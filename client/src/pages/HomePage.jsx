@@ -5,6 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import api from "../utils/api";
 import "react-toastify/dist/ReactToastify.css";
+import "./HomePage.css";
 
 function BackgroundAnimation() {
   useEffect(() => {
@@ -43,7 +44,7 @@ function BackgroundAnimation() {
     draw();
   }, []);
 
-  return <canvas id="bg-canvas" className="absolute top-0 left-0 w-full h-full z-0" />;
+  return <canvas id="bg-canvas" className="absolute top-0 left-0 z-0" />;
 }
 
 const initialForm = {
@@ -63,37 +64,6 @@ const initialForm = {
   confirmPassword: "",
 };
 
-const InputField = ({
-  label,
-  type = "text",
-  name,
-  value,
-  onChange,
-  onBlur,
-  error,
-  ...props
-}) => (
-  <div className="relative group w-full animate-fadeIn">
-    <input
-      id={name}
-      name={name}
-      type={type}
-      value={value}
-      onChange={onChange}
-      onBlur={onBlur}
-      className={`peer w-full bg-gray-100 dark:bg-gray-800 text-black dark:text-white px-4 pt-5 pb-2 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 transition-all`}
-      placeholder=" "
-      {...props}
-    />
-    <label
-      htmlFor={name}
-      className="absolute left-4 top-2.5 text-gray-500 dark:text-gray-400 text-sm transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 dark:peer-placeholder-shown:text-gray-500 peer-focus:top-2.5 peer-focus:text-sm"
-    >
-      {label}
-    </label>
-    {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
-  </div>
-);
 
 export default function HomePage() {
   const [mode, setMode] = useState("login");
@@ -102,21 +72,21 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   const validate = (field, value) => {
-    if (["username", "fullname", "institute", "street", "city"].includes(field)) {
-      return /^[A-Za-z ]+$/.test(value) ? "" : "Only letters allowed";
-    }
-    if (["pincode", "phone", "age"].includes(field)) {
-      return /^[0-9]+$/.test(value) ? "" : "Only numbers allowed";
-    }
     switch (field) {
       case "email":
         return /\S+@\S+\.\S+/.test(value) ? "" : "Invalid email format";
       case "password":
-        return value.length >= 6 ? "" : "Minimum 6 characters";
-      case "confirmPassword":
-        return value === formData.password ? "" : "Passwords do not match";
+        return value.length >= 6 ? "" : "Password must be at least 6 characters";
+      case "username":
+      case "fullname":
+      case "institute":
+      case "address":
       case "course":
-        return value ? "" : "Please select a course";
+        return value.trim() ? "" : "This field is required";
+      case "age":
+        return value >= 10 && value <= 100 ? "" : "Enter a valid age";
+      case "phone":
+        return /^\d{10}$/.test(value) ? "" : "Enter a valid 10-digit phone number";
       default:
         return "";
     }
@@ -127,16 +97,17 @@ export default function HomePage() {
     const val = name === "studentId" ? files[0] : value;
     setFormData((prev) => ({ ...prev, [name]: val }));
 
+    // Live validation on change
     if (name !== "studentId") {
-      const error = validate(name, val);
-      setErrors((prev) => ({ ...prev, [name]: error }));
+      const errorMsg = validate(name, val);
+      setErrors((prev) => ({ ...prev, [name]: errorMsg }));
     }
   };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    const error = validate(name, value);
-    setErrors((prev) => ({ ...prev, [name]: error }));
+    const errorMsg = validate(name, value);
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
   };
 
   const handleLogin = async (e) => {
@@ -146,7 +117,7 @@ export default function HomePage() {
 
     if (emailErr || passErr) {
       setErrors({ email: emailErr, password: passErr });
-      toast.error("❌ Fix login errors");
+      toast.error("❌ Fix login form errors");
       return;
     }
 
@@ -155,26 +126,26 @@ export default function HomePage() {
         email: formData.email,
         password: formData.password,
       });
-      toast.success("✅ Login successful");
+      toast.success("✅ Login Successful");
       localStorage.setItem("token", res.data.token);
       navigate("/dashboard");
     } catch (err) {
-      toast.error("❌ Login failed");
+      toast.error("❌ Login Failed: " + err.response?.data?.error);
     }
   };
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    let allErrors = {};
+    const newErrors = {};
     for (const key in formData) {
-      if (key === "studentId") continue;
+      if (key === "studentId") continue; // skip file validation
       const error = validate(key, formData[key]);
-      if (error) allErrors[key] = error;
+      if (error) newErrors[key] = error;
     }
 
-    if (Object.keys(allErrors).length) {
-      setErrors(allErrors);
-      toast.error("❌ Fix registration errors");
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("❌ Fix registration form errors");
       return;
     }
 
@@ -183,66 +154,35 @@ export default function HomePage() {
 
     try {
       await api.post("/api/auth/register", data);
-      toast.success("✅ Registration successful");
-      setFormData(initialForm);
+      toast.success("✅ Registered Successfully");
       setMode("login");
+      setFormData(initialForm);
     } catch (err) {
-      toast.error("❌ Register failed");
+      toast.error("❌ Register Failed: " + err.response?.data?.error);
     }
   };
 
   return (
-    <div className="relative min-h-screen bg-white dark:bg-black text-black dark:text-white flex items-center justify-center p-4">
+    <div className="relative h-screen flex items-center justify-center text-white overflow-auto">
       <BackgroundAnimation />
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-2xl max-w-lg w-full z-10 overflow-y-auto space-y-4">
-        <h1 className="text-2xl font-bold text-center">Student Event Portal</h1>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={() => setMode("login")}
-            className={`px-4 py-2 rounded-md font-semibold ${mode === "login"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 dark:bg-gray-800"
-              }`}
-          >
-            Login
-          </button>
-          <button
-            onClick={() => setMode("register")}
-            className={`px-4 py-2 rounded-md font-semibold ${mode === "register"
-              ? "bg-green-600 text-white"
-              : "bg-gray-200 dark:bg-gray-800"
-              }`}
-          >
-            Register
-          </button>
+      <div className="form-container">
+        <h1 className="text-3xl font-bold mb-4">Student Event Portal</h1>
+        <div className="flex justify-center gap-4 mb-6">
+          <button onClick={() => setMode("login")} className={`tab ${mode === "login" ? "active" : ""}`}>Login</button>
+          <button onClick={() => setMode("register")} className={`tab ${mode === "register" ? "active" : ""}`}>Register</button>
         </div>
 
         {mode === "login" ? (
-          <form onSubmit={handleLogin} className="space-y-4">
-            <InputField
-              name="email"
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.email}
-            />
-            <InputField
-              name="password"
-              label="Password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.password}
-            />
-            <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-              Login
-            </button>
+          <form className="space-y-4 animate-fadeIn" onSubmit={handleLogin}>
+            <input name="email" type="email" placeholder="Email" className="input" onChange={handleChange} onBlur={handleBlur} required />
+            {errors.email && <p className="error">{errors.email}</p>}
+            <input name="password" type="password" placeholder="Password" className="input" onChange={handleChange} onBlur={handleBlur} required />
+            {errors.password && <p className="error">{errors.password}</p>}
+            <button className="btn btn-login">Login</button>
             <GoogleLogin
               onSuccess={(cred) => {
                 const user = jwtDecode(cred.credential);
+                console.log("Google User:", user);
                 toast.success("✅ Google login success");
                 localStorage.setItem("user", JSON.stringify(user));
                 navigate("/dashboard");
@@ -251,81 +191,69 @@ export default function HomePage() {
             />
           </form>
         ) : (
-          <form onSubmit={handleRegister} className="space-y-4" encType="multipart/form-data">
-            <InputField name="username" label="Username" value={formData.username} onChange={handleChange} onBlur={handleBlur} error={errors.username} />
-            <InputField name="fullname" label="Full Name" value={formData.fullname} onChange={handleChange} onBlur={handleBlur} error={errors.fullname} />
-            <InputField name="institute" label="Institute" value={formData.institute} onChange={handleChange} onBlur={handleBlur} error={errors.institute} />
+<form className="space-y-3 animate-fadeIn" onSubmit={handleRegister} encType="multipart/form-data">
+  <input name="username" placeholder="Username" className="input" onChange={handleChange} onBlur={handleBlur} />
+  {errors.username && <p className="error">{errors.username}</p>}
 
-            <div className="flex gap-2">
-              <InputField name="street" label="Street" value={formData.street} onChange={handleChange} onBlur={handleBlur} error={errors.street} />
-              <InputField name="city" label="City" value={formData.city} onChange={handleChange} onBlur={handleBlur} error={errors.city} />
-              <InputField name="pincode" label="Pincode" value={formData.pincode} onChange={handleChange} onBlur={handleBlur} error={errors.pincode} />
-            </div>
+  <input name="fullname" placeholder="Full Name" className="input" onChange={handleChange} onBlur={handleBlur} />
+  {errors.fullname && <p className="error">{errors.fullname}</p>}
 
-            <InputField name="age" label="Age" type="number" value={formData.age} onChange={handleChange} onBlur={handleBlur} error={errors.age} />
+  <input name="institute" placeholder="College/School" className="input" onChange={handleChange} onBlur={handleBlur} />
+  {errors.institute && <p className="error">{errors.institute}</p>}
 
-            <div className="relative group animate-fadeIn">
-              <select
-                name="course"
-                value={formData.course}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className="peer w-full bg-gray-100 dark:bg-gray-800 text-black dark:text-white px-4 pt-5 pb-2 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600"
-              >
-                <option value="">Select Course</option>
-                <option value="BCA">BCA</option>
-                <option value="MCA">MCA</option>
-                <option value="B.Tech">B.Tech</option>
-                <option value="MBA">MBA</option>
-              </select>
-              <label className="absolute left-4 top-2.5 text-gray-500 dark:text-gray-400 text-sm peer-placeholder-shown:text-base peer-focus:text-sm">
-                Course
-              </label>
-              {errors.course && <p className="text-red-400 text-sm mt-1">{errors.course}</p>}
-            </div>
+  <div className="flex gap-2">
+    <input name="street" placeholder="Street" className="input" onChange={handleChange} onBlur={handleBlur} />
+    <input name="city" placeholder="City" className="input" onChange={handleChange} onBlur={handleBlur} />
+    <input name="pincode" placeholder="Pincode" className="input" onChange={handleChange} onBlur={handleBlur} />
+  </div>
 
-            <InputField name="email" label="Email" type="email" value={formData.email} onChange={handleChange} onBlur={handleBlur} error={errors.email} />
+  <input name="age" type="number" placeholder="Age" className="input" onChange={handleChange} onBlur={handleBlur} />
+  {errors.age && <p className="error">{errors.age}</p>}
 
-            <div className="flex gap-2">
-              <select
-                name="countryCode"
-                value={formData.countryCode}
-                onChange={handleChange}
-                className="w-1/4 bg-gray-100 dark:bg-gray-800 text-black dark:text-white px-2 rounded-lg border border-gray-300 dark:border-gray-700"
-              >
-                <option value="+91">+91</option>
-                <option value="+1">+1</option>
-                <option value="+44">+44</option>
-              </select>
-              <InputField name="phone" label="Phone" value={formData.phone} onChange={handleChange} onBlur={handleBlur} error={errors.phone} />
-            </div>
+  <select name="course" className="input" onChange={handleChange} onBlur={handleBlur}>
+    <option value="">-- Select Course --</option>
+    <option value="BCA">BCA</option>
+    <option value="MCA">MCA</option>
+    <option value="B.Tech">B.Tech</option>
+    <option value="MBA">MBA</option>
+  </select>
+  {errors.course && <p className="error">{errors.course}</p>}
 
-            <label className="text-sm">Upload Student ID (Image)</label>
-            <input
-              name="studentId"
-              type="file"
-              accept="image/*"
-              onChange={handleChange}
-              className="w-full text-sm text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-700 p-2"
-            />
+  <input name="email" type="email" placeholder="Email" className="input" onChange={handleChange} onBlur={handleBlur} />
+  {errors.email && <p className="error">{errors.email}</p>}
 
-            <InputField name="password" label="Password" type="password" value={formData.password} onChange={handleChange} onBlur={handleBlur} error={errors.password} />
-            <InputField name="confirmPassword" label="Confirm Password" type="password" value={formData.confirmPassword} onChange={handleChange} onBlur={handleBlur} error={errors.confirmPassword} />
+  <div className="flex gap-2">
+    <select name="countryCode" className="input max-w-[100px]" onChange={handleChange}>
+      <option value="+91">+91</option>
+      <option value="+1">+1</option>
+      <option value="+44">+44</option>
+    </select>
+    <input name="phone" type="tel" placeholder="Phone Number" className="input" onChange={handleChange} onBlur={handleBlur} />
+  </div>
+  {errors.phone && <p className="error">{errors.phone}</p>}
 
-            <button type="submit" className="w-full py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">
-              Register
-            </button>
+  <label className="text-sm mt-2">Student ID Upload (Image only)</label>
+  <input name="studentId" type="file" accept="image/*" className="input" onChange={handleChange} />
 
-            <GoogleLogin
-              onSuccess={(cred) => {
-                const user = jwtDecode(cred.credential);
-                toast.success("✅ Google signup success");
-              }}
-              onError={() => toast.error("❌ Google signup failed")}
-            />
-          </form>
+  <input name="password" type="password" placeholder="Password" className="input" onChange={handleChange} onBlur={handleBlur} />
+  {errors.password && <p className="error">{errors.password}</p>}
+
+  <input name="confirmPassword" type="password" placeholder="Confirm Password" className="input" onChange={handleChange} onBlur={handleBlur} />
+  {errors.confirmPassword && <p className="error">{errors.confirmPassword}</p>}
+
+  <button className="btn btn-register">Register</button>
+
+  <GoogleLogin
+    onSuccess={(cred) => {
+      const user = jwtDecode(cred.credential);
+      toast.success("✅ Google signup success");
+    }}
+    onError={() => toast.error("❌ Google signup failed")}
+  />
+</form>
+
         )}
-        <ToastContainer />
+        <ToastContainer position="top-right" autoClose={3000} />
       </div>
     </div>
   );
