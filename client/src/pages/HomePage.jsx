@@ -78,15 +78,25 @@ export default function HomePage() {
       case "password":
         return value.length >= 6 ? "" : "Password must be at least 6 characters";
       case "username":
+        return value.length >= 3 ? "" : "Username must be at least 3 characters";     
+        break;
       case "fullname":
+        return /^[A-Za-z\s]+$/.test(value.trim())
+          ? ""
+          : "Full name should only contain letters and spaces";
+      case "confirmPassword":
+        return value === formData.password ? "" : "Passwords do not match";
       case "institute":
       case "address":
       case "course":
         return value.trim() ? "" : "This field is required";
       case "age":
-        return value >= 10 && value <= 100 ? "" : "Enter a valid age";
-      case "phone":
-        return /^\d{10}$/.test(value) ? "" : "Enter a valid 10-digit phone number";
+        return value >= 10 && value <= 110 ? "" : "Enter a valid age";
+case "phone":
+  return /^(\+91[\-\s]?)?[6-9]\d{9}$/.test(value.trim()) 
+    ? "" 
+    : "Enter a valid phone number starting with 6, 7, 8, or 9 (with or without +91)";
+
       default:
         return "";
     }
