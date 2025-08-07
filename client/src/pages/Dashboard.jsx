@@ -21,7 +21,6 @@ export default function Dashboard() {
         <div className="bg-gray-800 p-6 rounded-xl shadow-xl w-full max-w-md">
           <p><strong>👤 Username:</strong> {user.username || "N/A"}</p>
           <p><strong>📧 Email:</strong> {user.email || "N/A"}</p>
-          <p><strong>📍 Address:</strong> {user.address || "N/A"}</p>
           {/* Add more fields as needed */}
         </div>
       ) : (

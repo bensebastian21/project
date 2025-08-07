@@ -4,7 +4,7 @@ html, body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow-x: hidden;
-  background: linear-gradient(to right, #1e3c72, #2a5298);
+  background: linear-gradient(to right, #d03e04, #040a14);
   color: white;
 }
 
@@ -64,17 +64,17 @@ html, body {
 }
 
 .btn-login {
-  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  background: linear-gradient(to right, #da4809, #da4809);
   color: white;
 }
 
 .btn-login:hover {
-  background: linear-gradient(to right, #1e40af, #1e3a8a);
+  background: linear-gradient(to right, #d28249, #e3976b);
   transform: translateY(-1px);
 }
 
 .btn-register {
-  background: linear-gradient(to right, #059669, #047857);
+  background: linear-gradient(to right, #eb600a, #d15e20);
   color: white;
 }
 
@@ -99,7 +99,7 @@ html, body {
 }
 
 .tab.active {
-  background-color: #2563eb;
+  background-color: #f15a19;
   transform: scale(1.05);
 }
 
@@ -155,7 +155,7 @@ html, body {
 
 /* === FILE INPUT LABEL === */
 input[type="file"]::file-selector-button {
-  background: #2563eb;
+  background: #ee6221;
   border: none;
   color: white;
   padding: 0.5rem 0.75rem;
@@ -166,5 +166,5 @@ input[type="file"]::file-selector-button {
 }
 
 input[type="file"]::file-selector-button:hover {
-  background: #1e3a8a;
+  background: black;
 }
