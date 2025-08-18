@@ -1,16 +1,38 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  username: String,
-  fullname: String,
-  institution: String,
-  address: String,
-  age: Number,
-  course: String,
-  email: { type: String, unique: true },
-  phone: String,
-  password: String,
-  studentIdPath: String
+  username: { type: String, required: true },
+  fullname: { type: String, required: true },
+  institute: { type: String, required: true },
+  street: { type: String, required: true },
+  city: { type: String, required: true },
+  pincode: { type: String, required: true },
+  age: { type: Number, required: true },
+  course: { type: String, required: true },
+  email: { type: String, unique: true, required: true },
+  phone: { type: String, required: true },
+  countryCode: { type: String, default: "+91" },
+  password: { type: String, required: false }, // Optional for Firebase users
+  studentIdPath: String,
+
+  // ✅ Add role field
+  role: { 
+    type: String, 
+    enum: ["student", "host", "admin"], 
+    default: "student" 
+  },
+
+  // Password reset fields
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  // Code-based reset fields
+  resetCode: String,
+  resetCodeExpires: Date,
+
+  // Firebase fields
+  firebaseUid: String,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model("User", userSchema);
