@@ -16,7 +16,7 @@ const router = express.Router();
 const createTransporter = () => {
   // For development, you can use Gmail or other services
   // For production, consider using services like SendGrid, Mailgun, etc.
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail', // or 'outlook', 'yahoo', etc.
     auth: {
       user: process.env.EMAIL_USER || 'your-email@gmail.com',
@@ -500,18 +500,15 @@ router.post("/forgot-password", async (req, res) => {
     const emailSent = await sendResetEmail(email, resetCode, user.fullname);
     
     if (emailSent) {
-      res.json({ 
+      return res.json({ 
         message: "✅ Password reset email sent successfully!",
         note: "Check your email for the verification code. If you don't see it, check your spam folder."
       });
-    } else {
-      // Fallback: return code in response if email fails
-      res.json({ 
-        message: "⚠️ Reset code created but email failed to send",
-        resetCode,
-        note: "Email delivery failed. Use this code to reset your password. Check your email configuration."
-      });
     }
+
+    return res.status(500).json({ 
+      error: "Failed to send reset email. Please try again later.",
+    });
   } catch (err) {
     console.error("Forgot password error:", err);
     res.status(500).json({ error: "Server error" });
