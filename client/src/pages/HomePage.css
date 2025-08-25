@@ -4,8 +4,8 @@ html, body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow-x: hidden;
-  background: linear-gradient(to right, #d03e04, #040a14);
-  color: white;
+  background: linear-gradient(to right, #0418d0, #00040a);
+  color: rgb(235, 213, 14);
 }
 
 /* === BACKGROUND PARTICLES CANVAS === */
@@ -18,7 +18,7 @@ html, body {
 
 /* === FORM CONTAINER === */
 .form-container {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 9, 0.932);
   padding: 2rem;
   border-radius: 1.5rem;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
@@ -39,7 +39,7 @@ html, body {
   margin-bottom: 1.5rem;
   font-size: 2.25rem;
   font-weight: 800;
-  color: #ef4444;
+  color: #f7f7f8;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -74,7 +74,7 @@ html, body {
 }
 
 .btn-login {
-  background: linear-gradient(to right, #da4809, #da4809);
+  background: linear-gradient(to right, #1e0ce3, #1417ce);
   color: white;
 }
 

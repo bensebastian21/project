@@ -3,11 +3,11 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 // Firebase removed
 import { useNavigate } from "react-router-dom";
-import { Users, Calendar, BarChart2, UserPlus, Trash2, Edit3, LogOut } from "lucide-react";
+import { Users, Calendar, BarChart2, UserPlus, Trash2, Edit3, LogOut, Eye, Settings } from "lucide-react";
 import config from "../config";
 
 export default function AdminPanel() {
-  const [activeTab, setActiveTab] = useState("hosts");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
 
@@ -31,6 +31,9 @@ export default function AdminPanel() {
   const [hostErrors, setHostErrors] = useState({});
   const [touchedFields, setTouchedFields] = useState({});
   const [loading, setLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingHostId, setEditingHostId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
   // Validation functions
@@ -169,23 +172,36 @@ export default function AdminPanel() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`${config.apiBaseUrl}/api/auth/register`, {
-        method: "POST",
-        body: JSON.stringify(newHost),
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-      });
-
-      if (!response.ok) throw new Error("MongoDB host creation failed");
-      const mongoData = await response.json();
-
-      // Success stored in MongoDB only
-
-      toast.success("✅ New host added!");
       
-      // Reset form
+      if (isEditMode) {
+        // Update existing host
+        const response = await fetch(`${config.apiBaseUrl}/api/auth/update/${editingHostId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(newHost)
+        });
+
+        if (!response.ok) throw new Error("Failed to update host");
+        toast.success("✅ Host updated successfully!");
+      } else {
+        // Add new host
+        const response = await fetch(`${config.apiBaseUrl}/api/auth/register`, {
+          method: "POST",
+          body: JSON.stringify(newHost),
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+        });
+
+        if (!response.ok) throw new Error("MongoDB host creation failed");
+        toast.success("✅ New host added!");
+      }
+      
+      // Reset form and exit edit mode
       setNewHost({
         email: "", fullname: "", username: "", password: "", role: "host",
         institute: "", street: "", city: "", pincode: "",
@@ -193,54 +209,82 @@ export default function AdminPanel() {
       });
       setHostErrors({});
       setTouchedFields({});
+      setIsEditMode(false);
+      setEditingHostId(null);
       
       fetchHosts();
     } catch (error) {
-      toast.error("Error adding host");
+      toast.error(isEditMode ? "Error updating host" : "Error adding host");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteHost = async (id) => {
+  const handleEditHost = (host) => {
+    // Set the form to edit mode
+    setNewHost({
+      ...host,
+      password: "" // Clear password for security
+    });
+    setIsEditMode(true);
+    setEditingHostId(host._id);
+    setActiveTab("add-host");
+    toast.info("Edit mode: Update the fields and click 'Update Host'");
+  };
+
+  const handleUpdateHost = async (hostId, updatedData) => {
     try {
       const token = localStorage.getItem("token");
-      await fetch(`${config.apiBaseUrl}/api/auth/delete/${id}`, {
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/update/${hostId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!response.ok) throw new Error("Failed to update host");
+      
+      toast.success("✅ Host updated successfully!");
+      fetchHosts();
+    } catch (error) {
+      toast.error("Error updating host: " + error.message);
+    }
+  };
+
+  const handleDeleteHost = async (hostId) => {
+    if (!window.confirm("Are you sure you want to delete this host? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/delete/${hostId}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`
         }
       });
 
-      // Removed Firestore deletion
-
-      toast.success("Host deleted successfully");
+      if (!response.ok) throw new Error("Failed to delete host");
+      
+      toast.success("✅ Host deleted successfully!");
       fetchHosts();
     } catch (error) {
-      toast.error("Error deleting host");
+      toast.error("Error deleting host: " + error.message);
     }
   };
 
-  const handleUpdateHost = async (id, updatedData) => {
-    try {
-      const token = localStorage.getItem("token");
-      await fetch(`${config.apiBaseUrl}/api/auth/update/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(updatedData),
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-      });
+  // Filter hosts based on search term
+  const filteredHosts = hosts.filter(host => 
+    host.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    host.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    host.institute?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    host.course?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-      // Removed Firestore update
 
-      toast.success("Host updated successfully");
-      fetchHosts();
-    } catch (error) {
-      toast.error("Error updating host");
-    }
-  };
 
   if (checkingAdmin) {
     return (
@@ -261,14 +305,47 @@ export default function AdminPanel() {
         </h2>
 
         <button
-          onClick={() => setActiveTab("hosts")}
+          onClick={() => setActiveTab("dashboard")}
           className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
-            activeTab === "hosts"
+            activeTab === "dashboard"
               ? "bg-blue-600 scale-105 shadow-lg"
               : "hover:bg-gray-700"
           }`}
         >
-          <Users size={20} /> Manage Hosts
+          <BarChart2 size={20} /> Dashboard
+        </button>
+
+        <button
+          onClick={() => setActiveTab("view-hosts")}
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+            activeTab === "view-hosts"
+              ? "bg-green-600 scale-105 shadow-lg"
+              : "hover:bg-gray-700"
+          }`}
+        >
+          <Eye size={20} /> View Hosts
+        </button>
+
+        <button
+          onClick={() => setActiveTab("add-host")}
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+            activeTab === "add-host"
+              ? "bg-purple-600 scale-105 shadow-lg"
+              : "hover:bg-gray-700"
+          }`}
+        >
+          <UserPlus size={20} /> Add Host
+        </button>
+
+        <button
+          onClick={() => setActiveTab("manage-hosts")}
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+            activeTab === "manage-hosts"
+              ? "bg-orange-600 scale-105 shadow-lg"
+              : "hover:bg-gray-700"
+          }`}
+        >
+          <Settings size={20} /> Manage Hosts
         </button>
 
         <button
@@ -304,10 +381,142 @@ export default function AdminPanel() {
 
       {/* Main */}
       <div className="flex-1 p-10 overflow-y-auto">
-        {activeTab === "hosts" && (
+        {/* Dashboard Tab */}
+        {activeTab === "dashboard" && (
           <div className="animate-fadeIn">
             <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-              <Users size={28} /> Manage Hosts
+              <BarChart2 size={28} /> Admin Dashboard
+            </h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-gray-800 rounded-xl p-6 shadow-xl admin-card animate-scaleIn">
+                <div className="flex items-center gap-3 mb-4">
+                  <Users size={24} className="text-blue-400" />
+                  <h3 className="text-lg font-semibold">Total Hosts</h3>
+                </div>
+                <p className="text-3xl font-bold text-blue-400">{hosts.length}</p>
+              </div>
+              
+              <div className="bg-gray-800 rounded-xl p-6 shadow-xl admin-card animate-scaleIn" style={{animationDelay: '0.1s'}}>
+                <div className="flex items-center gap-3 mb-4">
+                  <Calendar size={24} className="text-green-400" />
+                  <h3 className="text-lg font-semibold">Active Events</h3>
+                </div>
+                <p className="text-3xl font-bold text-green-400">0</p>
+              </div>
+              
+              <div className="bg-gray-800 rounded-xl p-6 shadow-xl admin-card animate-scaleIn" style={{animationDelay: '0.2s'}}>
+                <div className="flex items-center gap-3 mb-4">
+                  <BarChart2 size={24} className="text-purple-400" />
+                  <h3 className="text-lg font-semibold">System Status</h3>
+                </div>
+                <p className="text-3xl font-bold text-purple-400">Online</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+              <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button
+                  onClick={() => setActiveTab("add-host")}
+                  className="flex items-center gap-3 p-4 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                >
+                  <UserPlus size={20} />
+                  Add New Host
+                </button>
+                <button
+                  onClick={() => setActiveTab("view-hosts")}
+                  className="flex items-center gap-3 p-4 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                >
+                  <Eye size={20} />
+                  View All Hosts
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Hosts Tab */}
+        {activeTab === "view-hosts" && (
+          <div className="animate-fadeIn">
+            <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
+              <Eye size={28} /> View Hosts
+            </h1>
+            
+            <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">All Hosts ({filteredHosts.length} of {hosts.length})</h2>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search hosts..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="px-4 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-700 text-gray-300">
+                    <tr>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Institute</th>
+                      <th className="px-4 py-3">Course</th>
+                      <th className="px-4 py-3">Phone</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-300">
+                    {filteredHosts.map((host) => (
+                      <tr key={host._id} className="border-b border-gray-700 hover:bg-gray-700 table-row">
+                        <td className="px-4 py-3">{host.fullname}</td>
+                        <td className="px-4 py-3">{host.email}</td>
+                        <td className="px-4 py-3">{host.institute}</td>
+                        <td className="px-4 py-3">{host.course}</td>
+                        <td className="px-4 py-3">{host.countryCode} {host.phone}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditHost(host)}
+                              className="p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteHost(host._id)}
+                              className="p-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add Host Tab */}
+        {activeTab === "add-host" && (
+          <div className="animate-fadeIn">
+            <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
+              <UserPlus size={28} /> Add New Host
             </h1>
 
             {/* Add Host */}
@@ -315,9 +524,9 @@ export default function AdminPanel() {
               onSubmit={handleAddHost}
               className="bg-gray-800 rounded-xl p-6 shadow-xl space-y-4 max-w-2xl"
             >
-              <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
-                <UserPlus size={20} /> Add New Host
-              </h2>
+                          <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
+              <UserPlus size={20} /> {isEditMode ? 'Edit Host' : 'Add New Host'}
+            </h2>
               
               {/* Personal Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -570,20 +779,42 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-semibold transition-all mt-6"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Adding Host...
-                  </div>
-                ) : (
-                  "Add Host"
+              <div className="flex gap-4 mt-6">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-semibold transition-all"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      {isEditMode ? "Updating..." : "Adding Host..."}
+                    </div>
+                  ) : (
+                    isEditMode ? "Update Host" : "Add Host"
+                  )}
+                </button>
+                
+                {isEditMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditMode(false);
+                      setEditingHostId(null);
+                      setNewHost({
+                        email: "", fullname: "", username: "", password: "", role: "host",
+                        institute: "", street: "", city: "", pincode: "",
+                        age: "", course: "", phone: "", countryCode: "+91"
+                      });
+                      setHostErrors({});
+                      setTouchedFields({});
+                    }}
+                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded-lg font-semibold transition-all"
+                  >
+                    Cancel
+                  </button>
                 )}
-              </button>
+              </div>
             </form>
 
             {/* Host List */}
@@ -675,6 +906,91 @@ export default function AdminPanel() {
                    ))}
                  </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Manage Hosts Tab */}
+        {activeTab === "manage-hosts" && (
+          <div className="animate-fadeIn">
+            <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
+              <Settings size={28} /> Manage Hosts
+            </h1>
+            
+            <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Host Management ({filteredHosts.length} of {hosts.length})</h2>
+                <div className="flex gap-4 items-center">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search hosts..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="px-4 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("add-host")}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  >
+                    <UserPlus size={16} />
+                    Add New Host
+                  </button>
+                </div>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-700 text-gray-300">
+                    <tr>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Institute</th>
+                      <th className="px-4 py-3">Course</th>
+                      <th className="px-4 py-3">Phone</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-300">
+                    {filteredHosts.map((host) => (
+                      <tr key={host._id} className="border-b border-gray-700 hover:bg-gray-700 table-row">
+                        <td className="px-4 py-3">{host.fullname}</td>
+                        <td className="px-4 py-3">{host.email}</td>
+                        <td className="px-4 py-3">{host.institute}</td>
+                        <td className="px-4 py-3">{host.course}</td>
+                        <td className="px-4 py-3">{host.countryCode} {host.phone}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditHost(host)}
+                              className="p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                              title="Edit Host"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteHost(host._id)}
+                              className="p-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
+                              title="Delete Host"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

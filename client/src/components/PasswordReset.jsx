@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, Copy, Check } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import "react-toastify/dist/ReactToastify.css";
 import config from "../config";
 
@@ -15,8 +15,7 @@ export default function PasswordReset() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [resetTokenReceived, setResetTokenReceived] = useState("");
-  const [copied, setCopied] = useState(false);
+  
   const navigate = useNavigate();
 
   const handleRequestReset = async (e) => {
@@ -36,20 +35,9 @@ export default function PasswordReset() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Reset request failed");
 
-      // Handle response based on whether email was sent or code returned (fallback)
-      if (data.resetCode) {
-        // Fallback: email failed, show token on screen
-        setResetTokenReceived(data.resetCode);
-        toast.warning("⚠️ Email delivery failed");
-        toast.info("Use the code below to reset your password");
-        setStep("reset");
-      } else {
-        // Email sent successfully
-        toast.success("📧 Password reset email sent!");
-        toast.info("Check your email for the verification code");
-        // Don't automatically go to reset step - user should check email first
-        setEmail(""); // Clear email for security
-      }
+      toast.success("📧 Password reset email sent!");
+      toast.info("Check your email for the verification code");
+      setStep("reset");
     } catch (err) {
       toast.error("❌ " + err.message);
     } finally {
@@ -100,16 +88,7 @@ export default function PasswordReset() {
     }
   };
 
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      toast.success("Token copied to clipboard!");
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      toast.error("Failed to copy token");
-    }
-  };
+  
 
   const goBack = () => {
     if (step === "reset") {
@@ -117,7 +96,7 @@ export default function PasswordReset() {
       setCode("");
       setNewPassword("");
       setConfirmPassword("");
-      setResetTokenReceived("");
+      
     } else {
       navigate("/", { replace: true });
     }
@@ -188,32 +167,7 @@ export default function PasswordReset() {
         {/* Reset Password Form */}
         {step === "reset" && (
           <form onSubmit={handleResetPassword} className="space-y-6">
-            {/* Display Code (fallback when email fails) */}
-            {resetTokenReceived && (
-              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-                <label className="block text-sm font-medium text-blue-300 mb-2">
-                  Your Verification Code
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={resetTokenReceived}
-                    readOnly
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white font-mono text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(resetTokenReceived)}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white transition-colors"
-                  >
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
-                </div>
-                <p className="text-xs text-blue-400 mt-2">
-                  Copy this code and paste it below
-                </p>
-              </div>
-            )}
+            
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
