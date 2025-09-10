@@ -17,6 +17,7 @@ export default function AdminPanel() {
     fullname: "",
     username: "",
     password: "",
+    confirmPassword: "",
     role: "host",
     institute: "",
     street: "",
@@ -26,6 +27,7 @@ export default function AdminPanel() {
     course: "",
     phone: "",
     countryCode: "+91",
+    institutionType: "", // optional UI-only field
   });
 
   const [hostErrors, setHostErrors] = useState({});
@@ -47,8 +49,10 @@ export default function AdminPanel() {
         return value.length >= 3 ? "" : "Username must be at least 3 characters";
       case "password":
         return value.length >= 6 ? "" : "Password must be at least 6 characters";
+      case "confirmPassword":
+        return value === newHost.password ? "" : "Passwords do not match";
       case "institute":
-        return value.length >= 2 ? "" : "Institute name is required";
+        return value.length >= 2 ? "" : "Institution name is required";
       case "street":
         return value.length >= 5 ? "" : "Street address must be at least 5 characters";
       case "city":
@@ -57,9 +61,9 @@ export default function AdminPanel() {
         return /^\d{6}$/.test(value) ? "" : "Pincode must be 6 digits";
       case "age":
         const ageNum = parseInt(value);
-        return ageNum >= 16 && ageNum <= 100 ? "" : "Age must be between 16 and 100";
+        return ageNum >= 16 && ageNum <= 100 ? "" : "Contact person age must be between 16 and 100";
       case "course":
-        return value.length >= 2 ? "" : "Course name is required";
+        return value.length >= 2 ? "" : "Department is required";
       case "phone":
         return /^\d{10}$/.test(value) ? "" : "Phone must be 10 digits";
       case "countryCode":
@@ -71,8 +75,6 @@ export default function AdminPanel() {
 
   const handleHostFieldChange = (field, value) => {
     setNewHost(prev => ({ ...prev, [field]: value }));
-    
-    // Validate on change if field has been touched
     if (touchedFields[field]) {
       const error = validateField(field, value);
       setHostErrors(prev => ({ ...prev, [field]: error }));
@@ -203,9 +205,9 @@ export default function AdminPanel() {
       
       // Reset form and exit edit mode
       setNewHost({
-        email: "", fullname: "", username: "", password: "", role: "host",
+        email: "", fullname: "", username: "", password: "", confirmPassword: "", role: "host",
         institute: "", street: "", city: "", pincode: "",
-        age: "", course: "", phone: "", countryCode: "+91"
+        age: "", course: "", phone: "", countryCode: "+91", institutionType: ""
       });
       setHostErrors({});
       setTouchedFields({});
@@ -536,7 +538,7 @@ export default function AdminPanel() {
                   </label>
                   <input
                     type="email"
-                    placeholder="Enter email address"
+                    placeholder="Institution email address"
                     value={newHost.email}
                     onChange={(e) => handleHostFieldChange("email", e.target.value)}
                     onBlur={() => handleHostFieldBlur("email")}
@@ -552,93 +554,11 @@ export default function AdminPanel() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Full Name *
+                    Institution Name *
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter full name"
-                    value={newHost.fullname}
-                    onChange={(e) => handleHostFieldChange("fullname", e.target.value)}
-                    onBlur={() => handleHostFieldBlur("fullname")}
-                    className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
-                      hostErrors.fullname ? 'border-red-500' : 'border-gray-600'
-                    }`}
-                    required
-                  />
-                  {hostErrors.fullname && (
-                    <p className="text-red-400 text-sm mt-1">{hostErrors.fullname}</p>
-                  )}
-                </div>
-
-                                 <div>
-                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                     Username *
-                   </label>
-                   <input
-                     type="text"
-                     placeholder="Enter username"
-                     value={newHost.username}
-                     onChange={(e) => handleHostFieldChange("username", e.target.value)}
-                     onBlur={() => handleHostFieldBlur("username")}
-                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
-                       hostErrors.username ? 'border-red-500' : 'border-gray-600'
-                     }`}
-                     required
-                   />
-                   {hostErrors.username && (
-                     <p className="text-red-400 text-sm mt-1">{hostErrors.username}</p>
-                   )}
-                 </div>
-
-                 <div>
-                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                     Password *
-                   </label>
-                   <input
-                     type="password"
-                     placeholder="Enter password"
-                     value={newHost.password}
-                     onChange={(e) => handleHostFieldChange("password", e.target.value)}
-                     onBlur={() => handleHostFieldBlur("password")}
-                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
-                       hostErrors.password ? 'border-red-500' : 'border-gray-600'
-                     }`}
-                     required
-                   />
-                   {hostErrors.password && (
-                     <p className="text-red-400 text-sm mt-1">{hostErrors.password}</p>
-                   )}
-                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Age *
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Enter age"
-                    value={newHost.age}
-                    onChange={(e) => handleHostFieldChange("age", e.target.value)}
-                    onBlur={() => handleHostFieldBlur("age")}
-                    className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
-                      hostErrors.age ? 'border-red-500' : 'border-gray-600'
-                    }`}
-                    min="16"
-                    max="100"
-                    required
-                  />
-                  {hostErrors.age && (
-                    <p className="text-red-400 text-sm mt-1">{hostErrors.age}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Institute *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter institute name"
+                    placeholder="e.g., ABC College of Engineering"
                     value={newHost.institute}
                     onChange={(e) => handleHostFieldChange("institute", e.target.value)}
                     onBlur={() => handleHostFieldBlur("institute")}
@@ -654,11 +574,11 @@ export default function AdminPanel() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Course *
+                    Department *
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter course name"
+                    placeholder="e.g., Computer Science Department"
                     value={newHost.course}
                     onChange={(e) => handleHostFieldChange("course", e.target.value)}
                     onBlur={() => handleHostFieldBlur("course")}
@@ -671,6 +591,127 @@ export default function AdminPanel() {
                     <p className="text-red-400 text-sm mt-1">{hostErrors.course}</p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Institution Type (optional)
+                  </label>
+                  <select
+                    value={newHost.institutionType}
+                    onChange={(e) => handleHostFieldChange("institutionType", e.target.value)}
+                    className="w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                  >
+                    <option value="">Select type</option>
+                    <option value="College">College</option>
+                    <option value="University">University</option>
+                    <option value="Institute">Institute</option>
+                    <option value="Company">Company</option>
+                    <option value="NGO">NGO</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Contact Person Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Primary contact full name"
+                    value={newHost.fullname}
+                    onChange={(e) => handleHostFieldChange("fullname", e.target.value)}
+                    onBlur={() => handleHostFieldBlur("fullname")}
+                    className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
+                      hostErrors.fullname ? 'border-red-500' : 'border-gray-600'
+                    }`}
+                    required
+                  />
+                  {hostErrors.fullname && (
+                    <p className="text-red-400 text-sm mt-1">{hostErrors.fullname}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Contact Person Username *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Create username for contact person"
+                    value={newHost.username}
+                    onChange={(e) => handleHostFieldChange("username", e.target.value)}
+                    onBlur={() => handleHostFieldBlur("username")}
+                    className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
+                      hostErrors.username ? 'border-red-500' : 'border-gray-600'
+                    }`}
+                    required
+                  />
+                  {hostErrors.username && (
+                    <p className="text-red-400 text-sm mt-1">{hostErrors.username}</p>
+                  )}
+                </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  placeholder="Create a password"
+                  value={newHost.password}
+                  onChange={(e) => handleHostFieldChange("password", e.target.value)}
+                  onBlur={() => handleHostFieldBlur("password")}
+                  className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
+                    hostErrors.password ? 'border-red-500' : 'border-gray-600'
+                  }`}
+                  required
+                />
+                {hostErrors.password && (
+                  <p className="text-red-400 text-sm mt-1">{hostErrors.password}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  placeholder="Confirm the password"
+                  value={newHost.confirmPassword}
+                  onChange={(e) => handleHostFieldChange("confirmPassword", e.target.value)}
+                  onBlur={() => handleHostFieldBlur("confirmPassword")}
+                  className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
+                    hostErrors.confirmPassword ? 'border-red-500' : 'border-gray-600'
+                  }`}
+                  required
+                />
+                {hostErrors.confirmPassword && (
+                  <p className="text-red-400 text-sm mt-1">{hostErrors.confirmPassword}</p>
+                )}
+              </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Contact Person Age *
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 30"
+                    value={newHost.age}
+                    onChange={(e) => handleHostFieldChange("age", e.target.value)}
+                    onBlur={() => handleHostFieldBlur("age")}
+                    className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
+                      hostErrors.age ? 'border-red-500' : 'border-gray-600'
+                    }`}
+                    min="16"
+                    max="100"
+                    required
+                  />
+                  {hostErrors.age && (
+                    <p className="text-red-400 text-sm mt-1">{hostErrors.age}</p>
+                  )}
+                </div>
               </div>
 
               {/* Contact Information */}
@@ -681,7 +722,7 @@ export default function AdminPanel() {
                   </label>
                   <input
                     type="text"
-                    placeholder="+91"
+                    placeholder="e.g., +91"
                     value={newHost.countryCode}
                     onChange={(e) => handleHostFieldChange("countryCode", e.target.value)}
                     onBlur={() => handleHostFieldBlur("countryCode")}
@@ -696,11 +737,11 @@ export default function AdminPanel() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Phone Number *
+                    Institution Phone Number *
                   </label>
                   <input
                     type="tel"
-                    placeholder="Enter phone number"
+                    placeholder="Institution main contact number"
                     value={newHost.phone}
                     onChange={(e) => handleHostFieldChange("phone", e.target.value)}
                     onBlur={() => handleHostFieldBlur("phone")}
@@ -723,7 +764,7 @@ export default function AdminPanel() {
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter street address"
+                    placeholder="e.g., 123, College Road"
                     value={newHost.street}
                     onChange={(e) => handleHostFieldChange("street", e.target.value)}
                     onBlur={() => handleHostFieldBlur("street")}
@@ -743,7 +784,7 @@ export default function AdminPanel() {
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter city"
+                    placeholder="e.g., Chennai"
                     value={newHost.city}
                     onChange={(e) => handleHostFieldChange("city", e.target.value)}
                     onBlur={() => handleHostFieldBlur("city")}
@@ -763,7 +804,7 @@ export default function AdminPanel() {
                   </label>
                   <input
                     type="text"
-                    placeholder="Enter pincode"
+                    placeholder="6-digit pincode"
                     value={newHost.pincode}
                     onChange={(e) => handleHostFieldChange("pincode", e.target.value)}
                     onBlur={() => handleHostFieldBlur("pincode")}
@@ -802,9 +843,9 @@ export default function AdminPanel() {
                       setIsEditMode(false);
                       setEditingHostId(null);
                       setNewHost({
-                        email: "", fullname: "", username: "", password: "", role: "host",
+                        email: "", fullname: "", username: "", password: "", confirmPassword: "", role: "host",
                         institute: "", street: "", city: "", pincode: "",
-                        age: "", course: "", phone: "", countryCode: "+91"
+                        age: "", course: "", phone: "", countryCode: "+91", institutionType: ""
                       });
                       setHostErrors({});
                       setTouchedFields({});
@@ -843,16 +884,16 @@ export default function AdminPanel() {
                        {host.institute && (
                          <div className="mb-3 p-3 bg-gray-700 rounded-lg">
                            <p className="text-gray-300 text-sm">
-                             <strong>🏫 Institute:</strong> {host.institute}
+                             <strong>🏫 Institution:</strong> {host.institute}
                            </p>
                            {host.course && (
                              <p className="text-gray-300 text-sm">
-                               <strong>📚 Course:</strong> {host.course}
+                               <strong>📚 Department:</strong> {host.course}
                              </p>
                            )}
                            {host.age && (
                              <p className="text-gray-300 text-sm">
-                               <strong>🎂 Age:</strong> {host.age}
+                               <strong>👤 Contact Age:</strong> {host.age}
                              </p>
                            )}
                          </div>
