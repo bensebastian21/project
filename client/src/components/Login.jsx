@@ -94,7 +94,7 @@ export default function Login({ onSwitchToRegister }) {
   };
 
   // =========================
-  // Google Login via OAuth (server)
+  // Google Login via OAuth (server-initiated)
   // =========================
   const handleGoogleAuth = () => {
     window.location.href = config.oauthStartUrl;

@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel"; // ✅ Import Admin Panel
 import PasswordReset from "./components/PasswordReset"; // ✅ Import Password Reset
 import OAuthCallback from "./components/OAuthCallback"; // ✅ OAuth callback handler
+import HostDashboard from "./pages/HostDashboard";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/host-dashboard" element={<HostDashboard />} />
         <Route path="/reset-password" element={<PasswordReset />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
       </Routes>
