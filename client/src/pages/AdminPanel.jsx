@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 // Firebase removed
 import { useNavigate } from "react-router-dom";
-import { Users, Calendar, BarChart2, UserPlus, Trash2, Edit3, LogOut, Eye, Settings } from "lucide-react";
+import { Users, Calendar, BarChart2, UserPlus, Trash2, Edit3, LogOut, Eye, ToggleLeft, ToggleRight, CheckCircle2, XCircle } from "lucide-react";
 import config from "../config";
 
 export default function AdminPanel() {
@@ -36,6 +36,12 @@ export default function AdminPanel() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingHostId, setEditingHostId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [adminEvents, setAdminEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [metrics, setMetrics] = useState(null);
+  const [editHostModal, setEditHostModal] = useState(false);
+  const [editHostForm, setEditHostForm] = useState({});
+  const [savingHost, setSavingHost] = useState(false);
   const navigate = useNavigate();
 
   // Validation functions
@@ -101,6 +107,8 @@ export default function AdminPanel() {
 
     checkAdminStatus();
     fetchHosts();
+    fetchAdminEvents();
+    fetchMetrics();
 
     // prevent back after logout
     window.history.pushState(null, "", window.location.href);
@@ -149,6 +157,82 @@ export default function AdminPanel() {
       setHosts(data);
     } catch (error) {
       toast.error("Error fetching hosts from MongoDB");
+    }
+  };
+
+  const fetchAdminEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/events`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch events");
+      setAdminEvents(await res.json());
+    } catch (e) {
+      toast.error("Error fetching events");
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  const fetchMetrics = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/metrics`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch metrics");
+      setMetrics(await res.json());
+    } catch (e) {
+      toast.error("Error fetching metrics");
+    }
+  };
+
+  const openEditHostModal = (host) => {
+    setEditHostForm({
+      _id: host._id,
+      email: host.email || "",
+      fullname: host.fullname || "",
+      username: host.username || "",
+      password: "",
+      confirmPassword: "",
+      role: host.role || "host",
+      institute: host.institute || "",
+      street: host.street || "",
+      city: host.city || "",
+      pincode: host.pincode || "",
+      age: host.age || "",
+      course: host.course || "",
+      phone: host.phone || "",
+      countryCode: host.countryCode || "+91",
+    });
+    setEditHostModal(true);
+  };
+
+  const saveEditHost = async () => {
+    try {
+      setSavingHost(true);
+      // Basic validation: confirm password only if password provided
+      if (editHostForm.password && editHostForm.password !== editHostForm.confirmPassword) {
+        toast.error("Passwords do not match");
+        return;
+      }
+      const token = localStorage.getItem("token");
+      const { _id, confirmPassword, ...payload } = editHostForm;
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/update/${_id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("Failed to update host");
+      toast.success("✅ Host updated");
+      setEditHostModal(false);
+      await fetchHosts();
+    } catch (e) {
+      toast.error("Error updating host");
+    } finally {
+      setSavingHost(false);
     }
   };
 
@@ -339,16 +423,7 @@ export default function AdminPanel() {
           <UserPlus size={20} /> Add Host
         </button>
 
-        <button
-          onClick={() => setActiveTab("manage-hosts")}
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
-            activeTab === "manage-hosts"
-              ? "bg-orange-600 scale-105 shadow-lg"
-              : "hover:bg-gray-700"
-          }`}
-        >
-          <Settings size={20} /> Manage Hosts
-        </button>
+        
 
         <button
           onClick={() => setActiveTab("events")}
@@ -402,17 +477,17 @@ export default function AdminPanel() {
               <div className="bg-gray-800 rounded-xl p-6 shadow-xl admin-card animate-scaleIn" style={{animationDelay: '0.1s'}}>
                 <div className="flex items-center gap-3 mb-4">
                   <Calendar size={24} className="text-green-400" />
-                  <h3 className="text-lg font-semibold">Active Events</h3>
+                  <h3 className="text-lg font-semibold">Events</h3>
                 </div>
-                <p className="text-3xl font-bold text-green-400">0</p>
+                <p className="text-3xl font-bold text-green-400">{metrics ? metrics.events.total : 0}</p>
               </div>
               
               <div className="bg-gray-800 rounded-xl p-6 shadow-xl admin-card animate-scaleIn" style={{animationDelay: '0.2s'}}>
                 <div className="flex items-center gap-3 mb-4">
                   <BarChart2 size={24} className="text-purple-400" />
-                  <h3 className="text-lg font-semibold">System Status</h3>
+                  <h3 className="text-lg font-semibold">Registrations</h3>
                 </div>
-                <p className="text-3xl font-bold text-purple-400">Online</p>
+                <p className="text-3xl font-bold text-purple-400">{metrics ? metrics.registrations?.total : 0}</p>
               </div>
             </div>
 
@@ -492,7 +567,7 @@ export default function AdminPanel() {
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
                             <button
-                              onClick={() => handleEditHost(host)}
+                              onClick={() => openEditHostModal(host)}
                               className="p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
                             >
                               <Edit3 size={16} />
@@ -858,190 +933,119 @@ export default function AdminPanel() {
               </div>
             </form>
 
-            {/* Host List */}
-            <div className="mt-10">
-              <h2 className="text-2xl font-semibold mb-4">Current Hosts</h2>
-              {hosts.length === 0 ? (
-                <p className="text-gray-400">No hosts found</p>
-              ) : (
-                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                   {hosts.map((host) => (
-                     <div
-                       key={host._id}
-                       className="bg-gray-800 p-6 rounded-xl shadow-lg hover:scale-[1.02] transition-transform"
-                     >
-                       {/* Basic Info */}
-                       <div className="mb-4">
-                         <h3 className="text-lg font-semibold text-white mb-2">
-                           👤 {host.fullname}
-                         </h3>
-                         <p className="text-gray-300 text-sm">🔑 {host.username}</p>
-                         <p className="text-gray-300 text-sm">📧 {host.email}</p>
-                         <p className="text-gray-300 text-sm">🎭 Role: {host.role}</p>
-                       </div>
-
-                       {/* Academic Info */}
-                       {host.institute && (
-                         <div className="mb-3 p-3 bg-gray-700 rounded-lg">
-                           <p className="text-gray-300 text-sm">
-                             <strong>🏫 Institution:</strong> {host.institute}
-                           </p>
-                           {host.course && (
-                             <p className="text-gray-300 text-sm">
-                               <strong>📚 Department:</strong> {host.course}
-                             </p>
-                           )}
-                           {host.age && (
-                             <p className="text-gray-300 text-sm">
-                               <strong>👤 Contact Age:</strong> {host.age}
-                             </p>
-                           )}
-                         </div>
-                       )}
-
-                       {/* Contact Info */}
-                       {host.phone && (
-                         <div className="mb-3 p-3 bg-gray-700 rounded-lg">
-                           <p className="text-gray-300 text-sm">
-                             <strong>📱 Phone:</strong> {host.countryCode || "+91"} {host.phone}
-                           </p>
-                         </div>
-                       )}
-
-                       {/* Address Info */}
-                       {(host.street || host.city || host.pincode) && (
-                         <div className="mb-3 p-3 bg-gray-700 rounded-lg">
-                           <p className="text-gray-300 text-sm">
-                             <strong>📍 Address:</strong>
-                           </p>
-                           {host.street && (
-                             <p className="text-gray-300 text-sm ml-2">{host.street}</p>
-                           )}
-                           <p className="text-gray-300 text-sm ml-2">
-                             {host.city} {host.pincode}
-                           </p>
-                         </div>
-                       )}
-
-                       {/* Action Buttons */}
-                       <div className="flex gap-2 mt-4">
-                         <button
-                           onClick={() =>
-                             handleUpdateHost(host._id, {
-                               ...host,
-                               fullname: host.fullname + " (Updated)",
-                             })
-                           }
-                           className="flex items-center gap-1 bg-yellow-600 hover:bg-yellow-700 px-3 py-2 rounded-lg text-sm transition-colors"
-                         >
-                           <Edit3 size={16} /> Update
-                         </button>
-                         <button
-                           onClick={() => handleDeleteHost(host._id)}
-                           className="flex items-center gap-1 bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg text-sm transition-colors"
-                         >
-                           <Trash2 size={16} /> Delete
-                         </button>
-                       </div>
-                     </div>
-                   ))}
-                 </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Manage Hosts Tab */}
-        {activeTab === "manage-hosts" && (
-          <div className="animate-fadeIn">
-            <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
-              <Settings size={28} /> Manage Hosts
-            </h1>
             
-            <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Host Management ({filteredHosts.length} of {hosts.length})</h2>
-                <div className="flex gap-4 items-center">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search hosts..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="px-4 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    {searchTerm && (
-                      <button
-                        onClick={() => setSearchTerm("")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("add-host")}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                  >
-                    <UserPlus size={16} />
-                    Add New Host
-                  </button>
-                </div>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-700 text-gray-300">
-                    <tr>
-                      <th className="px-4 py-3">Name</th>
-                      <th className="px-4 py-3">Email</th>
-                      <th className="px-4 py-3">Institute</th>
-                      <th className="px-4 py-3">Course</th>
-                      <th className="px-4 py-3">Phone</th>
-                      <th className="px-4 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-300">
-                    {filteredHosts.map((host) => (
-                      <tr key={host._id} className="border-b border-gray-700 hover:bg-gray-700 table-row">
-                        <td className="px-4 py-3">{host.fullname}</td>
-                        <td className="px-4 py-3">{host.email}</td>
-                        <td className="px-4 py-3">{host.institute}</td>
-                        <td className="px-4 py-3">{host.course}</td>
-                        <td className="px-4 py-3">{host.countryCode} {host.phone}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditHost(host)}
-                              className="p-2 bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-                              title="Edit Host"
-                            >
-                              <Edit3 size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteHost(host._id)}
-                              className="p-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
-                              title="Delete Host"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
         )}
+
+        
 
         {activeTab === "events" && (
           <div className="animate-fadeIn">
             <h1 className="text-3xl font-bold mb-4 flex items-center gap-2">
               <Calendar size={28} /> Manage Events
             </h1>
-            <p className="text-gray-400">Event CRUD goes here</p>
+            <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+              {loadingEvents ? (
+                <div className="text-gray-400">Loading events...</div>
+              ) : adminEvents.length === 0 ? (
+                <div className="text-gray-400">No events found.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-700 text-gray-300">
+                      <tr>
+                        <th className="px-4 py-3">Title</th>
+                        <th className="px-4 py-3">Date</th>
+                        <th className="px-4 py-3">City</th>
+                        <th className="px-4 py-3">Published</th>
+                        <th className="px-4 py-3">Completed</th>
+                        <th className="px-4 py-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-300">
+                      {adminEvents.map((ev) => (
+                        <tr key={ev._id} className="border-b border-gray-700 hover:bg-gray-700 table-row">
+                          <td className="px-4 py-3">{ev.title}</td>
+                          <td className="px-4 py-3">{new Date(ev.date).toLocaleString()}</td>
+                          <td className="px-4 py-3">{ev.city || "-"}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const token = localStorage.getItem("token");
+                                  const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/events/${ev._id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                                    body: JSON.stringify({ isPublished: !ev.isPublished })
+                                  });
+                                  if (!res.ok) throw new Error("Failed");
+                                  toast.success(!ev.isPublished ? "Published" : "Unpublished");
+                                  fetchAdminEvents();
+                                } catch (_) {
+                                  toast.error("Toggle publish failed");
+                                }
+                              }}
+                              className="p-2 bg-gray-700 rounded hover:bg-gray-600"
+                              title={ev.isPublished ? "Unpublish" : "Publish"}
+                            >
+                              {ev.isPublished ? <ToggleRight size={18} className="text-green-400" /> : <ToggleLeft size={18} className="text-gray-400" />}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const token = localStorage.getItem("token");
+                                  const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/events/${ev._id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                                    body: JSON.stringify({ isCompleted: !ev.isCompleted })
+                                  });
+                                  if (!res.ok) throw new Error("Failed");
+                                  toast.success(!ev.isCompleted ? "Marked completed" : "Marked active");
+                                  fetchAdminEvents();
+                                } catch (_) {
+                                  toast.error("Toggle complete failed");
+                                }
+                              }}
+                              className="p-2 bg-gray-700 rounded hover:bg-gray-600"
+                              title={ev.isCompleted ? "Mark active" : "Mark completed"}
+                            >
+                              {ev.isCompleted ? <CheckCircle2 size={18} className="text-green-400" /> : <XCircle size={18} className="text-gray-400" />}
+                            </button>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <button
+                                onClick={async () => {
+                                  if (!window.confirm("Delete this event?")) return;
+                                  try {
+                                    const token = localStorage.getItem("token");
+                                    const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/events/${ev._id}`, {
+                                      method: "DELETE",
+                                      headers: { "Authorization": `Bearer ${token}` }
+                                    });
+                                    if (!res.ok) throw new Error("Failed");
+                                    toast.success("Event deleted");
+                                    setAdminEvents((prev) => prev.filter((e) => e._id !== ev._id));
+                                  } catch (_) {
+                                    toast.error("Delete failed");
+                                  }
+                                }}
+                                className="p-2 bg-red-600 hover:bg-red-700 rounded"
+                                title="Delete Event"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1050,10 +1054,134 @@ export default function AdminPanel() {
             <h1 className="text-3xl font-bold mb-4 flex items-center gap-2">
               <BarChart2 size={28} /> Monitor Activity & Feedback
             </h1>
-            <p className="text-gray-400">Monitoring dashboard goes here</p>
+            {!metrics ? (
+              <div className="text-gray-400">Loading metrics...</div>
+            ) : (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-sm text-gray-400 mb-2">Users</h3>
+                    <p className="text-2xl font-bold">{metrics.users.total} total</p>
+                    <p className="text-sm text-gray-400">{metrics.users.hosts} hosts • {metrics.users.students} students • {metrics.users.admins} admins</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-sm text-gray-400 mb-2">Events</h3>
+                    <p className="text-2xl font-bold">{metrics.events.total} total</p>
+                    <p className="text-sm text-gray-400">{metrics.events.published} published • {metrics.events.completed} completed</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-sm text-gray-400 mb-2">Recent Activity</h3>
+                    <p className="text-sm text-gray-400">Last 10 events, registrations, feedbacks</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-lg font-semibold mb-3">Recent Events</h3>
+                    <ul className="space-y-2 text-sm text-gray-300">
+                      {metrics.recent.events.map((e) => (
+                        <li key={e._id} className="flex justify-between">
+                          <span className="truncate mr-2">{e.title}</span>
+                          <span className="text-gray-500">{new Date(e.createdAt).toLocaleDateString()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-lg font-semibold mb-3">Recent Registrations</h3>
+                    <ul className="space-y-2 text-sm text-gray-300">
+                      {metrics.recent.registrations.map((r, idx) => (
+                        <li key={idx} className="flex justify-between">
+                          <span className="truncate mr-2">{r.title}</span>
+                          <span className="text-gray-500">{new Date(r.registeredAt).toLocaleDateString()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
+                    <h3 className="text-lg font-semibold mb-3">Recent Feedback</h3>
+                    <ul className="space-y-2 text-sm text-gray-300">
+                      {metrics.recent.feedbacks.map((f, idx) => (
+                        <li key={idx} className="flex justify-between">
+                          <span className="truncate mr-2">{f.title} • {f.rating}★</span>
+                          <span className="text-gray-500">{new Date(f.createdAt).toLocaleDateString()}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
+      {editHostModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-2xl border border-gray-700 max-h-[85vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold mb-4">Edit Host</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Full Name</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.fullname} onChange={(e)=>setEditHostForm(f=>({...f, fullname:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Username</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.username} onChange={(e)=>setEditHostForm(f=>({...f, username:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Email</label>
+                <input type="email" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.email} onChange={(e)=>setEditHostForm(f=>({...f, email:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Phone</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.phone} onChange={(e)=>setEditHostForm(f=>({...f, phone:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Country Code</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.countryCode} onChange={(e)=>setEditHostForm(f=>({...f, countryCode:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Institute</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.institute} onChange={(e)=>setEditHostForm(f=>({...f, institute:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Course/Department</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.course} onChange={(e)=>setEditHostForm(f=>({...f, course:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Age</label>
+                <input type="number" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.age} onChange={(e)=>setEditHostForm(f=>({...f, age:e.target.value}))} />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-300 mb-1">Street</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.street} onChange={(e)=>setEditHostForm(f=>({...f, street:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">City</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.city} onChange={(e)=>setEditHostForm(f=>({...f, city:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Pincode</label>
+                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.pincode} onChange={(e)=>setEditHostForm(f=>({...f, pincode:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">New Password (optional)</label>
+                <input type="password" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.password} onChange={(e)=>setEditHostForm(f=>({...f, password:e.target.value}))} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Confirm Password</label>
+                <input type="password" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.confirmPassword} onChange={(e)=>setEditHostForm(f=>({...f, confirmPassword:e.target.value}))} />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6 justify-end">
+              <button onClick={()=>setEditHostModal(false)} className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded">Cancel</button>
+              <button disabled={savingHost} onClick={saveEditHost} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">
+                {savingHost ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,11 +27,16 @@ html, body {
   max-width: 500px;
   backdrop-filter: blur(12px);
   max-height: 90vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #4b5563 transparent;
+  overflow-y: scroll;       /* enable scrolling */
+  scrollbar-width: none;    /* Firefox - hide scrollbar */
+  -ms-overflow-style: none; /* IE & Edge */
   animation: slideIn 0.5s ease-out;
   text-align: center;
+}
+
+/* Chrome, Safari, Edge */
+.form-container::-webkit-scrollbar {
+  display: none;
 }
 
 .form-container h1 {
@@ -79,17 +84,17 @@ html, body {
 }
 
 .btn-login:hover {
-  background: linear-gradient(to right, #d28249, #e3976b);
+  background: linear-gradient(to right, #3154ba, #3154ba);
   transform: translateY(-1px);
 }
 
 .btn-register {
-  background: linear-gradient(to right, #eb600a, #d15e20);
+  background: linear-gradient(to right, #1e0ce3, #1e0ce3);
   color: white;
 }
 
 .btn-register:hover {
-  background: linear-gradient(to right, #065f46, #064e3b);
+  background: linear-gradient(to right, #3154ba, #3154ba);
   transform: translateY(-1px);
 }
 
@@ -126,14 +131,13 @@ html, body {
   flex-shrink: 0;
 }
 
-
-
 /* === ERROR STYLES === */
 .error {
-  color: #ef4444;
+  color: #fb0303;
   font-size: 0.875rem;
   margin-top: 0.25rem;
   margin-left: 0.5rem;
+  animation: shake 0.5s ease-in-out;
 }
 
 /* === ANIMATIONS === */
@@ -204,17 +208,6 @@ html, body {
 .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-/* Error message animations */
-.error {
-  animation: shake 0.5s ease-in-out;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
 }
 
 /* === COMPONENT SPECIFIC STYLES === */

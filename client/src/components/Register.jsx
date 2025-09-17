@@ -57,9 +57,9 @@ export default function Register({ onSwitchToLogin }) {
           ? ""
           : "Pincode must be 6 digits only";
       case "age":
-        return /^[0-9]+$/.test(value) && value >= 10 && value <= 110
+        return /^[0-9]+$/.test(value) && value >= 5 && value <= 40
           ? ""
-          : "Enter a valid age (10-110)";
+          : "Enter a valid age (5-40 years)";
       case "phone":
         return /^(\+91[\-\s]?)?[6-9]\d{9}$/.test(value.trim())
           ? ""
@@ -187,7 +187,6 @@ export default function Register({ onSwitchToLogin }) {
 
   return (
     <div className="space-y-3 animate-fadeIn">
-      <h2 className="text-2xl font-semibold text-center mb-6">Create Account</h2>
 
       <form
         className="space-y-3"

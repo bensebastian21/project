@@ -38,7 +38,7 @@ export default function OAuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+    <div className="min-h-screen bg-white text-gray-800 flex items-center justify-center">
       Processing login...
     </div>
   );

@@ -35,8 +35,12 @@ export default function PasswordReset() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Reset request failed");
 
-      toast.success("📧 Password reset email sent!");
-      toast.info("Check your email for the verification code");
+      if (data.devCode) {
+        toast.warning(`Dev code: ${data.devCode}`);
+      } else {
+        toast.success("📧 Password reset email sent!");
+        toast.info("Check your email for the verification code");
+      }
       setStep("reset");
     } catch (err) {
       toast.error("❌ " + err.message);
