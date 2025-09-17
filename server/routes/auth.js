@@ -6,7 +6,48 @@ const multer = require("multer");
 const path = require("path");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const https = require("https");
 const User = require("../models/User");
+
+// Helper to POST form-encoded data without fetch (for Node versions < 18)
+const postForm = (url, form) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const data = new URLSearchParams(form).toString();
+      const u = new URL(url);
+      const options = {
+        method: "POST",
+        hostname: u.hostname,
+        path: u.pathname + (u.search || ""),
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Length": Buffer.byteLength(data),
+        },
+      };
+      const req = https.request(options, (res) => {
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            try {
+              resolve(JSON.parse(body));
+            } catch (e) {
+              reject(new Error("Invalid JSON from token endpoint"));
+            }
+          } else {
+            console.error("Google token error:", body);
+            reject(new Error(`Failed to exchange code: ${body}`));
+          }
+        });
+      });
+      req.on("error", reject);
+      req.write(data);
+      req.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
 
 const router = express.Router();
 
@@ -146,25 +187,21 @@ router.get("/google/callback", async (req, res) => {
       return res.status(400).send("Missing code");
     }
 
-    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
+    // Exchange code for tokens (supports Node without fetch)
+    let tokenJson;
+    try {
+      tokenJson = await postForm("https://oauth2.googleapis.com/token", {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         redirect_uri: process.env.OAUTH_REDIRECT_URI || "http://localhost:5000/api/auth/google/callback",
         grant_type: "authorization_code",
-      }),
-    });
-
-    if (!tokenRes.ok) {
-      const errTxt = await tokenRes.text();
-      console.error("Google token error:", errTxt);
-      return res.status(400).send("Failed to exchange code");
+      });
+    } catch (err) {
+      console.error("Google token error:", err.message || err);
+      return res.status(400).send(err.message || "Failed to exchange code");
     }
 
-    const tokenJson = await tokenRes.json();
     const { id_token } = tokenJson;
     if (!id_token) {
       return res.status(400).send("Missing id_token");
@@ -506,6 +543,15 @@ router.post("/forgot-password", async (req, res) => {
       });
     }
 
+    // Dev fallback if email sending fails
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn("Email failed to send. Returning dev reset code in response (non-production).");
+      return res.json({
+        message: "✅ Dev mode: use this code to reset your password",
+        devCode: resetCode
+      });
+    }
+
     return res.status(500).json({ 
       error: "Failed to send reset email. Please try again later.",
     });
@@ -562,7 +608,25 @@ router.get("/hosts", authenticateToken, requireAdmin, async (req, res) => {
 router.put("/update/:id", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedUser = await User.findByIdAndUpdate(id, req.body, { new: true });
+    const body = { ...req.body };
+
+    // Remove non-persisted fields
+    if (typeof body.confirmPassword !== "undefined") delete body.confirmPassword;
+
+    // Hash new password if provided and non-empty
+    if (typeof body.password !== "undefined") {
+      if (body.password && body.password.trim() !== "") {
+        body.password = await bcrypt.hash(body.password, 10);
+      } else {
+        // Do not overwrite existing password with empty string/null
+        delete body.password;
+      }
+    }
+
+    body.updatedAt = new Date();
+
+    const updatedUser = await User.findByIdAndUpdate(id, body, { new: true });
+    if (!updatedUser) return res.status(404).json({ error: "User not found" });
     res.json(updatedUser);
   } catch (err) {
     console.error("Update error:", err);
@@ -612,6 +676,137 @@ router.post("/create-admin", async (req, res) => {
   } catch (err) {
     console.error("Admin creation error:", err);
     res.status(500).json({ error: "Failed to create admin" });
+  }
+});
+
+// =========================
+// Public-safe: Get host profiles by IDs
+// =========================
+router.get("/hosts/by-ids", async (req, res) => {
+  try {
+    const idsParam = req.query.ids || "";
+    const ids = idsParam
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    if (!ids.length) return res.json([]);
+
+    const hosts = await User.find({ _id: { $in: ids }, role: "host" })
+      .select("_id username fullname email institute city")
+      .lean();
+
+    res.json(hosts);
+  } catch (err) {
+    console.error("Get hosts by ids error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
+// Admin: Events Management
+// =========================
+const Event = require("../models/Event");
+
+// List all events with basic host info
+router.get("/admin/events", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const events = await Event.find({}).sort({ createdAt: -1 }).lean();
+    res.json(events);
+  } catch (err) {
+    console.error("Admin list events error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Update event: publish/unpublish, complete, or edit fields
+router.put("/admin/events/:id", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const allowed = [
+      "title","description","shortDescription","date","endDate","location","address","city","state","pincode","capacity","price","currency","category","tags","requirements","agenda","contactEmail","contactPhone","website","imageUrl","isOnline","meetingLink","isCompleted","isPublished"
+    ];
+    const update = { updatedAt: new Date() };
+    Object.keys(req.body || {}).forEach((k) => {
+      if (allowed.includes(k)) update[k] = req.body[k];
+    });
+    const ev = await Event.findByIdAndUpdate(id, update, { new: true });
+    if (!ev) return res.status(404).json({ error: "Event not found" });
+    res.json({ message: "✅ Event updated", event: ev });
+  } catch (err) {
+    console.error("Admin update event error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Delete event
+router.delete("/admin/events/:id", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Event.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: "Event not found" });
+    res.json({ message: "✅ Event deleted" });
+  } catch (err) {
+    console.error("Admin delete event error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Admin: View registrations for an event
+router.get("/admin/events/:id/registrations", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await Event.findById(id).populate("registrations.studentId", "fullname email");
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    res.json(event.registrations || []);
+  } catch (err) {
+    console.error("Admin registrations fetch error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
+// Admin: Metrics & Monitoring
+// =========================
+router.get("/admin/metrics", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments({});
+    const totalHosts = await User.countDocuments({ role: "host" });
+    const totalStudents = await User.countDocuments({ role: "student" });
+    const totalAdmins = await User.countDocuments({ role: "admin" });
+
+    const totalEvents = await Event.countDocuments({});
+    const publishedEvents = await Event.countDocuments({ isPublished: true });
+    const completedEvents = await Event.countDocuments({ isCompleted: true });
+
+    const recentEvents = await Event.find({}).sort({ createdAt: -1 }).limit(10).select("title createdAt hostId isPublished isCompleted").lean();
+    const registrationsTotalAgg = await Event.aggregate([
+      { $project: { count: { $size: { $ifNull: ["$registrations", []] } } } },
+      { $group: { _id: null, total: { $sum: "$count" } } }
+    ]);
+    const totalRegistrations = registrationsTotalAgg?.[0]?.total || 0;
+    const recentRegistrations = await Event.aggregate([
+      { $unwind: "$registrations" },
+      { $sort: { "registrations.registeredAt": -1 } },
+      { $limit: 10 },
+      { $project: { title: 1, eventId: "$_id", registeredAt: "$registrations.registeredAt" } }
+    ]);
+    const recentFeedbacks = await Event.aggregate([
+      { $unwind: "$feedbacks" },
+      { $sort: { "feedbacks.createdAt": -1 } },
+      { $limit: 10 },
+      { $project: { title: 1, eventId: "$_id", rating: "$feedbacks.rating", createdAt: "$feedbacks.createdAt" } }
+    ]);
+
+    res.json({
+      users: { total: totalUsers, hosts: totalHosts, students: totalStudents, admins: totalAdmins },
+      events: { total: totalEvents, published: publishedEvents, completed: completedEvents },
+      registrations: { total: totalRegistrations },
+      recent: { events: recentEvents, registrations: recentRegistrations, feedbacks: recentFeedbacks }
+    });
+  } catch (err) {
+    console.error("Admin metrics error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

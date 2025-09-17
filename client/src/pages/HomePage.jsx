@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import Login from "../components/Login";
 import Register from "../components/Register";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import "./HomePage.css";
 
 // Canvas particle background
@@ -70,18 +68,18 @@ export default function HomePage() {
     <div className="relative h-screen flex items-center justify-center text-white overflow-auto">
       <BackgroundAnimation />
       <div className="form-container">
-        <h1>Student Event Portal</h1>
-        
-        {/* Mode indicator */}
-        <div className="text-center mb-4">
-          <span className={`text-sm px-3 py-1 rounded-full transition-all duration-300 ${
-            mode === "login" 
-              ? "bg-blue-500 text-white" 
-              : "bg-green-500 text-white"
-          }`}>
-            {mode === "login" ? "🔐 Login Mode" : "📝 Registration Mode"}
-          </span>
-        </div>
+     <h1
+  style={{
+    fontFamily: "'Poppins', sans-serif",
+    color: "white",
+    textShadow: "1px 1px 4px rgba(0,0,0,0.5)",
+    letterSpacing: "1px"
+  }}
+  className="text-5xl font-extrabold animate-fadeIn"
+>
+  Student Event Portal
+</h1>
+
         
         <div className={`transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
           {mode === "login" ? (
@@ -92,24 +90,7 @@ export default function HomePage() {
         </div>
       </div>
       
-      {/* Global Toast Container - Positioned at top right of page */}
-      <ToastContainer 
-        position="top-right" 
-        autoClose={4000}
-        hideProgressBar={false}
-        newestOnTop={true}
-        closeOnClick={true}
-        rtl={false}
-        pauseOnFocusLoss={true}
-        draggable={true}
-        pauseOnHover={true}
-        theme="dark"
-        style={{
-          top: '20px',
-          right: '20px',
-          zIndex: 9999
-        }}
-      />
+      {/* ToastContainer moved to App.js for global placement */}
     </div>
   );
 }

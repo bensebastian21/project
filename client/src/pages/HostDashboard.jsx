@@ -78,6 +78,22 @@ export default function HostDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  // Host notifications read-tracking in localStorage
+  const HOST_NOTIF_READ_KEY = "host.notifications.read";
+  const loadLS = (key, fallback) => {
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
+  };
+  const saveLS = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+  const notifKey = (n) => `${n.type || "n"}|${n.eventId || "none"}|${n.at || 0}`;
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [readSet, setReadSet] = useState(() => new Set(loadLS(HOST_NOTIF_READ_KEY, [])));
+
+  // Review field customization state
+  const [showReviewFieldsForm, setShowReviewFieldsForm] = useState(false);
+  const [selectedEventForReviewFields, setSelectedEventForReviewFields] = useState(null);
+  const [reviewFields, setReviewFields] = useState([]);
+
   const navigate = useNavigate();
 
   // Validation functions
@@ -188,7 +204,12 @@ export default function HostDashboard() {
   const fetchNotifications = async () => {
     try {
       const res = await api.get(`/api/host/notifications`, { headers: bearer() });
-      setNotifications(res.data);
+      const list = Array.isArray(res.data) ? res.data : [];
+      const mapped = list.map((n) => {
+        const key = notifKey(n);
+        return { ...n, _key: key, read: readSet.has(key) };
+      });
+      setNotifications(mapped);
     } catch (e) {
       console.error("Failed to fetch notifications:", e);
     }
@@ -338,8 +359,10 @@ export default function HostDashboard() {
     setSelectedEvent(event);
     setActiveTab("feedbacks");
     try {
-      const res = await api.get(`/api/host/events/${event._id}/feedbacks`, { headers: bearer() });
-      setFeedbacks(res.data);
+      // Use reviews API (new review model)
+      const res = await api.get(`/api/reviews/events/${event._id}/reviews`, { headers: bearer() });
+      const list = Array.isArray(res.data?.reviews) ? res.data.reviews : [];
+      setFeedbacks(list);
     } catch (e) {
       toast.error("❌ " + (e?.response?.data?.error || e.message));
     }
@@ -353,6 +376,59 @@ export default function HostDashboard() {
     try {
       // This would call a certificate generation endpoint
       toast.success("✅ Certificates generated successfully!");
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  const customizeReviewFields = async (event) => {
+    setSelectedEventForReviewFields(event);
+    try {
+      // Fetch existing review fields
+      const res = await api.get(`/api/reviews/events/${event._id}/fields`, { headers: bearer() });
+      setReviewFields(res.data || []);
+    } catch (e) {
+      console.error("Error fetching review fields:", e);
+      setReviewFields([]);
+    }
+    setShowReviewFieldsForm(true);
+  };
+
+  const addReviewField = () => {
+    setReviewFields(prev => [...prev, {
+      fieldName: "",
+      fieldType: "text",
+      isRequired: false,
+      placeholder: ""
+    }]);
+  };
+
+  const updateReviewField = (index, field) => {
+    setReviewFields(prev => prev.map((f, i) => i === index ? field : f));
+  };
+
+  const removeReviewField = (index) => {
+    setReviewFields(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const saveReviewFields = async () => {
+    try {
+      // Validate fields
+      for (let i = 0; i < reviewFields.length; i++) {
+        const field = reviewFields[i];
+        if (!field.fieldName.trim()) {
+          toast.error(`Field ${i + 1}: Field name is required`);
+          return;
+        }
+      }
+
+      await api.post(`/api/reviews/events/${selectedEventForReviewFields._id}/fields`, {
+        fields: reviewFields
+      }, { headers: bearer() });
+      
+      toast.success("✅ Review fields updated successfully!");
+      setShowReviewFieldsForm(false);
+      setSelectedEventForReviewFields(null);
     } catch (e) {
       toast.error("❌ " + (e?.response?.data?.error || e.message));
     }
@@ -418,18 +494,73 @@ export default function HostDashboard() {
               <p className="text-gray-400">Manage your events and registrations</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 relative">
             <button
-              onClick={fetchNotifications}
+              onClick={() => setNotifOpen((o) => !o)}
               className="relative p-3 bg-gray-700/50 hover:bg-gray-600/50 rounded-xl transition-all duration-300 hover:scale-105"
+              aria-label="Notifications"
             >
               <Bell className="w-5 h-5" />
-              {notifications.length > 0 && (
+              {(notifications || []).some(n => !n.read) && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
-                  {notifications.length}
+                  {(notifications || []).filter(n => !n.read).length}
                 </span>
               )}
             </button>
+
+            {notifOpen && (
+              <div className="absolute right-24 top-12 w-96 max-h-96 overflow-auto bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
+                  <span className="text-sm text-gray-300">Notifications</span>
+                  <button
+                    onClick={() => {
+                      setReadSet((prev) => {
+                        const next = new Set(prev);
+                        (notifications || []).forEach(n => next.add(n._key));
+                        localStorage.setItem(HOST_NOTIF_READ_KEY, JSON.stringify(Array.from(next)));
+                        return next;
+                      });
+                      setNotifications((prev) => (prev || []).map(n => ({ ...n, read: true })));
+                    }}
+                    className="text-xs text-blue-400 hover:underline"
+                  >
+                    Mark all read
+                  </button>
+                </div>
+                <div className="divide-y divide-gray-800">
+                  {(notifications || []).length === 0 ? (
+                    <div className="p-3 text-sm text-gray-400">No notifications</div>
+                  ) : (
+                    (notifications || []).map((n, idx) => (
+                      <div key={n._key || idx} className="p-3 flex items-start gap-3">
+                        <div className={`w-2 h-2 rounded-full mt-2 ${n.read ? "bg-gray-600" : "bg-yellow-400"}`} />
+                        <div className="flex-1">
+                          <div className="text-sm text-gray-200">{n.message}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">{new Date(n.at).toLocaleString()}</div>
+                        </div>
+                        {!n.read && (
+                          <button
+                            onClick={() => {
+                              setReadSet((prev) => {
+                                const next = new Set(prev);
+                                next.add(n._key);
+                                localStorage.setItem(HOST_NOTIF_READ_KEY, JSON.stringify(Array.from(next)));
+                                return next;
+                              });
+                              setNotifications((prev) => prev.map(x => x._key === n._key ? { ...x, read: true } : x));
+                            }}
+                            className="text-xs text-blue-400 hover:underline"
+                          >
+                            Mark read
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-2 bg-red-600/80 hover:bg-red-700 rounded-xl transition-all duration-300 hover:scale-105"
@@ -677,6 +808,13 @@ export default function HostDashboard() {
                           <Star className="w-4 h-4" />
                           <span>Feedbacks</span>
                         </button>
+                        <button
+                          onClick={() => customizeReviewFields(event)}
+                          className="flex items-center space-x-1 px-3 py-2 bg-orange-600/80 hover:bg-orange-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span>Customize Reviews</span>
+                        </button>
                         {!event.isCompleted && (
                           <button
                             onClick={() => markCompleted(event)}
@@ -808,21 +946,48 @@ export default function HostDashboard() {
                         <div key={idx} className="bg-gray-700/50 rounded-xl p-6 border border-gray-600/50 hover:bg-gray-700/70 transition-all duration-300">
                           <div className="flex items-start justify-between mb-3">
                             <div>
-                              <p className="font-semibold text-white text-lg">{feedback.studentId?.fullname || "Anonymous"}</p>
-                              <p className="text-gray-400 text-sm">{feedback.studentId?.email || ""}</p>
+                              <p className="font-semibold text-white text-lg">{feedback.isAnonymous ? "Anonymous" : (feedback.reviewerId?.fullname || "Anonymous")}</p>
+                              {!feedback.isAnonymous && (
+                                <p className="text-gray-400 text-sm">{feedback.reviewerId?.email || ""}</p>
+                              )}
                             </div>
                             <div className="flex items-center space-x-1">
                               {[...Array(5)].map((_, i) => (
                                 <Star
                                   key={i}
                                   className={`w-5 h-5 ${
-                                    i < feedback.rating ? "text-yellow-400 fill-current" : "text-gray-400"
+                                    i < (feedback.overallRating || 0) ? "text-yellow-400 fill-current" : "text-gray-400"
                                   }`}
                                 />
                               ))}
-                              <span className="ml-2 text-gray-400 text-sm">({feedback.rating}/5)</span>
+                              <span className="ml-2 text-gray-400 text-sm">({feedback.overallRating || 0}/5)</span>
                             </div>
                           </div>
+
+                          {/* Optional detailed fields */}
+                          {Array.isArray(feedback.reviewFields) && feedback.reviewFields.length > 0 && (
+                            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {feedback.reviewFields.map((f, i) => (
+                                <div key={i} className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                                  <div className="text-xs text-gray-400">{f.fieldName}</div>
+                                  {f.fieldType === "rating" ? (
+                                    <div className="flex items-center mt-1">
+                                      {[...Array(5)].map((_, j) => (
+                                        <Star
+                                          key={j}
+                                          className={`w-4 h-4 ${j < (f.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-500"}`}
+                                        />
+                                      ))}
+                                      <span className="ml-2 text-gray-400 text-xs">({f.rating || 0}/5)</span>
+                                    </div>
+                                  ) : (
+                                    <div className="text-gray-300 text-sm mt-1 break-words">{String(f.value || "").trim() || "-"}</div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
                           {feedback.comment && (
                             <p className="text-gray-300 text-sm mt-3 leading-relaxed">{feedback.comment}</p>
                           )}
@@ -900,6 +1065,83 @@ export default function HostDashboard() {
           )}
         </div>
       </div>
+
+      {/* Review Fields Modal */}
+      {showReviewFieldsForm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800/95 rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
+                Customize Review Fields {selectedEventForReviewFields && `- ${selectedEventForReviewFields.title}`}
+              </h2>
+              <button onClick={() => setShowReviewFieldsForm(false)} className="px-3 py-1 bg-gray-600/80 hover:bg-gray-700 rounded-lg">Close</button>
+            </div>
+
+            <div className="space-y-4">
+              {reviewFields.map((f, idx) => (
+                <div key={idx} className="bg-gray-700/40 p-4 rounded-xl border border-gray-600/50">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-gray-300 mb-1">Field Name</label>
+                      <input
+                        type="text"
+                        value={f.fieldName}
+                        onChange={(e) => updateReviewField(idx, { ...f, fieldName: e.target.value })}
+                        className="w-full p-2 rounded-lg bg-gray-800/60 border border-gray-600 focus:ring-2 focus:ring-orange-500"
+                        placeholder="e.g. Speaker Quality"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-300 mb-1">Field Type</label>
+                      <select
+                        value={f.fieldType}
+                        onChange={(e) => updateReviewField(idx, { ...f, fieldType: e.target.value })}
+                        className="w-full p-2 rounded-lg bg-gray-800/60 border border-gray-600 focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="text">Short Text</option>
+                        <option value="textarea">Long Text</option>
+                        <option value="rating">Rating (1-5)</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center">
+                      <label className="flex items-center text-sm text-gray-300">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(f.isRequired)}
+                          onChange={(e) => updateReviewField(idx, { ...f, isRequired: e.target.checked })}
+                          className="mr-2"
+                        />
+                        Required
+                      </label>
+                    </div>
+                  </div>
+                  {f.fieldType !== "rating" && (
+                    <div className="mt-3">
+                      <label className="block text-sm text-gray-300 mb-1">Placeholder</label>
+                      <input
+                        type="text"
+                        value={f.placeholder || ""}
+                        onChange={(e) => updateReviewField(idx, { ...f, placeholder: e.target.value })}
+                        className="w-full p-2 rounded-lg bg-gray-800/60 border border-gray-600 focus:ring-2 focus:ring-orange-500"
+                        placeholder="Enter placeholder text"
+                      />
+                    </div>
+                  )}
+                  <div className="mt-3 flex justify-between">
+                    <span className="text-xs text-gray-400">Order: {idx + 1}</span>
+                    <button onClick={() => removeReviewField(idx)} className="text-sm px-3 py-1 bg-red-600/80 hover:bg-red-700 rounded-lg">Remove</button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex items-center gap-3">
+                <button onClick={addReviewField} className="px-4 py-2 bg-orange-600/80 hover:bg-orange-700 rounded-lg">Add Field</button>
+                <button onClick={saveReviewFields} className="px-4 py-2 bg-green-600/80 hover:bg-green-700 rounded-lg">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Event Form Modal */}
       {showForm && (

@@ -32,9 +32,6 @@ export default function Login({ onSwitchToRegister }) {
     setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
   };
 
-  // =========================
-  // Redirect by Role
-  // =========================
   const redirectByRole = (role) => {
     if (role === "admin") {
       navigate("/admin");
@@ -45,13 +42,9 @@ export default function Login({ onSwitchToRegister }) {
     }
   };
 
-  // =========================
-  // Login with Email + Password (JWT)
-  // =========================
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Validate all fields
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
       const error = validate(key, formData[key]);
@@ -79,31 +72,22 @@ export default function Login({ onSwitchToRegister }) {
 
       toast.success("✅ Login successful");
 
-      // 🔹 Redirect based on role
       redirectByRole(data.user.role);
     } catch (err) {
       toast.error("❌ " + err.message);
     }
   };
 
-  // =========================
-  // Forgot Password
-  // =========================
   const handleForgotPassword = () => {
     navigate("/reset-password");
   };
 
-  // =========================
-  // Google Login via OAuth (server-initiated)
-  // =========================
   const handleGoogleAuth = () => {
     window.location.href = config.oauthStartUrl;
   };
 
   return (
-    <div className="space-y-4 animate-fadeIn">
-      <h2 className="text-2xl font-semibold text-center mb-6">Welcome Back</h2>
-
+    <div className="space-y-4 animate-fadeIn overflow-hidden"> {/* 🔹 Hides scrollbar */}
       <form className="space-y-4" onSubmit={handleLogin}>
         <div>
           <input
@@ -176,4 +160,3 @@ export default function Login({ onSwitchToRegister }) {
     </div>
   );
 }
-    

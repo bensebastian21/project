@@ -7,6 +7,10 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+/* Utility: hide scrollbars on a specific container while keeping scroll */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* Custom animations for admin panel */
 @keyframes fadeIn {
   from {
@@ -71,4 +75,30 @@ body {
 .table-row:hover {
   background-color: rgba(55, 65, 81, 0.8);
   transform: scale(1.01);
+}
+
+/* Auth background: subtle animated gradients + grid overlay */
+.auth-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(16, 185, 129, 0.06), transparent 60%),
+    radial-gradient(1000px 500px at 110% 10%, rgba(16, 185, 129, 0.05), transparent 60%),
+    linear-gradient(180deg, #030712, #020617);
+  animation: floatBg 14s ease-in-out infinite alternate;
+}
+
+.auth-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,0.55), rgba(0,0,0,1) 70%);
+  pointer-events: none;
+}
+
+@keyframes floatBg {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(-12px) translateX(8px); }
 }
