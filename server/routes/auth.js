@@ -8,6 +8,7 @@ const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const https = require("https");
 const User = require("../models/User");
+const Host = require("../models/Host");
 
 // Helper to POST form-encoded data without fetch (for Node versions < 18)
 const postForm = (url, form) => {
@@ -167,6 +168,13 @@ router.get("/test", (req, res) => {
 // =========================
 router.get("/google", (req, res) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
+  
+  if (!clientId) {
+    return res.status(400).json({ 
+      error: "Google OAuth not configured. Please contact administrator." 
+    });
+  }
+  
   const redirectUri = process.env.OAUTH_REDIRECT_URI || "http://localhost:5000/api/auth/google/callback";
   const scope = encodeURIComponent("openid email profile");
   const state = req.query.state || "";
@@ -185,6 +193,11 @@ router.get("/google/callback", async (req, res) => {
     const code = req.query.code;
     if (!code) {
       return res.status(400).send("Missing code");
+    }
+
+    // Check if Google OAuth is configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      return res.status(400).send("Google OAuth not configured");
     }
 
     // Exchange code for tokens (supports Node without fetch)
@@ -383,6 +396,71 @@ router.post("/register", upload.single("studentId"), async (req, res) => {
 });
 
 // =========================
+// Register Host
+// =========================
+router.post("/register-host", upload.single("document"), async (req, res) => {
+  try {
+    const {
+      email,
+      password,
+      username,
+      fullname,
+      institute,
+      street,
+      city,
+      pincode,
+      age,
+      course,
+      phone,
+      countryCode,
+    } = req.body;
+
+    // Check if user already exists in User collection
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ error: "User already exists" });
+
+    // Check if host already exists in Host collection
+    const existingHost = await Host.findOne({ email });
+    if (existingHost) return res.status(400).json({ error: "Host already exists" });
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Document upload is required" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const hostData = {
+      username,
+      fullname,
+      institute,
+      street,
+      city,
+      pincode,
+      age: age ? parseInt(age) : undefined,
+      course,
+      email,
+      phone,
+      countryCode: countryCode || "+91",
+      password: hashedPassword,
+      documentPath: req.file.path,
+      approvalStatus: "pending", // Default to pending approval
+    };
+
+    const host = new Host(hostData);
+    await host.save();
+
+    res.json({ 
+      message: "✅ Host registration submitted successfully. Your application is pending admin approval.", 
+      hostId: host._id,
+      status: "pending"
+    });
+  } catch (err) {
+    console.error("❌ Host registration error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
 // Get User by Email
 // =========================
 router.get("/user/:email", async (req, res) => {
@@ -450,6 +528,55 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error("Login error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
+// Login Host (JWT Auth)
+// Checks approval status before allowing login
+// =========================
+router.post("/login-host", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const host = await Host.findOne({ email });
+    if (!host) return res.status(400).json({ error: "Invalid email" });
+
+    const match = await bcrypt.compare(password, host.password);
+    if (!match) return res.status(400).json({ error: "Invalid password" });
+
+    // Check approval status
+    if (host.approvalStatus === "pending") {
+      return res.status(403).json({ 
+        error: "Your host application is pending admin approval. Please wait for approval before logging in." 
+      });
+    }
+
+    if (host.approvalStatus === "rejected") {
+      return res.status(403).json({ 
+        error: "Your host application was rejected. Please contact admin for more information." 
+      });
+    }
+
+    const token = jwt.sign(
+      { id: host._id, email: host.email, role: "host" },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      message: "✅ Host login successful",
+      token,
+      user: {
+        id: host._id,
+        fullname: host.fullname,
+        email: host.email,
+        role: "host",
+      },
+    });
+  } catch (err) {
+    console.error("Host login error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -597,10 +724,61 @@ router.post("/reset-password", async (req, res) => {
 // =========================
 router.get("/hosts", authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const hosts = await User.find({ role: "host" });
+    const hosts = await User.find({ role: "host", isDeleted: { $ne: true } });
     res.json(hosts);
   } catch (err) {
     console.error("Get hosts error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
+// Admin: Host Applications Management
+// =========================
+router.get("/admin/host-applications", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const hosts = await Host.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
+    res.json(hosts);
+  } catch (err) {
+    console.error("Get host applications error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.put("/admin/host-applications/:id/approve", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const host = await Host.findById(id);
+    if (!host) return res.status(404).json({ error: "Host application not found" });
+
+    host.approvalStatus = "approved";
+    host.approvedBy = req.user.id;
+    host.approvedAt = new Date();
+    host.updatedAt = new Date();
+    await host.save();
+
+    res.json({ message: "✅ Host application approved", host });
+  } catch (err) {
+    console.error("Approve host error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.put("/admin/host-applications/:id/reject", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rejectionReason } = req.body;
+    const host = await Host.findById(id);
+    if (!host) return res.status(404).json({ error: "Host application not found" });
+
+    host.approvalStatus = "rejected";
+    host.rejectionReason = rejectionReason || "No reason provided";
+    host.updatedAt = new Date();
+    await host.save();
+
+    res.json({ message: "✅ Host application rejected", host });
+  } catch (err) {
+    console.error("Reject host error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -637,10 +815,16 @@ router.put("/update/:id", authenticateToken, requireAdmin, async (req, res) => {
 router.delete("/delete/:id", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    await User.findByIdAndDelete(id);
-    res.json({ message: "✅ User deleted" });
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (user.isDeleted) return res.json({ message: "✅ User already deleted" });
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    user.updatedAt = new Date();
+    await user.save();
+    res.json({ message: "✅ User deleted (soft)", userId: user._id });
   } catch (err) {
-    console.error("Delete error:", err);
+    console.error("Soft delete user error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -739,15 +923,21 @@ router.put("/admin/events/:id", authenticateToken, requireAdmin, async (req, res
   }
 });
 
-// Delete event
+// Soft delete event
 router.delete("/admin/events/:id", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await Event.findByIdAndDelete(id);
-    if (!deleted) return res.status(404).json({ error: "Event not found" });
-    res.json({ message: "✅ Event deleted" });
+    const ev = await Event.findById(id);
+    if (!ev) return res.status(404).json({ error: "Event not found" });
+    if (ev.isDeleted) return res.json({ message: "✅ Event already deleted" });
+    ev.isDeleted = true;
+    ev.isPublished = false;
+    ev.deletedAt = new Date();
+    ev.updatedAt = new Date();
+    await ev.save();
+    res.json({ message: "✅ Event deleted (soft)", eventId: ev._id });
   } catch (err) {
-    console.error("Admin delete event error:", err);
+    console.error("Admin soft delete event error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });

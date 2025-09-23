@@ -21,6 +21,9 @@ const reviewSchema = new mongoose.Schema({
   }],
   comment: { type: String, default: "" },
   isAnonymous: { type: Boolean, default: false },
+  // Soft delete flags
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

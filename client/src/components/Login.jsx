@@ -32,13 +32,25 @@ export default function Login({ onSwitchToRegister }) {
     setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
   };
 
+  const clearStudentCache = () => {
+    const KEYS = [
+      "student.registrations",
+      "student.bookmarks",
+      "student.subscriptions",
+      "student.subscriptions.meta",
+      "student.notifications",
+      "student.feedbacks",
+    ];
+    KEYS.forEach((k) => localStorage.removeItem(k));
+  };
+
   const redirectByRole = (role) => {
     if (role === "admin") {
       navigate("/admin");
     } else if (role === "host") {
       navigate("/host-dashboard");
     } else {
-      navigate("/Dashboard");
+      navigate("/dashboard");
     }
   };
 
@@ -67,6 +79,8 @@ export default function Login({ onSwitchToRegister }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
 
+      // Clear any previous student's cached data before setting new user
+      clearStudentCache();
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -153,7 +167,17 @@ export default function Login({ onSwitchToRegister }) {
             onClick={onSwitchToRegister}
             className="text-blue-400 hover:underline font-medium"
           >
-            Sign up
+            Sign up as Student
+          </button>
+        </p>
+        <p className="text-gray-400 mt-2">
+          Want to host events?{" "}
+          <button
+            type="button"
+            onClick={() => navigate("/register-host")}
+            className="text-orange-400 hover:underline font-medium"
+          >
+            Register as Host
           </button>
         </p>
       </div>

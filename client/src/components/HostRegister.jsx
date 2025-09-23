@@ -1,0 +1,569 @@
+// src/components/HostRegister.jsx
+import React, { useState } from "react";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { UserPlus, Building2, MapPin, Phone, Mail, Lock, FileText, ArrowLeft } from "lucide-react";
+import config from "../config";
+import "react-toastify/dist/ReactToastify.css";
+
+export default function HostRegister() {
+  const [formData, setFormData] = useState({
+    username: "",
+    fullname: "",
+    institute: "",
+    street: "",
+    city: "",
+    pincode: "",
+    age: "",
+    course: "",
+    email: "",
+    phone: "",
+    countryCode: "+91",
+    password: "",
+    confirmPassword: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const navigate = useNavigate();
+
+  const validate = (field, value) => {
+    switch (field) {
+      case "email":
+        return /\S+@\S+\.\S+/.test(value) ? "" : "Invalid email format";
+      case "password":
+        return value.length >= 6 ? "" : "Password must be at least 6 characters";
+      case "confirmPassword":
+        return value === formData.password ? "" : "Passwords do not match";
+      case "age":
+        return value && parseInt(value) >= 18 ? "" : "Must be 18 or older";
+      case "phone":
+        return /^\d{10}$/.test(value) ? "" : "Phone must be 10 digits";
+      case "pincode":
+        return /^\d{6}$/.test(value) ? "" : "Pincode must be 6 digits";
+      default:
+        return value.trim() ? "" : "This field is required";
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, document: file }));
+    }
+  };
+
+  const nextStep = () => {
+    if (currentStep === 1) {
+      const step1Fields = ['username', 'fullname', 'institute', 'email'];
+      const step1Errors = {};
+      step1Fields.forEach(field => {
+        const error = validate(field, formData[field]);
+        if (error) step1Errors[field] = error;
+      });
+      
+      if (Object.keys(step1Errors).length > 0) {
+        setErrors(step1Errors);
+        toast.error("❌ Please fix the errors before proceeding");
+        return;
+      }
+    } else if (currentStep === 2) {
+      const step2Fields = ['street', 'city', 'pincode', 'age', 'course', 'phone'];
+      const step2Errors = {};
+      step2Fields.forEach(field => {
+        const error = validate(field, formData[field]);
+        if (error) step2Errors[field] = error;
+      });
+      
+      if (Object.keys(step2Errors).length > 0) {
+        setErrors(step2Errors);
+        toast.error("❌ Please fix the errors before proceeding");
+        return;
+      }
+    }
+    setCurrentStep(currentStep + 1);
+  };
+
+  const prevStep = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Validate all fields
+    const newErrors = {};
+    Object.keys(formData).forEach((key) => {
+      if (key !== "confirmPassword" && key !== "document") {
+        const error = validate(key, formData[key]);
+        if (error) newErrors[key] = error;
+      }
+    });
+
+    if (!formData.document) {
+      newErrors.document = "Document upload is required";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      toast.error("❌ Please fix form errors");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const formDataToSend = new FormData();
+      Object.keys(formData).forEach((key) => {
+        if (key !== "confirmPassword" && key !== "document") {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+      formDataToSend.append("document", formData.document);
+
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/register-host`, {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Registration failed");
+
+      toast.success("✅ Host registration submitted successfully! Your application is pending admin approval.");
+      navigate("/login");
+    } catch (err) {
+      toast.error("❌ " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStep1 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 bg-orange-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <UserPlus className="w-8 h-8 text-orange-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Personal Information</h2>
+        <p className="text-gray-400 text-sm">Tell us about yourself</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            <UserPlus className="w-4 h-4 inline mr-2" />
+            Username *
+          </label>
+          <input
+            name="username"
+            type="text"
+            placeholder="Choose a username"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.username ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.username}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.username && <p className="text-red-400 text-sm mt-1">{errors.username}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            <UserPlus className="w-4 h-4 inline mr-2" />
+            Full Name *
+          </label>
+          <input
+            name="fullname"
+            type="text"
+            placeholder="Your full name"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.fullname ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.fullname}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.fullname && <p className="text-red-400 text-sm mt-1">{errors.fullname}</p>}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          <Building2 className="w-4 h-4 inline mr-2" />
+          Institute/Organization *
+        </label>
+        <input
+          name="institute"
+          type="text"
+          placeholder="Your institution or organization"
+          className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+            errors.institute ? 'border-red-500' : 'border-gray-600'
+          }`}
+          value={formData.institute}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {errors.institute && <p className="text-red-400 text-sm mt-1">{errors.institute}</p>}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          <Mail className="w-4 h-4 inline mr-2" />
+          Email Address *
+        </label>
+        <input
+          name="email"
+          type="email"
+          placeholder="your.email@institution.com"
+          className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+            errors.email ? 'border-red-500' : 'border-gray-600'
+          }`}
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+      </div>
+    </div>
+  );
+
+  const renderStep2 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 bg-orange-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <MapPin className="w-8 h-8 text-orange-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Contact & Location</h2>
+        <p className="text-gray-400 text-sm">Your contact details and address</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          <MapPin className="w-4 h-4 inline mr-2" />
+          Street Address *
+        </label>
+        <input
+          name="street"
+          type="text"
+          placeholder="Your complete street address"
+          className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+            errors.street ? 'border-red-500' : 'border-gray-600'
+          }`}
+          value={formData.street}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {errors.street && <p className="text-red-400 text-sm mt-1">{errors.street}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">City *</label>
+          <input
+            name="city"
+            type="text"
+            placeholder="City"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.city ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.city}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.city && <p className="text-red-400 text-sm mt-1">{errors.city}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Pincode *</label>
+          <input
+            name="pincode"
+            type="text"
+            placeholder="123456"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.pincode ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.pincode}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.pincode && <p className="text-red-400 text-sm mt-1">{errors.pincode}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Age *</label>
+          <input
+            name="age"
+            type="number"
+            placeholder="25"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.age ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.age}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.age && <p className="text-red-400 text-sm mt-1">{errors.age}</p>}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          <Building2 className="w-4 h-4 inline mr-2" />
+          Department/Course *
+        </label>
+        <input
+          name="course"
+          type="text"
+          placeholder="Your department or course"
+          className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+            errors.course ? 'border-red-500' : 'border-gray-600'
+          }`}
+          value={formData.course}
+          onChange={handleChange}
+          onBlur={handleBlur}
+        />
+        {errors.course && <p className="text-red-400 text-sm mt-1">{errors.course}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Country Code</label>
+          <select
+            name="countryCode"
+            className="w-full p-3 rounded-lg bg-gray-800/60 border border-gray-600 focus:ring-2 focus:ring-orange-500"
+            value={formData.countryCode}
+            onChange={handleChange}
+          >
+            <option value="+91">+91 (India)</option>
+            <option value="+1">+1 (USA)</option>
+            <option value="+44">+44 (UK)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            <Phone className="w-4 h-4 inline mr-2" />
+            Phone Number *
+          </label>
+          <input
+            name="phone"
+            type="tel"
+            placeholder="9876543210"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.phone ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.phone}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep3 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 bg-orange-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Lock className="w-8 h-8 text-orange-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Security & Verification</h2>
+        <p className="text-gray-400 text-sm">Set up your password and upload verification</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            <Lock className="w-4 h-4 inline mr-2" />
+            Password *
+          </label>
+          <input
+            name="password"
+            type="password"
+            placeholder="Minimum 6 characters"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.password ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            <Lock className="w-4 h-4 inline mr-2" />
+            Confirm Password *
+          </label>
+          <input
+            name="confirmPassword"
+            type="password"
+            placeholder="Repeat your password"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.confirmPassword ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          <FileText className="w-4 h-4 inline mr-2" />
+          Verification Document *
+        </label>
+        <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-300 mb-2">Upload your verification document</p>
+          <p className="text-gray-500 text-sm mb-4">ID Card, Certificate, or Institution Letter</p>
+          <input
+            name="document"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            className="hidden"
+            id="document-upload"
+            onChange={handleFileChange}
+          />
+          <label
+            htmlFor="document-upload"
+            className="inline-block px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg cursor-pointer transition-colors"
+          >
+            Choose File
+          </label>
+          {formData.document && (
+            <p className="text-green-400 text-sm mt-2">✓ {formData.document.name}</p>
+          )}
+        </div>
+        {errors.document && <p className="text-red-400 text-sm mt-1">{errors.document}</p>}
+      </div>
+
+      <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
+        <h4 className="text-blue-400 font-semibold mb-2">📋 Application Process</h4>
+        <ul className="text-gray-300 text-sm space-y-1">
+          <li>• Your application will be reviewed by our admin team</li>
+          <li>• You'll receive an email notification once approved</li>
+          <li>• Only approved hosts can create and manage events</li>
+          <li>• This process usually takes 1-2 business days</li>
+        </ul>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <button
+            onClick={() => navigate("/login")}
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Login
+          </button>
+          <h1 className="text-4xl font-bold text-white mb-2">Host Registration</h1>
+          <p className="text-gray-400">Join as an event host and create amazing experiences</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-400">Step {currentStep} of 3</span>
+            <span className="text-sm text-gray-400">{Math.round((currentStep / 3) * 100)}% Complete</span>
+          </div>
+          <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(currentStep / 3) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Form Container */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+          <form onSubmit={handleSubmit}>
+            {currentStep === 1 && renderStep1()}
+            {currentStep === 2 && renderStep2()}
+            {currentStep === 3 && renderStep3()}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-8">
+              <button
+                type="button"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                  currentStep === 1
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-600 hover:bg-gray-700 text-white'
+                }`}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Previous
+              </button>
+
+              {currentStep < 3 ? (
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded-lg font-medium text-white transition-all"
+                >
+                  Next
+                  <ArrowLeft className="w-4 h-4 rotate-180" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 rounded-lg font-medium text-white transition-all"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Submit Application
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-6">
+          <p className="text-gray-400 text-sm">
+            Already have an account?{" "}
+            <button
+              onClick={() => navigate("/login")}
+              className="text-orange-400 hover:underline font-medium"
+            >
+              Login here
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

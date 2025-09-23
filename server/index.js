@@ -12,7 +12,32 @@ const app = express();
 
 
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:3001", 
+      "http://localhost:3002",
+      "http://localhost:3003",
+      "http://localhost:3004",
+      "http://localhost:3005",
+      "http://localhost:3006",
+      "http://localhost:3007",
+      "http://localhost:3008",
+      "http://localhost:3009",
+      process.env.CLIENT_ORIGIN
+    ].filter(Boolean); // Remove any undefined values
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
@@ -49,8 +74,9 @@ console.log("Environment variables:");
 console.log("- MONGO_URI:", process.env.MONGO_URI || "mongodb://localhost:27017/dev_db");
 console.log("- JWT_SECRET:", process.env.JWT_SECRET ? "SET" : "NOT SET");
 console.log("- CLIENT_ORIGIN:", process.env.CLIENT_ORIGIN || "http://localhost:3000");
+console.log("- CORS: Allowing multiple localhost ports (3000-3009)");
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`CORS origin: ${process.env.CLIENT_ORIGIN || "http://localhost:3000"}`);
+  console.log(`CORS: Allowing localhost ports 3000-3009 and ${process.env.CLIENT_ORIGIN || "default origin"}`);
 });

@@ -42,6 +42,9 @@ const eventSchema = new mongoose.Schema({
   hostId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   registrations: { type: [registrationSchema], default: [] },
   feedbacks: { type: [feedbackSchema], default: [] },
+  // Soft delete flags
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

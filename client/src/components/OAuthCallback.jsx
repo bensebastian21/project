@@ -20,6 +20,17 @@ export default function OAuthCallback() {
       const userJson = atob(userB64);
       const user = JSON.parse(userJson);
 
+      // Clear any previous student's cached data before setting new user
+      const KEYS = [
+        "student.registrations",
+        "student.bookmarks",
+        "student.subscriptions",
+        "student.subscriptions.meta",
+        "student.notifications",
+        "student.feedbacks",
+      ];
+      KEYS.forEach((k) => localStorage.removeItem(k));
+
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
