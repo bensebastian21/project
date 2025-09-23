@@ -12,6 +12,8 @@ export default function AdminPanel() {
   const [checkingAdmin, setCheckingAdmin] = useState(true);
 
   const [hosts, setHosts] = useState([]);
+  const [hostApplications, setHostApplications] = useState([]);
+  const [loadingApplications, setLoadingApplications] = useState(false);
   const [newHost, setNewHost] = useState({
     email: "",
     fullname: "",
@@ -115,6 +117,12 @@ export default function AdminPanel() {
     window.onpopstate = () => window.history.go(1);
   }, []);
 
+  useEffect(() => {
+    if (activeTab === "host-applications") {
+      fetchHostApplications();
+    }
+  }, [activeTab]);
+
   const checkAdminStatus = async () => {
     try {
       // Check if user is logged in via JWT token
@@ -157,6 +165,61 @@ export default function AdminPanel() {
       setHosts(data);
     } catch (error) {
       toast.error("Error fetching hosts from MongoDB");
+    }
+  };
+
+  const fetchHostApplications = async () => {
+    try {
+      setLoadingApplications(true);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/admin/host-applications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error("Failed to fetch host applications");
+      const data = await response.json();
+      setHostApplications(data);
+    } catch (error) {
+      toast.error("Error fetching host applications");
+    } finally {
+      setLoadingApplications(false);
+    }
+  };
+
+  const approveHostApplication = async (hostId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/admin/host-applications/${hostId}/approve`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+      if (!response.ok) throw new Error("Failed to approve host application");
+      toast.success("✅ Host application approved");
+      fetchHostApplications();
+      fetchHosts(); // Refresh the hosts list to show the newly approved host
+    } catch (error) {
+      toast.error("Error approving host application");
+    }
+  };
+
+  const rejectHostApplication = async (hostId, rejectionReason) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/admin/host-applications/${hostId}/reject`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ rejectionReason })
+      });
+      if (!response.ok) throw new Error("Failed to reject host application");
+      toast.success("✅ Host application rejected");
+      fetchHostApplications();
+    } catch (error) {
+      toast.error("Error rejecting host application");
     }
   };
 
@@ -413,14 +476,14 @@ export default function AdminPanel() {
         </button>
 
         <button
-          onClick={() => setActiveTab("add-host")}
+          onClick={() => setActiveTab("host-applications")}
           className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
-            activeTab === "add-host"
-              ? "bg-purple-600 scale-105 shadow-lg"
+            activeTab === "host-applications"
+              ? "bg-orange-600 scale-105 shadow-lg"
               : "hover:bg-gray-700"
           }`}
         >
-          <UserPlus size={20} /> Add Host
+          <UserPlus size={20} /> Host Applications
         </button>
 
         
@@ -589,24 +652,117 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* Add Host Tab */}
-        {activeTab === "add-host" && (
+        {/* Host Applications Tab */}
+        {activeTab === "host-applications" && (
+          <div className="animate-fadeIn">
+            <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
+              <UserPlus size={28} /> Host Applications
+            </h1>
+
+            {loadingApplications ? (
+              <div className="text-gray-400 text-center py-8">Loading applications...</div>
+            ) : hostApplications.length === 0 ? (
+              <div className="text-gray-400 text-center py-8">No host applications found.</div>
+            ) : (
+              <div className="space-y-4">
+                {hostApplications.map((application) => (
+                  <div key={application._id} className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-semibold text-white">{application.fullname}</h3>
+                        <p className="text-gray-400">{application.email}</p>
+                        <p className="text-gray-400">{application.institute}</p>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        application.approvalStatus === "pending" 
+                          ? "bg-yellow-600 text-yellow-100" 
+                          : application.approvalStatus === "approved"
+                          ? "bg-green-600 text-green-100"
+                          : "bg-red-600 text-red-100"
+                      }`}>
+                        {application.approvalStatus.charAt(0).toUpperCase() + application.approvalStatus.slice(1)}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="text-sm text-gray-400">Department</label>
+                        <p className="text-white">{application.course}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-gray-400">Phone</label>
+                        <p className="text-white">{application.countryCode} {application.phone}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-gray-400">Address</label>
+                        <p className="text-white">{application.street}, {application.city} - {application.pincode}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-gray-400">Applied On</label>
+                        <p className="text-white">{new Date(application.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+
+                    {application.documentPath && (
+                      <div className="mb-4">
+                        <label className="text-sm text-gray-400">Document</label>
+                        <div className="mt-1">
+                          <a 
+                            href={`${config.apiBaseUrl}/${application.documentPath}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:underline"
+                          >
+                            View Document
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {application.rejectionReason && (
+                      <div className="mb-4 p-3 bg-red-900/30 border border-red-600 rounded-lg">
+                        <label className="text-sm text-red-400">Rejection Reason</label>
+                        <p className="text-red-200">{application.rejectionReason}</p>
+                      </div>
+                    )}
+
+                    {application.approvalStatus === "pending" && (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => approveHostApplication(application._id)}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-all"
+                        >
+                          <CheckCircle2 size={16} />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => {
+                            const reason = prompt("Enter rejection reason:");
+                            if (reason) {
+                              rejectHostApplication(application._id, reason);
+                            }
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-all"
+                        >
+                          <XCircle size={16} />
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        
+{activeTab === "add-host" && (
           <div className="animate-fadeIn">
             <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
               <UserPlus size={28} /> Add New Host
             </h1>
-
-            {/* Add Host */}
-            <form
-              onSubmit={handleAddHost}
-              className="bg-gray-800 rounded-xl p-6 shadow-xl space-y-4 max-w-2xl"
-            >
-                          <h2 className="text-xl font-semibold flex items-center gap-2 mb-4">
-              <UserPlus size={20} /> {isEditMode ? 'Edit Host' : 'Add New Host'}
-            </h2>
-              
-              {/* Personal Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleAddHost} className="bg-gray-800 rounded-xl p-6 shadow-xl space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Email *
@@ -787,7 +943,6 @@ export default function AdminPanel() {
                     <p className="text-red-400 text-sm mt-1">{hostErrors.age}</p>
                   )}
                 </div>
-              </div>
 
               {/* Contact Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

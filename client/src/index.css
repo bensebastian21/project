@@ -102,3 +102,12 @@ body {
   0% { transform: translateY(0) translateX(0); }
   100% { transform: translateY(-12px) translateX(8px); }
 }
+
+/* Hide scrollbar but keep scrolling for elements with .no-scrollbar */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;            /* Chrome, Safari, Opera */
+}

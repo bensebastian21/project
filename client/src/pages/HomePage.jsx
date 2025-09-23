@@ -64,6 +64,8 @@ export default function HomePage() {
     }, 150);
   };
 
+
+
   return (
     <div className="relative h-screen flex items-center justify-center text-white overflow-auto">
       <BackgroundAnimation />
@@ -88,6 +90,8 @@ export default function HomePage() {
             <Register onSwitchToLogin={switchToLogin} />
           )}
         </div>
+
+
       </div>
       
       {/* ToastContainer moved to App.js for global placement */}

@@ -76,8 +76,8 @@ router.post("/events/:eventId/reviews", authenticateToken, async (req, res) => {
     }
     const eid = new Types.ObjectId(eventId);
 
-    // Check if event exists and is completed
-    const event = await Event.findOne({ _id: eid, isCompleted: true });
+    // Check if event exists and is completed and not soft-deleted
+    const event = await Event.findOne({ _id: eid, isCompleted: true, isDeleted: { $ne: true } });
     if (!event) {
       return res.status(404).json({ error: "Event not found or not completed yet" });
     }
@@ -144,7 +144,7 @@ router.post("/events/:eventId/reviews", authenticateToken, async (req, res) => {
   }
 });
 
-// Get reviews for an event (public)
+// Get reviews for an event (public) excluding soft-deleted
 router.get("/events/:eventId/reviews", async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -157,8 +157,9 @@ router.get("/events/:eventId/reviews", async (req, res) => {
     const { Types } = require("mongoose");
     const isValidId = Types.ObjectId.isValid(eventId);
 
-    // Build filter with safe casting
-    const filter = isValidId ? { eventId: new Types.ObjectId(eventId) } : { eventId };
+    // Build filter with safe casting and soft-delete exclusion
+    const baseFilter = isValidId ? { eventId: new Types.ObjectId(eventId) } : { eventId };
+    const filter = { ...baseFilter, isDeleted: { $ne: true } };
 
     let reviews = [];
     let total = 0;
@@ -183,12 +184,12 @@ router.get("/events/:eventId/reviews", async (req, res) => {
       });
     }
 
-    // Calculate average rating robustly
+    // Calculate average rating robustly (exclude soft-deleted)
     let averageRating = 0;
     if (isValidId) {
       try {
         const agg = await Review.aggregate([
-          { $match: { eventId: new Types.ObjectId(eventId) } },
+          { $match: { eventId: new Types.ObjectId(eventId), isDeleted: { $ne: true } } },
           { $group: { _id: null, average: { $avg: "$overallRating" } } }
         ]);
         averageRating = agg?.[0]?.average || 0;
@@ -295,19 +296,25 @@ router.put("/events/:eventId/reviews/my", authenticateToken, async (req, res) =>
   }
 });
 
-// Delete user's review
+// Soft delete user's review
 router.delete("/events/:eventId/reviews/my", authenticateToken, async (req, res) => {
   try {
     const { eventId } = req.params;
-    const deleted = await Review.findOneAndDelete({ eventId, reviewerId: req.user.id });
-    
-    if (!deleted) {
+    const review = await Review.findOne({ eventId, reviewerId: req.user.id });
+    if (!review) {
       return res.status(404).json({ error: "Review not found" });
     }
+    if (review.isDeleted) {
+      return res.json({ message: "✅ Review already deleted" });
+    }
+    review.isDeleted = true;
+    review.deletedAt = new Date();
+    review.updatedAt = new Date();
+    await review.save();
 
-    res.json({ message: "✅ Review deleted successfully" });
+    res.json({ message: "✅ Review deleted (soft)" });
   } catch (err) {
-    console.error("Delete review error:", err);
+    console.error("Soft delete review error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });

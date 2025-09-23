@@ -6,10 +6,10 @@ const User = require("../models/User");
 // Reuse auth helpers from auth routes by re-defining minimal middleware here
 const jwt = require("jsonwebtoken");
 
-// Public: list published events regardless of host
+// Public: list published events regardless of host (excluding soft-deleted)
 router.get("/public/events", async (req, res) => {
   try {
-    const events = await Event.find({ isPublished: true }).sort({ date: -1 });
+    const events = await Event.find({ isPublished: true, isDeleted: { $ne: true } }).sort({ date: -1 });
     res.json(events);
   } catch (err) {
     console.error("Public events error:", err);
@@ -83,23 +83,32 @@ router.put("/events/:id", authenticateToken, requireHost, async (req, res) => {
   }
 });
 
-// Delete Event
+// Soft Delete Event
 router.delete("/events/:id", authenticateToken, requireHost, async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await Event.findOneAndDelete({ _id: id, hostId: req.user.id });
-    if (!deleted) return res.status(404).json({ error: "Event not found" });
-    res.json({ message: "✅ Event deleted" });
+    const event = await Event.findOne({ _id: id, hostId: req.user.id });
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    if (event.isDeleted) return res.json({ message: "✅ Event already deleted" });
+    event.isDeleted = true;
+    event.isPublished = false; // hide from public
+    event.deletedAt = new Date();
+    event.updatedAt = new Date();
+    await event.save();
+    res.json({ message: "✅ Event deleted (soft)", eventId: event._id });
   } catch (err) {
-    console.error("Delete event error:", err);
+    console.error("Soft delete event error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// List Events (owned by host)
+// List Events (owned by host), include both active and soft-deleted if requested
 router.get("/events", authenticateToken, requireHost, async (req, res) => {
   try {
-    const events = await Event.find({ hostId: req.user.id }).sort({ date: -1 });
+    const { includeDeleted } = req.query; // optional flag
+    const filter = { hostId: req.user.id };
+    if (!includeDeleted) filter.isDeleted = { $ne: true };
+    const events = await Event.find(filter).sort({ date: -1 });
     res.json(events);
   } catch (err) {
     console.error("List events error:", err);
@@ -223,11 +232,11 @@ router.get("/notifications", authenticateToken, requireHost, async (req, res) =>
   }
 });
 
-// Public: register for an event
+// Public: register for an event (only active, not soft-deleted)
 router.post("/public/events/:id/register", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const event = await Event.findOne({ _id: id, isPublished: true });
+    const event = await Event.findOne({ _id: id, isPublished: true, isDeleted: { $ne: true } });
     if (!event) return res.status(404).json({ error: "Event not found" });
 
     // Already registered check

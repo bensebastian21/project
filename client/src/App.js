@@ -9,8 +9,10 @@ import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel"; // ✅ Import Admin Panel
 import PasswordReset from "./components/PasswordReset"; // ✅ Import Password Reset
 import OAuthCallback from "./components/OAuthCallback"; // ✅ OAuth callback handler
+import RequireAuth from "./components/RequireAuth";
 import HostDashboard from "./pages/HostDashboard";
 import ReviewPage from "./pages/ReviewPage";
+import HostRegister from "./components/HostRegister";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -39,10 +41,32 @@ export default function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
 
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/host-dashboard" element={<HostDashboard />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth allowedRoles={["student", "admin", "host"]}>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth allowedRoles={["admin"]}>
+              <AdminPanel />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/host-dashboard"
+          element={
+            <RequireAuth allowedRoles={["host", "admin"]}>
+              <HostDashboard />
+            </RequireAuth>
+          }
+        />
         <Route path="/review/:eventId" element={<ReviewPage />} />
+        <Route path="/register-host" element={<HostRegister />} />
         <Route path="/reset-password" element={<PasswordReset />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
       </Routes>

@@ -142,6 +142,16 @@ export default function Dashboard() {
   }, [subscriptions]);
 
   const handleLogout = () => {
+    // Clear all student-local cached data to prevent leaking between accounts
+    const KEYS = [
+      "student.registrations",
+      "student.bookmarks",
+      "student.subscriptions",
+      "student.subscriptions.meta",
+      "student.notifications",
+      "student.feedbacks",
+    ];
+    KEYS.forEach((k) => localStorage.removeItem(k));
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     navigate("/");

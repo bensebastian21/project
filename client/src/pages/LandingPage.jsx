@@ -6,8 +6,8 @@ import { Link } from "react-router-dom";
 // e.g., d:\\ben\\Project\\client\\public\\assets\\hero.jpg
 const IMG = {
   hero: "/assets/hero.jpg", // Big header background
-  tour1: "/assets/section1.jpg",
-  tour2: "/assets/section2.jpg",
+  tour1: "/assets/hackathon.jpg",
+  tour2: "/assets/hackathon.jpg",
   tour3: "/assets/section3.jpg",
   tour4: "/assets/banner.jpg",
   sky: "/assets/banner.jpg", // Milky-way like banner
@@ -19,6 +19,16 @@ export default function LandingPage() {
   const exploreRef = useRef(null);
   const popularRef = useRef(null);
   const contactRef = useRef(null);
+
+  // Add a class to body and html to hide the scrollbar only on this page
+  useEffect(() => {
+    document.body.classList.add("no-scrollbar");
+    document.documentElement.classList.add("no-scrollbar");
+    return () => {
+      document.body.classList.remove("no-scrollbar");
+      document.documentElement.classList.remove("no-scrollbar");
+    };
+  }, []);
 
   useEffect(() => {
     const reveal = () => {
@@ -155,7 +165,7 @@ export default function LandingPage() {
           </div>
           <div>
             <h4 className="font-semibold mb-3">Contact</h4>
-            <p className="text-white/70 text-sm">Campus Road, Your City</p>
+            <p className="text-white/70 text-sm">Campus Road, Kerala</p>
             <p className="text-white/70 text-sm">Email: hello@evenite.app</p>
           </div>
           <div>
