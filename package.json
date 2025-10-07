@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.2",
     "firebase": "^12.1.0",
+    "mongodb": "^6.20.0",
+    "mongoose": "^8.18.2",
     "tailwind-scrollbar-hide": "^4.0.0"
   }
 }

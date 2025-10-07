@@ -70,14 +70,28 @@ export default function Login({ onSwitchToRegister }) {
     }
 
     try {
-      const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
+      // First attempt: generic user login
+      let res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
+      let data = await res.json();
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
+      // If not ok and looks like a host (or generic failure), attempt host login fallback
+      if (!res.ok) {
+        // Retry against host login endpoint
+        const resHost = await fetch(`${config.apiBaseUrl}/api/auth/login-host`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        const dataHost = await resHost.json();
+        if (!resHost.ok) {
+          throw new Error(dataHost.error || data.error || "Login failed");
+        }
+        data = dataHost;
+      }
 
       // Clear any previous student's cached data before setting new user
       clearStudentCache();

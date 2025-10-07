@@ -39,6 +39,8 @@ export default function HostDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("events");
+  const [otherCollegeEvents, setOtherCollegeEvents] = useState([]);
+  const [sameDayEvents, setSameDayEvents] = useState([]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -151,11 +153,37 @@ export default function HostDashboard() {
   };
 
   const handleFieldChange = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    // Sanitize certain fields before setting
+    let nextValue = value;
+    if (field === "capacity") {
+      const num = parseInt(String(value).replace(/[^\d-]/g, ""), 10);
+      nextValue = isNaN(num) || num < 0 ? 0 : num;
+    }
+    if (field === "price") {
+      const cleaned = String(value).replace(/[^\d.]/g, "");
+      const num = parseFloat(cleaned);
+      nextValue = isNaN(num) || num < 0 ? 0 : parseFloat(num.toFixed(2));
+    }
+    if (field === "pincode") {
+      nextValue = String(value).replace(/[^\d]/g, "").slice(0, 6);
+    }
+    if (field === "tags") {
+      nextValue = String(value)
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0)
+        .slice(0, 10)
+        .join(', ');
+    }
+    setForm(prev => ({ ...prev, [field]: nextValue }));
     
     if (touchedFields[field]) {
       const error = validateField(field, value);
       setFormErrors(prev => ({ ...prev, [field]: error }));
+    }
+    if (field === "date") {
+      const iso = value ? new Date(value).toISOString() : "";
+      fetchSameDayEvents(iso);
     }
   };
 
@@ -201,6 +229,30 @@ export default function HostDashboard() {
     }
   };
 
+  const fetchOtherCollegeEvents = async () => {
+    try {
+      const res = await api.get(`/api/host/public/events?excludeSelf=true`, { headers: bearer() });
+      setOtherCollegeEvents(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error("Failed to fetch other college events", e);
+      setOtherCollegeEvents([]);
+    }
+  };
+
+  const fetchSameDayEvents = async (isoDate) => {
+    try {
+      if (!isoDate) { setSameDayEvents([]); return; }
+      const d = new Date(isoDate);
+      if (isNaN(d.getTime())) { setSameDayEvents([]); return; }
+      const ymd = d.toISOString().slice(0,10);
+      const res = await api.get(`/api/host/public/events-by-date?date=${ymd}&excludeSelf=true`, { headers: bearer() });
+      setSameDayEvents(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error("Failed to fetch same-day events", e);
+      setSameDayEvents([]);
+    }
+  };
+
   const fetchNotifications = async () => {
     try {
       const res = await api.get(`/api/host/notifications`, { headers: bearer() });
@@ -218,6 +270,7 @@ export default function HostDashboard() {
   useEffect(() => {
     fetchEvents();
     fetchNotifications();
+    fetchOtherCollegeEvents();
   }, []);
 
   const openCreate = () => {
@@ -250,6 +303,7 @@ export default function HostDashboard() {
     setFormErrors({});
     setTouchedFields({});
     setShowForm(true);
+    setSameDayEvents([]);
   };
 
   const openEdit = (event) => {
@@ -662,6 +716,39 @@ export default function HostDashboard() {
                   <Plus className="w-5 h-5" />
                   <span className="font-semibold">Create Event</span>
                 </button>
+              </div>
+
+              {/* Other colleges' published events */}
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">Other Colleges' Events</h3>
+                  <button
+                    onClick={fetchOtherCollegeEvents}
+                    className="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-lg"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                {otherCollegeEvents.length === 0 ? (
+                  <div className="text-gray-400 text-sm">No events found.</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {otherCollegeEvents.slice(0, 6).map((ev) => (
+                      <div key={ev._id} className="p-4 bg-gray-900/50 rounded-xl border border-gray-700/50">
+                        <div className="font-semibold text-white line-clamp-1">{ev.title}</div>
+                        <div className="text-xs text-gray-400 mt-1">{new Date(ev.date).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400 mt-1">{ev.location || (ev.isOnline ? "Online" : "")}</div>
+                        {Array.isArray(ev.tags) && ev.tags.length > 0 && (
+                          <div className="mt-2 flex gap-1 flex-wrap">
+                            {ev.tags.slice(0, 3).map((t, i) => (
+                              <span key={i} className="px-2 py-0.5 bg-gray-700 text-gray-300 text-[10px] rounded">{t}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Search and Filter */}
@@ -1232,6 +1319,7 @@ export default function HostDashboard() {
                       value={form.date}
                       onChange={(e) => handleFieldChange("date", e.target.value)}
                       onBlur={() => handleFieldBlur("date")}
+                      min={(function(){ const d=new Date(); d.setSeconds(0,0); const z=d.getTimezoneOffset()*60000; return new Date(d.getTime()-z).toISOString().slice(0,16); })()}
                       className={`w-full p-3 rounded-xl bg-gray-700/50 border transition-all duration-300 ${
                         formErrors.date ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'
                       } focus:ring-2 focus:border-transparent`}
@@ -1246,6 +1334,7 @@ export default function HostDashboard() {
                       value={form.endDate}
                       onChange={(e) => handleFieldChange("endDate", e.target.value)}
                       onBlur={() => handleFieldBlur("endDate")}
+                      min={form.date || (function(){ const d=new Date(); d.setSeconds(0,0); const z=d.getTimezoneOffset()*60000; return new Date(d.getTime()-z).toISOString().slice(0,16); })()}
                       className={`w-full p-3 rounded-xl bg-gray-700/50 border transition-all duration-300 ${
                         formErrors.endDate ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'
                       } focus:ring-2 focus:border-transparent`}
@@ -1253,6 +1342,18 @@ export default function HostDashboard() {
                     {formErrors.endDate && <p className="text-red-400 text-sm mt-1">{formErrors.endDate}</p>}
                   </div>
                 </div>
+                {sameDayEvents.length > 0 && (
+                  <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-700 rounded-xl">
+                    <div className="text-yellow-300 font-semibold mb-2">Heads up: Other events on this day</div>
+                    <ul className="list-disc list-inside text-yellow-200 text-sm space-y-1 max-h-40 overflow-auto">
+                      {sameDayEvents.map((e) => (
+                        <li key={e._id}>
+                          <span className="font-medium">{e.title}</span> • {new Date(e.date).toLocaleTimeString()} • {e.location || (e.isOnline ? "Online" : "")}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Location */}
@@ -1387,8 +1488,7 @@ export default function HostDashboard() {
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Capacity</label>
                     <input
-                      type="number"
-                      min="0"
+                      type="text"
                       value={form.capacity}
                       onChange={(e) => handleFieldChange("capacity", e.target.value)}
                       onBlur={() => handleFieldBlur("capacity")}
@@ -1402,9 +1502,7 @@ export default function HostDashboard() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Price</label>
                     <div className="flex">
                       <input
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        type="text"
                         value={form.price}
                         onChange={(e) => handleFieldChange("price", e.target.value)}
                         onBlur={() => handleFieldBlur("price")}
@@ -1424,7 +1522,7 @@ export default function HostDashboard() {
                     </div>
                     {formErrors.price && <p className="text-red-400 text-sm mt-1">{formErrors.price}</p>}
                   </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-300 mb-2">Tags</label>
                     <input
                       type="text"
@@ -1436,6 +1534,7 @@ export default function HostDashboard() {
                       } focus:ring-2 focus:border-transparent`}
                       placeholder="tech, workshop, free (comma separated)"
                     />
+                    <div className="text-xs text-gray-500 mt-1">Up to 10 tags. Comma-separated.</div>
                     {formErrors.tags && <p className="text-red-400 text-sm mt-1">{formErrors.tags}</p>}
                   </div>
                 </div>
@@ -1480,15 +1579,25 @@ export default function HostDashboard() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Contact Phone</label>
-                    <input
-                      type="tel"
-                      value={form.contactPhone}
-                      onChange={(e) => handleFieldChange("contactPhone", e.target.value)}
-                      onBlur={() => handleFieldBlur("contactPhone")}
-                      className={`w-full p-3 rounded-xl bg-gray-700/50 border transition-all duration-300 ${
-                        formErrors.contactPhone ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'
-                      } focus:ring-2 focus:border-transparent`}
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={form.countryCode || "+91"}
+                        onChange={(e) => handleFieldChange("countryCode", e.target.value.replace(/[^+\d]/g, "").slice(0, 5))}
+                        className="w-24 p-3 rounded-xl bg-gray-700/50 border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="+91"
+                      />
+                      <input
+                        type="text"
+                        value={form.contactPhone}
+                        onChange={(e) => handleFieldChange("contactPhone", e.target.value.replace(/[^\d]/g, "").slice(0, 10))}
+                        onBlur={() => handleFieldBlur("contactPhone")}
+                        className={`flex-1 p-3 rounded-xl bg-gray-700/50 border transition-all duration-300 ${
+                          formErrors.contactPhone ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'
+                        } focus:ring-2 focus:border-transparent`}
+                        placeholder="10-digit phone"
+                      />
+                    </div>
                     {formErrors.contactPhone && <p className="text-red-400 text-sm mt-1">{formErrors.contactPhone}</p>}
                   </div>
                 </div>
@@ -1497,7 +1606,7 @@ export default function HostDashboard() {
                   <input
                     type="url"
                     value={form.website}
-                    onChange={(e) => handleFieldChange("website", e.target.value)}
+                    onChange={(e) => handleFieldChange("website", e.target.value.trim())}
                     onBlur={() => handleFieldBlur("website")}
                     className={`w-full p-3 rounded-xl bg-gray-700/50 border transition-all duration-300 ${
                       formErrors.website ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500'

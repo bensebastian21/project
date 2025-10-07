@@ -44,6 +44,9 @@ export default function AdminPanel() {
   const [editHostModal, setEditHostModal] = useState(false);
   const [editHostForm, setEditHostForm] = useState({});
   const [savingHost, setSavingHost] = useState(false);
+  // On-focus validation state for Edit Host modal
+  const [editTouched, setEditTouched] = useState({});
+  const [editErrors, setEditErrors] = useState({});
   const navigate = useNavigate();
 
   // Validation functions
@@ -78,6 +81,30 @@ export default function AdminPanel() {
         return /^\+\d{1,4}$/.test(value) ? "" : "Invalid country code format";
       default:
         return "";
+    }
+  };
+
+  // Helpers for on-focus validation in Edit Host modal
+  const handleEditFieldFocus = (field) => {
+    setEditTouched((prev) => ({ ...prev, [field]: true }));
+    const val = (editHostForm[field] ?? "").toString();
+    const msg = validateField(field, val);
+    setEditErrors((prev) => ({ ...prev, [field]: msg }));
+  };
+
+  const handleEditFieldChange = (field, value) => {
+    setEditHostForm((f) => ({ ...f, [field]: value }));
+    if (editTouched[field]) {
+      // live-validate once field has been focused
+      const msg = validateField(field, value);
+      setEditErrors((prev) => ({ ...prev, [field]: msg }));
+    }
+    // Special rule: confirmPassword should match password when either changes
+    if ((field === "password" || field === "confirmPassword") && editTouched["confirmPassword"]) {
+      const matchMsg = (field === "password" ? value : editHostForm.password) === (field === "confirmPassword" ? value : editHostForm.confirmPassword)
+        ? ""
+        : "Passwords do not match";
+      setEditErrors((prev) => ({ ...prev, confirmPassword: matchMsg }));
     }
   };
 
@@ -118,7 +145,7 @@ export default function AdminPanel() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "host-applications") {
+    if (activeTab === "host-applications" || activeTab === "view-hosts") {
       fetchHostApplications();
     }
   }, [activeTab]);
@@ -270,17 +297,28 @@ export default function AdminPanel() {
       phone: host.phone || "",
       countryCode: host.countryCode || "+91",
     });
+    // Reset edit validation state each time the modal opens
+    setEditTouched({});
+    setEditErrors({});
     setEditHostModal(true);
   };
 
   const saveEditHost = async () => {
     try {
       setSavingHost(true);
-      // Basic validation: confirm password only if password provided
-      if (editHostForm.password && editHostForm.password !== editHostForm.confirmPassword) {
-        toast.error("Passwords do not match");
-        return;
+      // Client-side validation for update
+      const requiredFields = ["fullname", "username", "email", "institute", "street", "city", "pincode", "age", "course", "phone"]; 
+      for (const f of requiredFields) {
+        const v = (editHostForm[f] ?? "").toString().trim();
+        if (!v) { toast.error(`Missing required field: ${f}`); setSavingHost(false); return; }
       }
+      // Specific validations
+      if (!/\S+@\S+\.\S+/.test(editHostForm.email)) { toast.error("Invalid email format"); setSavingHost(false); return; }
+      if (!/^\d{6}$/.test(String(editHostForm.pincode))) { toast.error("Pincode must be 6 digits"); setSavingHost(false); return; }
+      if (!/^\d{10}$/.test(String(editHostForm.phone))) { toast.error("Phone must be 10 digits"); setSavingHost(false); return; }
+      if (editHostForm.countryCode && !/^\+\d{1,4}$/.test(String(editHostForm.countryCode))) { toast.error("Invalid country code"); setSavingHost(false); return; }
+      const ageNum = parseInt(editHostForm.age, 10); if (isNaN(ageNum) || ageNum < 16 || ageNum > 100) { toast.error("Age must be between 16 and 100"); setSavingHost(false); return; }
+      if (editHostForm.password && editHostForm.password !== editHostForm.confirmPassword) { toast.error("Passwords do not match"); setSavingHost(false); return; }
       const token = localStorage.getItem("token");
       const { _id, confirmPassword, ...payload } = editHostForm;
       const res = await fetch(`${config.apiBaseUrl}/api/auth/update/${_id}`, {
@@ -425,7 +463,8 @@ export default function AdminPanel() {
     }
   };
 
-  // Filter hosts based on search term
+  // Derive approved hosts from applications and filter by search term
+  // Use users collection hosts (User role==host) list for View Hosts table
   const filteredHosts = hosts.filter(host => 
     host.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     host.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -585,7 +624,7 @@ export default function AdminPanel() {
             
             <div className="bg-gray-800 rounded-xl p-6 shadow-xl">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">All Hosts ({filteredHosts.length} of {hosts.length})</h2>
+                <h2 className="text-xl font-semibold">All Hosts ({filteredHosts.length})</h2>
                 <div className="flex gap-2">
                   <div className="relative">
                     <input
@@ -636,7 +675,7 @@ export default function AdminPanel() {
                               <Edit3 size={16} />
                             </button>
                             <button
-                              onClick={() => handleDeleteHost(host._id)}
+                              onClick={() => handleDeleteHost(host.userId || host._id)}
                               className="p-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
                             >
                               <Trash2 size={16} />
@@ -661,11 +700,13 @@ export default function AdminPanel() {
 
             {loadingApplications ? (
               <div className="text-gray-400 text-center py-8">Loading applications...</div>
-            ) : hostApplications.length === 0 ? (
+            ) : hostApplications.filter(a => a.approvalStatus === "pending").length === 0 ? (
               <div className="text-gray-400 text-center py-8">No host applications found.</div>
             ) : (
               <div className="space-y-4">
-                {hostApplications.map((application) => (
+                {hostApplications
+                  .filter(application => application.approvalStatus === "pending")
+                  .map((application) => (
                   <div key={application._id} className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
                     <div className="flex items-start justify-between mb-4">
                       <div>
@@ -1277,55 +1318,137 @@ export default function AdminPanel() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Full Name</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.fullname} onChange={(e)=>setEditHostForm(f=>({...f, fullname:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.fullname ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.fullname}
+                  onFocus={() => handleEditFieldFocus('fullname')}
+                  onChange={(e)=>handleEditFieldChange('fullname', e.target.value)}
+                />
+                {editErrors.fullname && <p className="text-red-400 text-xs mt-1">{editErrors.fullname}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Username</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.username} onChange={(e)=>setEditHostForm(f=>({...f, username:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.username ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.username}
+                  onFocus={() => handleEditFieldFocus('username')}
+                  onChange={(e)=>handleEditFieldChange('username', e.target.value)}
+                />
+                {editErrors.username && <p className="text-red-400 text-xs mt-1">{editErrors.username}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Email</label>
-                <input type="email" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.email} onChange={(e)=>setEditHostForm(f=>({...f, email:e.target.value}))} />
+                <input
+                  type="email"
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.email ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.email}
+                  onFocus={() => handleEditFieldFocus('email')}
+                  onChange={(e)=>handleEditFieldChange('email', e.target.value)}
+                />
+                {editErrors.email && <p className="text-red-400 text-xs mt-1">{editErrors.email}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Phone</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.phone} onChange={(e)=>setEditHostForm(f=>({...f, phone:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.phone ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.phone}
+                  onFocus={() => handleEditFieldFocus('phone')}
+                  onChange={(e)=>handleEditFieldChange('phone', e.target.value)}
+                />
+                {editErrors.phone && <p className="text-red-400 text-xs mt-1">{editErrors.phone}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Country Code</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.countryCode} onChange={(e)=>setEditHostForm(f=>({...f, countryCode:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.countryCode ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.countryCode}
+                  onFocus={() => handleEditFieldFocus('countryCode')}
+                  onChange={(e)=>handleEditFieldChange('countryCode', e.target.value)}
+                />
+                {editErrors.countryCode && <p className="text-red-400 text-xs mt-1">{editErrors.countryCode}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Institute</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.institute} onChange={(e)=>setEditHostForm(f=>({...f, institute:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.institute ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.institute}
+                  onFocus={() => handleEditFieldFocus('institute')}
+                  onChange={(e)=>handleEditFieldChange('institute', e.target.value)}
+                />
+                {editErrors.institute && <p className="text-red-400 text-xs mt-1">{editErrors.institute}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Course/Department</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.course} onChange={(e)=>setEditHostForm(f=>({...f, course:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.course ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.course}
+                  onFocus={() => handleEditFieldFocus('course')}
+                  onChange={(e)=>handleEditFieldChange('course', e.target.value)}
+                />
+                {editErrors.course && <p className="text-red-400 text-xs mt-1">{editErrors.course}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Age</label>
-                <input type="number" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.age} onChange={(e)=>setEditHostForm(f=>({...f, age:e.target.value}))} />
+                <input
+                  type="number"
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.age ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.age}
+                  onFocus={() => handleEditFieldFocus('age')}
+                  onChange={(e)=>handleEditFieldChange('age', e.target.value)}
+                />
+                {editErrors.age && <p className="text-red-400 text-xs mt-1">{editErrors.age}</p>}
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-gray-300 mb-1">Street</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.street} onChange={(e)=>setEditHostForm(f=>({...f, street:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.street ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.street}
+                  onFocus={() => handleEditFieldFocus('street')}
+                  onChange={(e)=>handleEditFieldChange('street', e.target.value)}
+                />
+                {editErrors.street && <p className="text-red-400 text-xs mt-1">{editErrors.street}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">City</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.city} onChange={(e)=>setEditHostForm(f=>({...f, city:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.city ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.city}
+                  onFocus={() => handleEditFieldFocus('city')}
+                  onChange={(e)=>handleEditFieldChange('city', e.target.value)}
+                />
+                {editErrors.city && <p className="text-red-400 text-xs mt-1">{editErrors.city}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Pincode</label>
-                <input className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.pincode} onChange={(e)=>setEditHostForm(f=>({...f, pincode:e.target.value}))} />
+                <input
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.pincode ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.pincode}
+                  onFocus={() => handleEditFieldFocus('pincode')}
+                  onChange={(e)=>handleEditFieldChange('pincode', e.target.value)}
+                />
+                {editErrors.pincode && <p className="text-red-400 text-xs mt-1">{editErrors.pincode}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">New Password (optional)</label>
-                <input type="password" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.password} onChange={(e)=>setEditHostForm(f=>({...f, password:e.target.value}))} />
+                <input
+                  type="password"
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.password ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.password}
+                  onFocus={() => handleEditFieldFocus('password')}
+                  onChange={(e)=>handleEditFieldChange('password', e.target.value)}
+                />
+                {editErrors.password && <p className="text-red-400 text-xs mt-1">{editErrors.password}</p>}
               </div>
               <div>
                 <label className="block text-sm text-gray-300 mb-1">Confirm Password</label>
-                <input type="password" className="w-full p-3 rounded bg-gray-700 border border-gray-600" value={editHostForm.confirmPassword} onChange={(e)=>setEditHostForm(f=>({...f, confirmPassword:e.target.value}))} />
+                <input
+                  type="password"
+                  className={`w-full p-3 rounded bg-gray-700 border ${editErrors.confirmPassword ? 'border-red-600' : 'border-gray-600'}`}
+                  value={editHostForm.confirmPassword}
+                  onFocus={() => handleEditFieldFocus('confirmPassword')}
+                  onChange={(e)=>handleEditFieldChange('confirmPassword', e.target.value)}
+                />
+                {editErrors.confirmPassword && <p className="text-red-400 text-xs mt-1">{editErrors.confirmPassword}</p>}
               </div>
             </div>
             <div className="flex gap-3 mt-6 justify-end">
