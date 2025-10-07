@@ -42,4 +42,10 @@ const hostSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+// Add indexes for better performance
+hostSchema.index({ email: 1 }, { unique: true });
+hostSchema.index({ approvalStatus: 1 });
+hostSchema.index({ isDeleted: 1 });
+hostSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model("Host", hostSchema);

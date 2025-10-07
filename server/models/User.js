@@ -14,6 +14,15 @@ const userSchema = new mongoose.Schema({
   countryCode: { type: String, default: "+91" },
   password: { type: String, required: false }, // Optional for Firebase users
   studentIdPath: String,
+  profilePic: String, // Path to profile picture
+
+  // Verification flags
+  emailVerified: { type: Boolean, default: false },
+  phoneVerified: { type: Boolean, default: false },
+  emailOTP: String,
+  emailOTPExpires: Date,
+  phoneOTP: String,
+  phoneOTPExpires: Date,
 
   // ✅ Add role field
   role: { 
@@ -32,6 +41,9 @@ const userSchema = new mongoose.Schema({
   // Firebase fields
   firebaseUid: String,
 
+  // Subscriptions (follow hosts) stored on user
+  subscribedHosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
   // Soft delete flags
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
@@ -39,5 +51,14 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+// Add indexes for better performance
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ role: 1 });
+userSchema.index({ isDeleted: 1 });
+userSchema.index({ firebaseUid: 1 });
+userSchema.index({ resetCode: 1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ subscribedHosts: 1 });
 
 module.exports = mongoose.model("User", userSchema);

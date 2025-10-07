@@ -164,6 +164,177 @@ router.get("/test", (req, res) => {
 });
 
 // =========================
+// Current user profile
+// =========================
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).lean();
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({
+      id: user._id,
+      username: user.username,
+      fullname: user.fullname,
+      institute: user.institute,
+      street: user.street,
+      city: user.city,
+      pincode: user.pincode,
+      age: user.age,
+      course: user.course,
+      email: user.email,
+      phone: user.phone,
+      countryCode: user.countryCode,
+      role: user.role,
+      emailVerified: !!user.emailVerified,
+      phoneVerified: !!user.phoneVerified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
+  } catch (err) {
+    console.error("/me error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.put("/me", authenticateToken, async (req, res) => {
+  try {
+    const allowed = [
+      "username","fullname","institute","street","city","pincode","age","course","email","phone","countryCode"
+    ];
+    const update = { updatedAt: new Date() };
+    allowed.forEach(k => {
+      if (typeof req.body[k] !== 'undefined') update[k] = req.body[k];
+    });
+
+    // Basic validations
+    if (typeof update.email !== 'undefined' && !/\S+@\S+\.\S+/.test(update.email)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+    if (typeof update.pincode !== 'undefined' && !/^\d{6}$/.test(String(update.pincode))) {
+      return res.status(400).json({ error: "Pincode must be 6 digits" });
+    }
+    if (typeof update.phone !== 'undefined' && !/^\d{10}$/.test(String(update.phone))) {
+      return res.status(400).json({ error: "Phone must be 10 digits" });
+    }
+    if (typeof update.countryCode !== 'undefined' && !/^\+\d{1,4}$/.test(String(update.countryCode))) {
+      return res.status(400).json({ error: "Invalid country code" });
+    }
+
+    const current = await User.findById(req.user.id);
+    if (!current) return res.status(404).json({ error: "User not found" });
+
+    // Reset verification if email/phone changed
+    if (typeof update.email !== 'undefined' && update.email !== current.email) {
+      update.emailVerified = false;
+      update.emailOTP = undefined;
+      update.emailOTPExpires = undefined;
+    }
+    if (typeof update.phone !== 'undefined' && update.phone !== current.phone) {
+      update.phoneVerified = false;
+      update.phoneOTP = undefined;
+      update.phoneOTPExpires = undefined;
+    }
+
+    const saved = await User.findByIdAndUpdate(req.user.id, update, { new: true });
+    res.json({ message: "✅ Profile updated", emailVerified: saved.emailVerified, phoneVerified: saved.phoneVerified });
+  } catch (err) {
+    console.error("/me update error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/upload-profile-pic", authenticateToken, upload.single('profilePic'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    user.profilePic = req.file.path;
+    await user.save();
+    res.json({ message: "Profile picture updated", profilePic: user.profilePic });
+  } catch (err) {
+    console.error("upload-profile-pic error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
+// Email/Phone OTP send & verify
+// =========================
+router.post("/send-email-otp", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user.email) return res.status(400).json({ error: "Email not set" });
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.emailOTP = code;
+    user.emailOTPExpires = new Date(Date.now() + 10 * 60 * 1000); // 10min
+    await user.save();
+    const sent = await sendResetEmail(user.email, code, user.fullname || user.username || "");
+    if (sent) return res.json({ message: "OTP sent to email" });
+    if (process.env.NODE_ENV !== 'production') return res.json({ message: "Dev mode: email OTP", devCode: code });
+    return res.status(500).json({ error: "Failed to send OTP email" });
+  } catch (err) {
+    console.error("send-email-otp error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/verify-email-otp", authenticateToken, async (req, res) => {
+  try {
+    const { code } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!code || user.emailOTP !== code || !user.emailOTPExpires || user.emailOTPExpires.getTime() < Date.now()) {
+      return res.status(400).json({ error: "Invalid or expired code" });
+    }
+    user.emailVerified = true;
+    user.emailOTP = undefined;
+    user.emailOTPExpires = undefined;
+    await user.save();
+    res.json({ message: "✅ Email verified" });
+  } catch (err) {
+    console.error("verify-email-otp error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/send-phone-otp", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user.phone) return res.status(400).json({ error: "Phone not set" });
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.phoneOTP = code;
+    user.phoneOTPExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+    // TODO: integrate SMS provider (Twilio etc). For dev, return code.
+    if (process.env.NODE_ENV !== 'production') return res.json({ message: "Dev mode: phone OTP", devCode: code });
+    res.json({ message: "OTP sent to phone" });
+  } catch (err) {
+    console.error("send-phone-otp error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/verify-phone-otp", authenticateToken, async (req, res) => {
+  try {
+    const { code } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!code || user.phoneOTP !== code || !user.phoneOTPExpires || user.phoneOTPExpires.getTime() < Date.now()) {
+      return res.status(400).json({ error: "Invalid or expired code" });
+    }
+    user.phoneVerified = true;
+    user.phoneOTP = undefined;
+    user.phoneOTPExpires = undefined;
+    await user.save();
+    res.json({ message: "✅ Phone verified" });
+  } catch (err) {
+    console.error("verify-phone-otp error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
 // Google OAuth 2.0 (Server-initiated)
 // =========================
 router.get("/google", (req, res) => {
@@ -724,8 +895,30 @@ router.post("/reset-password", async (req, res) => {
 // =========================
 router.get("/hosts", authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const hosts = await User.find({ role: "host", isDeleted: { $ne: true } });
-    res.json(hosts);
+    // Prefer approved Host applications as source of truth
+    const approvedHosts = await Host.find({ approvalStatus: "approved", isDeleted: { $ne: true } }).lean();
+    // Try to attach corresponding User id if exists (by email)
+    const emails = approvedHosts.map(h => h.email);
+    const users = await User.find({ email: { $in: emails }, role: "host", isDeleted: { $ne: true } }).select("_id email").lean();
+    const emailToUserId = new Map(users.map(u => [u.email, u._id.toString()]));
+
+    const result = approvedHosts.map(h => ({
+      _id: h._id, // Host collection id
+      userId: emailToUserId.get(h.email) || null,
+      username: h.username,
+      fullname: h.fullname,
+      institute: h.institute,
+      street: h.street,
+      city: h.city,
+      pincode: h.pincode,
+      age: h.age,
+      course: h.course,
+      email: h.email,
+      phone: h.phone,
+      countryCode: h.countryCode,
+    }));
+
+    res.json(result);
   } catch (err) {
     console.error("Get hosts error:", err);
     res.status(500).json({ error: "Server error" });
@@ -756,8 +949,31 @@ router.put("/admin/host-applications/:id/approve", authenticateToken, requireAdm
     host.approvedAt = new Date();
     host.updatedAt = new Date();
     await host.save();
+    // Upsert corresponding User with role "host"
+    const userPayload = {
+      username: host.username,
+      fullname: host.fullname,
+      institute: host.institute,
+      street: host.street,
+      city: host.city,
+      pincode: host.pincode,
+      age: host.age,
+      course: host.course,
+      email: host.email,
+      phone: host.phone,
+      countryCode: host.countryCode,
+      // password already hashed in Host model at registration time
+      password: host.password,
+      role: "host",
+      updatedAt: new Date(),
+    };
+    const upsertedUser = await User.findOneAndUpdate(
+      { email: host.email },
+      { $set: userPayload, $setOnInsert: { createdAt: new Date() } },
+      { new: true, upsert: true }
+    );
 
-    res.json({ message: "✅ Host application approved", host });
+    res.json({ message: "✅ Host application approved", host, user: upsertedUser });
   } catch (err) {
     console.error("Approve host error:", err);
     res.status(500).json({ error: "Server error" });
@@ -787,6 +1003,19 @@ router.put("/update/:id", authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const body = { ...req.body };
+
+    // Server-side validation
+    const required = ["fullname", "username", "email", "institute", "street", "city", "pincode", "age", "course", "phone"];    
+    for (const f of required) {
+      if (typeof body[f] === "undefined" || String(body[f]).trim() === "") {
+        return res.status(400).json({ error: `Missing required field: ${f}` });
+      }
+    }
+    if (!/\S+@\S+\.\S+/.test(body.email)) return res.status(400).json({ error: "Invalid email format" });
+    if (!/^\d{6}$/.test(String(body.pincode))) return res.status(400).json({ error: "Pincode must be 6 digits" });
+    if (!/^\d{10}$/.test(String(body.phone))) return res.status(400).json({ error: "Phone must be 10 digits" });
+    if (body.countryCode && !/^\+\d{1,4}$/.test(String(body.countryCode))) return res.status(400).json({ error: "Invalid country code" });
+    const ageNum = parseInt(body.age, 10); if (isNaN(ageNum) || ageNum < 16 || ageNum > 100) return res.status(400).json({ error: "Age must be between 16 and 100" });
 
     // Remove non-persisted fields
     if (typeof body.confirmPassword !== "undefined") delete body.confirmPassword;
@@ -876,7 +1105,12 @@ router.get("/hosts/by-ids", async (req, res) => {
 
     if (!ids.length) return res.json([]);
 
-    const hosts = await User.find({ _id: { $in: ids }, role: "host" })
+    // Filter to valid ObjectIds only to avoid CastErrors
+    const { Types } = require("mongoose");
+    const validIds = ids.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id));
+    if (!validIds.length) return res.json([]);
+
+    const hosts = await User.find({ _id: { $in: validIds }, role: "host" })
       .select("_id username fullname email institute city")
       .lean();
 
@@ -895,7 +1129,7 @@ const Event = require("../models/Event");
 // List all events with basic host info
 router.get("/admin/events", authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const events = await Event.find({}).sort({ createdAt: -1 }).lean();
+    const events = await Event.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
     res.json(events);
   } catch (err) {
     console.error("Admin list events error:", err);
@@ -965,23 +1199,27 @@ router.get("/admin/metrics", authenticateToken, requireAdmin, async (req, res) =
     const totalStudents = await User.countDocuments({ role: "student" });
     const totalAdmins = await User.countDocuments({ role: "admin" });
 
-    const totalEvents = await Event.countDocuments({});
-    const publishedEvents = await Event.countDocuments({ isPublished: true });
-    const completedEvents = await Event.countDocuments({ isCompleted: true });
+    const notDeleted = { isDeleted: { $ne: true } };
+    const totalEvents = await Event.countDocuments(notDeleted);
+    const publishedEvents = await Event.countDocuments({ ...notDeleted, isPublished: true });
+    const completedEvents = await Event.countDocuments({ ...notDeleted, isCompleted: true });
 
-    const recentEvents = await Event.find({}).sort({ createdAt: -1 }).limit(10).select("title createdAt hostId isPublished isCompleted").lean();
+    const recentEvents = await Event.find(notDeleted).sort({ createdAt: -1 }).limit(10).select("title createdAt hostId isPublished isCompleted").lean();
     const registrationsTotalAgg = await Event.aggregate([
+      { $match: notDeleted },
       { $project: { count: { $size: { $ifNull: ["$registrations", []] } } } },
       { $group: { _id: null, total: { $sum: "$count" } } }
     ]);
     const totalRegistrations = registrationsTotalAgg?.[0]?.total || 0;
     const recentRegistrations = await Event.aggregate([
+      { $match: notDeleted },
       { $unwind: "$registrations" },
       { $sort: { "registrations.registeredAt": -1 } },
       { $limit: 10 },
       { $project: { title: 1, eventId: "$_id", registeredAt: "$registrations.registeredAt" } }
     ]);
     const recentFeedbacks = await Event.aggregate([
+      { $match: notDeleted },
       { $unwind: "$feedbacks" },
       { $sort: { "feedbacks.createdAt": -1 } },
       { $limit: 10 },

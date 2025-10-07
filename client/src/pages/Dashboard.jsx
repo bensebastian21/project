@@ -18,7 +18,14 @@ import {
   UserCircle2,
   CheckCircle,
   MessageSquare,
+  FileText,
+  UserPen,
+  ShieldCheck,
+  ImagePlus,
 } from "lucide-react";
+import config from "../config";
+import PaymentModal from "../components/PaymentModal";
+import EventDetailModal from "../components/EventDetailModal";
 
 const STORAGE = {
   registrations: "student.registrations",
@@ -49,21 +56,31 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("Explore"); // Explore | MyRegs | Bookmarks | SubscribedHosts | Notifications
   const [subscribedHosts, setSubscribedHosts] = useState([]);
 
-  const [registrations, setRegistrations] = useState(() => loadLS(STORAGE.registrations, []));
-  const [bookmarks, setBookmarks] = useState(() => loadLS(STORAGE.bookmarks, []));
-  const [subscriptions, setSubscriptions] = useState(() => loadLS(STORAGE.subscriptions, []));
-  const [subsMeta, setSubsMeta] = useState(() => loadLS(STORAGE.subscriptionsMeta, {}));
-  const [notifications, setNotifications] = useState(() => loadLS(STORAGE.notifications, []));
-  const [feedbacks, setFeedbacks] = useState(() => loadLS(STORAGE.feedbacks, []));
+  // Start empty; load user-scoped values once user is known
+  const [registrations, setRegistrations] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [subsMeta, setSubsMeta] = useState({});
+  const [notifications, setNotifications] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [eventDetailModalOpen, setEventDetailModalOpen] = useState(false);
+  const [selectedEventForDetail, setSelectedEventForDetail] = useState(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [profilePic, setProfilePic] = useState(null);
 
   // Normalize notifications to include read flag on first load
   useEffect(() => {
-    setNotifications((prev) =>
-      (prev || []).map((n) => (typeof n.read === "boolean" ? n : { ...n, read: false }))
-    );
-  }, []);
+    const needsNormalization = (notifications || []).some(n => typeof n.read !== "boolean");
+    if (needsNormalization) {
+      setNotifications((prev) =>
+        (prev || []).map((n) => (typeof n.read === "boolean" ? n : { ...n, read: false }))
+      );
+    }
+  }, []); // Run only once on mount
 
   // Derived unread count
   const unreadCount = useMemo(
@@ -85,6 +102,23 @@ export default function Dashboard() {
   };
 
   const navigate = useNavigate();
+
+  // Ensure user email & phone are verified; if not, navigate to Profile
+  const ensureVerified = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return false;
+      const { data } = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
+      if (!data?.emailVerified || !data?.phoneVerified) {
+        toast.info("Please verify your email and phone to continue");
+        navigate("/profile");
+        return false;
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
 
   // Navigate to review page
   const navigateToReview = (eventId) => {
@@ -114,15 +148,79 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Persist local states
-  useEffect(() => saveLS(STORAGE.registrations, registrations), [registrations]);
-  useEffect(() => saveLS(STORAGE.bookmarks, bookmarks), [bookmarks]);
-  useEffect(() => saveLS(STORAGE.subscriptions, subscriptions), [subscriptions]);
-  useEffect(() => saveLS(STORAGE.subscriptionsMeta, subsMeta), [subsMeta]);
-  useEffect(() => saveLS(STORAGE.notifications, notifications), [notifications]);
-  useEffect(() => saveLS(STORAGE.feedbacks, feedbacks), [feedbacks]);
+  // Helpers to scope keys per user (by email). If user unknown, use base keys.
+  const userKey = (base) => {
+    const email = user?.email || null;
+    return email ? `${base}:${email}` : base;
+  };
 
-  // Load subscribed host details when subscriptions change
+  // Load scoped values when user changes (e.g., on login)
+  useEffect(() => {
+    // When user logs in, load their scoped data; if no user, keep defaults
+    const scopedRegs = loadLS(userKey(STORAGE.registrations), []);
+    const scopedBookmarks = loadLS(userKey(STORAGE.bookmarks), []);
+    const scopedSubs = loadLS(userKey(STORAGE.subscriptions), []);
+    const scopedMeta = loadLS(userKey(STORAGE.subscriptionsMeta), {});
+    const scopedNotifs = loadLS(userKey(STORAGE.notifications), []);
+    const scopedFeedbacks = loadLS(userKey(STORAGE.feedbacks), []);
+    setRegistrations(Array.isArray(scopedRegs) ? scopedRegs : []);
+    setBookmarks(Array.isArray(scopedBookmarks) ? scopedBookmarks : []);
+    setSubscriptions(Array.isArray(scopedSubs) ? scopedSubs : []);
+    setSubsMeta(scopedMeta && typeof scopedMeta === 'object' ? scopedMeta : {});
+    setNotifications(Array.isArray(scopedNotifs) ? scopedNotifs : []);
+    setFeedbacks(Array.isArray(scopedFeedbacks) ? scopedFeedbacks : []);
+  }, [user]);
+
+  // After user is known, sync registrations from server (source of truth)
+  useEffect(() => {
+    const sync = async () => {
+      try {
+        if (!user) return;
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const { data } = await api.get("/api/host/public/my-registrations", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const serverRegs = (Array.isArray(data) ? data : []).map((r) => ({
+          eventId: r.eventId,
+          title: r.title,
+          at: Date.now(),
+        }));
+        setRegistrations(serverRegs);
+      } catch (e) {
+        // Non-fatal; keep local values if server fetch fails
+        console.warn("Registrations sync failed:", e?.response?.data || e?.message || e);
+      }
+    };
+    sync();
+    // Only when user changes
+  }, [user]);
+
+  // Fetch profile pic for UI
+  useEffect(() => {
+    const fetchProfilePic = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (token && user) {
+          const { data } = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
+          setProfilePic(data.profilePic);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    if (user) fetchProfilePic();
+  }, [user]);
+
+  // Persist local states (scoped per user)
+  useEffect(() => saveLS(userKey(STORAGE.registrations), registrations), [registrations, user]);
+  useEffect(() => saveLS(userKey(STORAGE.bookmarks), bookmarks), [bookmarks, user]);
+  useEffect(() => saveLS(userKey(STORAGE.subscriptions), subscriptions), [subscriptions, user]);
+  useEffect(() => saveLS(userKey(STORAGE.subscriptionsMeta), subsMeta), [subsMeta, user]);
+  useEffect(() => saveLS(userKey(STORAGE.notifications), notifications), [notifications, user]);
+  useEffect(() => saveLS(userKey(STORAGE.feedbacks), feedbacks), [feedbacks, user]);
+
+  // Load subscribed host details when subscriptions change (local storage driven)
   useEffect(() => {
     const loadHosts = async () => {
       try {
@@ -130,12 +228,19 @@ export default function Dashboard() {
           setSubscribedHosts([]);
           return;
         }
-        const uniqueIds = Array.from(new Set(subscriptions)).join(",");
+        const isValidId = (s) => typeof s === "string" && /^[a-f\d]{24}$/i.test(s);
+        const filtered = Array.from(new Set((subscriptions || []).filter(isValidId)));
+        if (filtered.length === 0) {
+          setSubscribedHosts([]);
+          return;
+        }
+        const uniqueIds = filtered.join(",");
         const res = await api.get(`/api/auth/hosts/by-ids?ids=${encodeURIComponent(uniqueIds)}`);
         setSubscribedHosts(Array.isArray(res.data) ? res.data : []);
       } catch (e) {
         console.error(e);
         toast.error("Failed to load subscribed hosts");
+        setSubscribedHosts([]);
       }
     };
     loadHosts();
@@ -181,41 +286,151 @@ export default function Dashboard() {
   }, [events, bookmarks]);
 
   // Actions
-  const registerEvent = (event) => {
+  const registerEvent = async (event) => {
     if (!user) return toast.error("Please login to register");
     if (registrations.find((r) => r.eventId === event._id)) return toast.info("Already registered");
-    (async () => {
-      try {
-        const token = localStorage.getItem("token");
-        await api.post(`/api/host/public/events/${event._id}/register`, {}, { headers: { Authorization: `Bearer ${token}` } });
+    const ok = await ensureVerified();
+    if (!ok) return;
+    
+    if ((event.price || 0) > 0) {
+      // Paid registration → Show custom payment modal
+      setSelectedEvent(event);
+      setPaymentModalOpen(true);
+    } else {
+      // Free registration
+      handleFreeRegistration(event);
+    }
+  };
+
+  const handleFreeRegistration = async (event) => {
+    try {
+      const token = localStorage.getItem("token");
+      await api.post(`/api/host/public/events/${event._id}/register`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      const entry = { eventId: event._id, title: event.title, at: Date.now() };
+      setRegistrations((prev) => [...prev, entry]);
+      setNotifications((prev) => [{ type: "registration", message: `Registered for ${event.title}`, at: Date.now(), eventId: event._id, read: false }, ...prev]);
+      toast.success("Registered successfully");
+    } catch (e) {
+      toast.error(e?.response?.data?.error || "Registration failed");
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    // PaymentModal already processed payment + registration via payForEvent
+    try {
+      const event = selectedEvent;
+      if (event) {
+        // Optimistically add to local registrations
         const entry = { eventId: event._id, title: event.title, at: Date.now() };
-        setRegistrations((prev) => [...prev, entry]);
+        setRegistrations((prev) => (prev.some(r => r.eventId === event._id) ? prev : [...prev, entry]));
         setNotifications((prev) => [{ type: "registration", message: `Registered for ${event.title}`, at: Date.now(), eventId: event._id, read: false }, ...prev]);
-        toast.success("Registered successfully");
-      } catch (e) {
-        toast.error(e?.response?.data?.error || "Registration failed");
       }
-    })();
+      // Also sync from server to ensure consistency
+      const token = localStorage.getItem("token");
+      if (token) {
+        const { data } = await api.get("/api/host/public/my-registrations", { headers: { Authorization: `Bearer ${token}` } });
+        const serverRegs = (Array.isArray(data) ? data : []).map((r) => ({ eventId: r.eventId, title: r.title, at: Date.now() }));
+        setRegistrations(serverRegs);
+      }
+      toast.success("Payment successful and registered");
+    } catch (e) {
+      // Non-fatal; UI already updated optimistically
+      console.warn("Post-payment sync failed:", e?.response?.data || e?.message || e);
+    } finally {
+      setPaymentModalOpen(false);
+      setSelectedEvent(null);
+    }
   };
 
-  const toggleBookmark = (event) => {
-    setBookmarks((prev) => {
-      if (prev.includes(event._id)) {
+  const handlePaymentError = (error) => {
+    console.error("Payment error:", error);
+    toast.error("Payment failed. Please try again.");
+  };
+
+  const handlePaymentCancel = () => {
+    setPaymentModalOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleViewMore = (event) => {
+    setSelectedEventForDetail(event);
+    setEventDetailModalOpen(true);
+  };
+
+  const handleEventDetailClose = () => {
+    setEventDetailModalOpen(false);
+    setSelectedEventForDetail(null);
+  };
+
+  const handleRegisterFromDetail = async (event) => {
+    if (!user) return toast.error("Please login to register");
+    if (registrations.find((r) => r.eventId === event._id)) return toast.info("Already registered");
+    
+    if ((event.price || 0) > 0) {
+      // Close event detail modal and open payment modal
+      setEventDetailModalOpen(false);
+      setSelectedEvent(event);
+      setPaymentModalOpen(true);
+    } else {
+      // Free registration
+      await handleFreeRegistration(event);
+    }
+  };
+
+  const toggleBookmark = async (event) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return toast.error("Please login to bookmark events");
+      const ok = await ensureVerified();
+      if (!ok) return;
+
+      const isCurrentlyBookmarked = bookmarks.includes(event._id);
+      
+      if (isCurrentlyBookmarked) {
+        // Remove bookmark
+        await api.delete(`/api/bookmarks/${event._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        setBookmarks((prev) => prev.filter((id) => id !== event._id));
         toast("Removed bookmark");
-        return prev.filter((id) => id !== event._id);
+      } else {
+        // Add bookmark
+        await api.post("/api/bookmarks", 
+          { eventId: event._id }, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        setBookmarks((prev) => [event._id, ...prev]);
+        toast.success("Bookmarked");
       }
-      toast.success("Bookmarked");
-      return [event._id, ...prev];
-    });
+    } catch (error) {
+      console.error("Bookmark toggle error:", error);
+      toast.error(error.response?.data?.error || "Failed to update bookmark");
+    }
   };
 
-  const subscribeHost = (event) => {
-    const hostId = event.hostId || "unknown";
+  const subscribeHost = async (event) => {
+    const hostId = event.hostId;
+    // Only allow valid ObjectId-like IDs
+    if (!hostId || !/^[a-f\d]{24}$/i.test(String(hostId))) {
+      console.error("Invalid host ID:", hostId);
+      return toast.error("Unable to subscribe: invalid host ID");
+    }
+    const ok = await ensureVerified();
+    if (!ok) return;
+    // Local-only subscribe flow (no backend subscriptions API)
     if (subscriptions.includes(hostId)) return toast.info("Already subscribed to this host");
     setSubscriptions((prev) => [hostId, ...prev]);
     // Initialize last-seen to now so old events don't trigger notifications
     setSubsMeta((prev) => ({ ...prev, [hostId]: Date.now() }));
-    setNotifications((prev) => [{ type: "subscribe", message: `Subscribed for updates from this host`, at: Date.now(), hostId, read: false }, ...prev]);
+    setNotifications((prev) => [{ 
+      type: "subscribe", 
+      message: `Subscribed for updates from this host`, 
+      at: Date.now(), 
+      hostId, 
+      read: false 
+    }, ...prev]);
     toast.success("Subscribed to host updates");
   };
 
@@ -309,18 +524,7 @@ export default function Dashboard() {
           ))}
         </nav>
 
-        <div className="mt-6 p-4 rounded-lg bg-[#151518] border border-[#27272b]">
-          <div className="flex items-center gap-3">
-            <UserCircle2 className="w-8 h-8 text-yellow-400" />
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{user?.fullname || user?.username || "Guest"}</p>
-              <p className="text-xs text-gray-400 truncate">{user?.email || "Not logged in"}</p>
-            </div>
-          </div>
-          <button onClick={handleLogout} className="mt-4 w-full px-3 py-2 rounded-lg bg-[#1f1f22] hover:bg-[#25252a] text-red-400 flex items-center gap-2 justify-center">
-            <LogOut className="w-4 h-4" /> Logout
-          </button>
-        </div>
+        {/* User info card removed as requested */}
       </aside>
 
       {/* Main content */}
@@ -373,12 +577,111 @@ export default function Dashboard() {
           </div>
         </div>
 
-          {/* Notifications bell */}
-          <div className="flex justify-end mb-4 relative">
+          {/* Profile + Notifications (top-right) */}
+        <div className="flex justify-end mb-4 gap-3 relative z-40">
+          <div className="relative">
+            <button
+              onClick={() => setProfileMenuOpen((prev) => !prev)}
+              className="flex items-center gap-2 p-2 rounded-lg bg-[#0e0e10] border border-[#2a2a30] hover:bg-[#151518]"
+              aria-label="Profile"
+              title="Profile menu"
+            >
+              {profilePic ? (
+                <img src={`http://localhost:5000/${profilePic}`} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
+              ) : (
+                <UserCircle2 className="w-5 h-5 text-yellow-400" />
+              )}
+              {user?.fullname && (
+                <span className="text-sm text-gray-300 max-w-[120px] truncate">
+                  {user.fullname}
+                </span>
+              )}
+            </button>
+
+            {profileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-[#0e0e10] border border-[#2a2a30] rounded-lg shadow-lg z-50">
+                <div className="flex items-center gap-3 px-3 py-3 border-b border-[#2a2a30]">
+                  <div className="w-10 h-10 rounded-full bg-[#151518] border border-[#2a2a30] flex items-center justify-center overflow-hidden">
+                    {profilePic ? (
+                      <img src={`http://localhost:5000/${profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <UserCircle2 className="w-6 h-6 text-yellow-400" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-200 truncate">{user?.fullname || "Guest"}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email || "No email"}</p>
+                  </div>
+                </div>
+
+                <div className="py-2">
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/profile?tab=view");
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#151518]"
+                  >
+                    <FileText className="w-4 h-4 text-yellow-400" />
+                    View Profile
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/profile?tab=update");
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#151518]"
+                  >
+                    <UserPen className="w-4 h-4 text-yellow-400" />
+                    Update Profile Info
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/profile?tab=otp");
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#151518]"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-yellow-400" />
+                    Verify Credentials
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      navigate("/profile?tab=photo");
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#151518]"
+                  >
+                    <ImagePlus className="w-4 h-4 text-yellow-400" />
+                    Change Profile Photo
+                  </button>
+                </div>
+
+                <div className="border-t border-[#2a2a30] py-2">
+                  <button
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-[#151518]"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
             <button
               onClick={() => setNotifOpen((o) => !o)}
               className="relative p-2 rounded-lg bg-[#0e0e10] border border-[#2a2a30] hover:bg-[#151518]"
               aria-label="Notifications"
+              title="Notifications"
             >
               <BellRing className="w-5 h-5 text-yellow-400" />
               {unreadCount > 0 && (
@@ -426,6 +729,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </div>
 
         {activeTab === "Explore" && (
           <div className="space-y-6">
@@ -454,10 +758,10 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => registerEvent(e)}
-                        className={`flex-1 px-3 py-2 rounded-lg ${isRegistered(e._id) ? "bg-green-600 hover:bg-green-700" : "bg-yellow-500 text-black hover:bg-yellow-400"}`}
+                        onClick={() => handleViewMore(e)}
+                        className="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
                       >
-                        {isRegistered(e._id) ? "Registered" : "Register"}
+                        View More
                       </button>
                       <button
                         onClick={() => subscribeHost(e)}
@@ -465,22 +769,6 @@ export default function Dashboard() {
                         title="Subscribe to host updates"
                       >
                         <Building2 className="w-5 h-5 text-yellow-400" />
-                      </button>
-                      {e.isCompleted && (
-                        <button
-                          onClick={() => navigateToReview(e._id)}
-                          className="px-3 py-2 rounded-lg bg-[#151518] hover:bg-[#1b1b20] border border-[#2a2a30]"
-                          title="Write a detailed review"
-                        >
-                          <MessageSquare className="w-5 h-5 text-blue-400" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => downloadCertificate(e)}
-                        className="px-3 py-2 rounded-lg bg-[#151518] hover:bg-[#1b1b20] border border-[#2a2a30]"
-                        title="Download certificate"
-                      >
-                        <Trophy className="w-5 h-5 text-yellow-400" />
                       </button>
                     </div>
                   </div>
@@ -508,7 +796,13 @@ export default function Dashboard() {
                       <span>{new Date(e.date).toLocaleString()}</span>
                     </div>
                     <div className="space-y-2">
-                      <button onClick={() => downloadCertificate(e)} className="w-full px-3 py-2 rounded-lg bg-yellow-500 text-black hover:bg-yellow-400">Download Certificate</button>
+                      <button 
+                        onClick={() => downloadCertificate(e)} 
+                        disabled={!e.isCompleted}
+                        className={`w-full px-3 py-2 rounded-lg ${e.isCompleted ? "bg-yellow-500 text-black hover:bg-yellow-400" : "bg-gray-700/50 cursor-not-allowed opacity-60"}`}
+                      >
+                        Download Certificate
+                      </button>
                       {e.isCompleted && (
                         <button 
                           onClick={() => navigateToReview(e._id)} 
@@ -547,7 +841,7 @@ export default function Dashboard() {
                       <span>{new Date(e.date).toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => registerEvent(e)} className="flex-1 px-3 py-2 rounded-lg bg-yellow-500 text-black hover:bg-yellow-400">{isRegistered(e._id) ? "Registered" : "Register"}</button>
+                      <button onClick={() => handleViewMore(e)} className="flex-1 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">View More</button>
                       <button onClick={() => setActiveTab("Explore")} className="px-3 py-2 rounded-lg bg-[#151518] hover:bg-[#1b1b20] border border-[#2a2a30]">Explore</button>
                     </div>
                   </div>
@@ -625,6 +919,32 @@ export default function Dashboard() {
       )}
           </div>
         )}
+
+        {/* Payment Modal */}
+        <PaymentModal
+          isOpen={paymentModalOpen}
+          onClose={handlePaymentCancel}
+          event={selectedEvent}
+          user={user}
+          onSuccess={handlePaymentSuccess}
+          onError={handlePaymentError}
+          onCancel={handlePaymentCancel}
+        />
+
+        {/* Event Detail Modal */}
+        <EventDetailModal
+          event={selectedEventForDetail}
+          isOpen={eventDetailModalOpen}
+          onClose={handleEventDetailClose}
+          user={user}
+          onRegister={handleRegisterFromDetail}
+          onBookmark={toggleBookmark}
+          onSubscribe={subscribeHost}
+          onNavigateToReview={navigateToReview}
+          onDownloadCertificate={downloadCertificate}
+          isRegistered={(id) => registrations.some((r) => r.eventId === id)}
+          isBookmarked={isBookmarked}
+        />
       </main>
     </div>
   );

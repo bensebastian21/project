@@ -7,12 +7,14 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel"; // ✅ Import Admin Panel
+import Profile from "./pages/Profile";
 import PasswordReset from "./components/PasswordReset"; // ✅ Import Password Reset
 import OAuthCallback from "./components/OAuthCallback"; // ✅ OAuth callback handler
 import RequireAuth from "./components/RequireAuth";
 import HostDashboard from "./pages/HostDashboard";
 import ReviewPage from "./pages/ReviewPage";
 import HostRegister from "./components/HostRegister";
+import PaymentUIDemo from "./components/PaymentUIDemo";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -69,6 +71,15 @@ export default function App() {
         <Route path="/register-host" element={<HostRegister />} />
         <Route path="/reset-password" element={<PasswordReset />} />
         <Route path="/oauth-callback" element={<OAuthCallback />} />
+        <Route path="/payment-demo" element={<PaymentUIDemo />} />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth allowedRoles={["student", "host", "admin"]}>
+              <Profile />
+            </RequireAuth>
+          }
+        />
       </Routes>
     </Router>
   );

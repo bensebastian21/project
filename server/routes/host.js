@@ -2,14 +2,32 @@ const express = require("express");
 const router = express.Router();
 const Event = require("../models/Event");
 const User = require("../models/User");
+const https = require("https");
+const crypto = require("crypto");
 
 // Reuse auth helpers from auth routes by re-defining minimal middleware here
 const jwt = require("jsonwebtoken");
 
-// Public: list published events regardless of host (excluding soft-deleted)
-router.get("/public/events", async (req, res) => {
+// Optional auth: decode JWT if provided, ignore if missing/invalid
+const optionalAuth = (req, _res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) return next();
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (!err) req.user = user;
+    next();
+  });
+};
+
+// Public: list published events regardless of host (excluding soft-deleted), can exclude self if auth provided
+router.get("/public/events", optionalAuth, async (req, res) => {
   try {
-    const events = await Event.find({ isPublished: true, isDeleted: { $ne: true } }).sort({ date: -1 });
+    const filter = { isPublished: true, isDeleted: { $ne: true } };
+    const excludeSelf = String(req.query.excludeSelf || "false").toLowerCase() === "true";
+    if (excludeSelf && req.user?.id) {
+      filter.hostId = { $ne: req.user.id };
+    }
+    const events = await Event.find(filter).sort({ date: -1 });
     res.json(events);
   } catch (err) {
     console.error("Public events error:", err);
@@ -17,7 +35,146 @@ router.get("/public/events", async (req, res) => {
   }
 });
 
-const authenticateToken = (req, res, next) => {
+// Public: list events the current user is registered for (server source of truth)
+router.get("/public/my-registrations", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const events = await Event.find({
+      isDeleted: { $ne: true },
+      registrations: { $elemMatch: { studentId: userId, status: "registered" } },
+    }).select("_id title").lean();
+    const list = (events || []).map(e => ({ eventId: String(e._id), title: e.title }));
+    res.json(list);
+  } catch (err) {
+    console.error("List my registrations error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Payments config (public-safe: only exposes key id)
+router.get("/payments/config", async (_req, res) => {
+  try {
+    res.json({ keyId: process.env.RAZORPAY_KEY_ID || null });
+  } catch (err) {
+    res.status(500).json({ keyId: null });
+  }
+});
+
+// Create Razorpay order
+router.post("/payments/create-order", authenticateToken, async (req, res) => {
+  try {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) {
+      console.error("Razorpay not configured - missing environment variables");
+      return res.status(500).json({ error: "Payment is not configured" });
+    }
+
+    const { amount, currency = "INR", receipt } = req.body || {};
+    console.log("Payment request:", { amount, currency, receipt });
+    
+    const amt = parseInt(amount, 10);
+    if (!amt || amt <= 0) {
+      console.error("Invalid amount:", amount);
+      return res.status(400).json({ error: "Invalid amount" });
+    }
+
+    const payload = JSON.stringify({ 
+      amount: amt, 
+      currency, 
+      receipt: receipt || `rcpt_${Date.now()}`,
+      notes: {
+        source: "student-event-portal"
+      }
+    });
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+    const options = {
+      hostname: "api.razorpay.com",
+      path: "/v1/orders",
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${auth}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload)
+      }
+    };
+
+    console.log("Making Razorpay request with payload:", payload);
+
+    const rq = https.request(options, (rs) => {
+      let body = "";
+      rs.on("data", (chunk) => (body += chunk));
+      rs.on("end", () => {
+        console.log("Razorpay response status:", rs.statusCode);
+        console.log("Razorpay response body:", body);
+        try {
+          const data = JSON.parse(body || "{}");
+          if (rs.statusCode >= 200 && rs.statusCode < 300) return res.json(data);
+          return res.status(rs.statusCode || 500).json({ error: data.error?.description || "Order create failed" });
+        } catch (e) {
+          console.error("Failed to parse Razorpay response:", e);
+          return res.status(500).json({ error: "Invalid response from payment gateway" });
+        }
+      });
+    });
+    rq.on("error", (e) => {
+      console.error("Razorpay request error:", e);
+      res.status(500).json({ error: e.message });
+    });
+    rq.write(payload);
+    rq.end();
+  } catch (err) {
+    console.error("Create order error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Verify Razorpay payment signature
+router.post("/payments/verify", authenticateToken, async (req, res) => {
+  try {
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keySecret) return res.status(500).json({ error: "Payment is not configured" });
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ error: "Missing payment params" });
+    }
+    const generated = crypto
+      .createHmac("sha256", keySecret)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+    const valid = generated === razorpay_signature;
+    if (!valid) return res.status(400).json({ error: "Invalid payment signature" });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Verify payment error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Public: list published events occurring on a given date (YYYY-MM-DD), optional exclude self
+router.get("/public/events-by-date", optionalAuth, async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: "Missing date (YYYY-MM-DD)" });
+    const day = new Date(date);
+    if (isNaN(day.getTime())) return res.status(400).json({ error: "Invalid date" });
+    const start = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), 0, 0, 0));
+    const end = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate(), 23, 59, 59, 999));
+
+    const filter = { isPublished: true, isDeleted: { $ne: true }, date: { $gte: start, $lte: end } };
+    const excludeSelf = String(req.query.excludeSelf || "false").toLowerCase() === "true";
+    if (excludeSelf && req.user?.id) {
+      filter.hostId = { $ne: req.user.id };
+    }
+    const events = await Event.find(filter).sort({ date: 1 });
+    res.json(events);
+  } catch (err) {
+    console.error("Public events-by-date error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.status(401).json({ error: "Access token required" });
@@ -26,14 +183,14 @@ const authenticateToken = (req, res, next) => {
     req.user = user;
     next();
   });
-};
+}
 
-const requireHost = (req, res, next) => {
+function requireHost(req, res, next) {
   if (req.user.role !== "host" && req.user.role !== "admin") {
     return res.status(403).json({ error: "Host access required" });
   }
   next();
-};
+}
 
 // Create Event
 router.post("/events", authenticateToken, requireHost, async (req, res) => {
@@ -235,6 +392,12 @@ router.get("/notifications", authenticateToken, requireHost, async (req, res) =>
 // Public: register for an event (only active, not soft-deleted)
 router.post("/public/events/:id/register", authenticateToken, async (req, res) => {
   try {
+    // Enforce verification
+    const u = await User.findById(req.user.id).lean();
+    if (!u) return res.status(401).json({ error: "User not found" });
+    if (!u.emailVerified || !u.phoneVerified) {
+      return res.status(403).json({ error: "Please verify your email and phone to register for events" });
+    }
     const { id } = req.params;
     const event = await Event.findOne({ _id: id, isPublished: true, isDeleted: { $ne: true } });
     if (!event) return res.status(404).json({ error: "Event not found" });
@@ -243,7 +406,10 @@ router.post("/public/events/:id/register", authenticateToken, async (req, res) =
     const already = (event.registrations || []).some(
       (r) => String(r.studentId) === String(req.user.id) && r.status === "registered"
     );
-    if (already) return res.status(400).json({ error: "Already registered" });
+    if (already) {
+      // Idempotent success to simplify client flows
+      return res.json({ message: "Already registered" });
+    }
 
     // Capacity check (if capacity > 0)
     if (event.capacity && event.capacity > 0) {

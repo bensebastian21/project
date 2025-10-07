@@ -42,11 +42,18 @@ const eventSchema = new mongoose.Schema({
   hostId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   registrations: { type: [registrationSchema], default: [] },
   feedbacks: { type: [feedbackSchema], default: [] },
+  // Users who bookmarked this event (no separate collection)
+  bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   // Soft delete flags
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+// Helpful indexes for common queries
+eventSchema.index({ isPublished: 1, isDeleted: 1, date: -1 });
+eventSchema.index({ hostId: 1, isDeleted: 1, date: -1 });
+eventSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Event", eventSchema);
