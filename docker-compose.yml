@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  web:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+      - REACT_APP_OAUTH_START_URL=${REACT_APP_OAUTH_START_URL}
+    volumes:
+      - ./client:/app
+      - /app/node_modules

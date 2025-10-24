@@ -56,76 +56,23 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Environment variable validation
-if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
-  console.warn("⚠️ MONGODB_URI is not set in environment. Using default.");
-  process.env.MONGODB_URI = "mongodb://localhost:27017/student_event_db";
-}
-if (!process.env.JWT_SECRET) {
-  console.warn("⚠️ JWT_SECRET is not set in environment. Using default.");
-  process.env.JWT_SECRET = "your_jwt_secret_key_here_change_this_in_production";
-}
-
-// Use MONGODB_URI if available, otherwise fall back to MONGO_URI
-const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://localhost:27017/student_event_db";
-let mongoConnected = false;
-
-// MongoDB connection function
-async function connectWithRetry(retries = 5, delayMs = 3000) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      await mongoose.connect(mongoUri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-      mongoConnected = true;
-      console.log("✅ MongoDB Connected");
-      console.log("MongoDB URI:", mongoUri);
-      break;
-    } catch (err) {
-      mongoConnected = false;
-      console.log(`❌ DB connection attempt ${attempt}/${retries} failed:`);
-      console.log(err?.message || err);
-      if (attempt < retries) {
-        console.log(`⏳ Retrying in ${Math.round(delayMs / 1000)}s...`);
-        await new Promise((r) => setTimeout(r, delayMs));
-      } else {
-        console.log("⚠️ Giving up after max retries. Server will continue without DB.");
-      }
-    }
-  }
-}
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect to MongoDB
-connectWithRetry();
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/student-events", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error("Database connection error:", error);
+    process.exit(1);
+  }
+};
 
-// Handle connection events
-mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
-});
-
-mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected');
-});
-
-// Health check endpoint
-app.get("/health", (req, res) => {
-  res.json({
-    ok: true,
-    uptime: process.uptime(),
-    env: process.env.NODE_ENV || "development",
-    mongo: { connected: mongoConnected },
-    timestamp: new Date().toISOString()
-  });
-});
-
-// API Routes
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/host", hostRoutes);
 app.use("/api/users", usersRoutes);
@@ -136,6 +83,11 @@ app.use("/api/certificates", certificatesRoutes);
 app.use("/api/subscriptions", subscriptionsRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/chat", chatRoutes);
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -152,7 +104,7 @@ app.use('*', (req, res) => {
 module.exports = async (req, res) => {
   // Connect to database if not already connected
   if (mongoose.connection.readyState === 0) {
-    await connectWithRetry();
+    await connectDB();
   }
   
   // Handle the request
@@ -162,15 +114,9 @@ module.exports = async (req, res) => {
 // For local development
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
-  console.log("Starting server on port:", PORT);
-  console.log("Environment variables:");
-  console.log("- MONGODB_URI:", mongoUri);
-  console.log("- JWT_SECRET:", process.env.JWT_SECRET ? "SET" : "NOT SET");
-  console.log("- CLIENT_ORIGIN:", process.env.CLIENT_ORIGIN || "http://localhost:3000");
-  console.log("- CORS: Allowing multiple localhost ports (3000-3009)");
-
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-    console.log(`CORS: Allowing localhost ports 3000-3009 and ${process.env.CLIENT_ORIGIN || "default origin"}`);
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
   });
 }
