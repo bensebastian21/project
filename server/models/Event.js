@@ -3,7 +3,8 @@ const mongoose = require("mongoose");
 const registrationSchema = new mongoose.Schema({
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   registeredAt: { type: Date, default: Date.now },
-  status: { type: String, enum: ["registered", "cancelled"], default: "registered" }
+  status: { type: String, enum: ["registered", "cancelled"], default: "registered" },
+  attended: { type: Boolean, default: false }
 });
 
 const feedbackSchema = new mongoose.Schema({
@@ -19,6 +20,7 @@ const eventSchema = new mongoose.Schema({
   shortDescription: { type: String, default: "" },
   date: { type: Date, required: true },
   endDate: { type: Date },
+  registrationDeadline: { type: Date },
   location: { type: String, default: "" },
   address: { type: String, default: "" },
   city: { type: String, default: "" },
@@ -35,6 +37,7 @@ const eventSchema = new mongoose.Schema({
   contactPhone: { type: String, default: "" },
   website: { type: String, default: "" },
   imageUrl: { type: String, default: "" },
+  images: { type: [String], default: [] },
   isOnline: { type: Boolean, default: false },
   meetingLink: { type: String, default: "" },
   isCompleted: { type: Boolean, default: false },

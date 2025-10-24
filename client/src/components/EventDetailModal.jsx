@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import config from '../config';
 import { 
   X, Calendar, MapPin, Clock, Users, Tag, Globe, Phone, Mail, 
   CreditCard, Bookmark, BookmarkCheck, Building2, MessageSquare, 
@@ -16,9 +17,20 @@ const EventDetailModal = ({
   onNavigateToReview,
   onDownloadCertificate,
   isRegistered,
-  isBookmarked 
+  isBookmarked,
+  isSubscribed,
+  onOpenHost,
+  certificateId,
+  disabledActions = false
 }) => {
   const [loading, setLoading] = useState(false);
+
+  const toAbsoluteUrl = (u) => {
+    const s = String(u || '');
+    if (!s) return s;
+    if (/^https?:\/\//i.test(s)) return s;
+    return `${config.apiBaseUrl.replace(/\/$/, '')}${s.startsWith('/') ? '' : '/'}${s}`;
+  };
 
   if (!isOpen || !event) return null;
 
@@ -53,6 +65,29 @@ const EventDetailModal = ({
     }).format(amount);
   };
 
+  const deadline = event?.registrationDeadline ? new Date(event.registrationDeadline) : null;
+  const [nowTs, setNowTs] = useState(Date.now());
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [isOpen]);
+  const now = new Date(nowTs);
+  const deadlinePassed = deadline && !isNaN(deadline.getTime()) && now.getTime() > deadline.getTime();
+  const fmtCountdown = (end) => {
+    if (!end) return '';
+    const ms = new Date(end) - new Date();
+    if (ms <= 0) return '0s';
+    const d = Math.floor(ms / (24*60*60*1000));
+    const h = Math.floor((ms % (24*60*60*1000)) / (60*60*1000));
+    const m = Math.floor((ms % (60*60*1000)) / (60*1000));
+    const s = Math.floor((ms % (60*1000)) / 1000);
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full" style={{ maxHeight: '90vh' }}>
@@ -82,19 +117,33 @@ const EventDetailModal = ({
             </div>
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => onBookmark(event)}
-                className="text-white hover:text-yellow-300 transition-colors"
-                title={bookmarked ? "Remove bookmark" : "Bookmark event"}
+                onClick={() => { if (disabledActions) return; onBookmark(event); }}
+                disabled={disabledActions}
+                className={`transition-colors ${disabledActions ? 'text-white/50 cursor-not-allowed' : 'text-white hover:text-yellow-300'}`}
+                title={disabledActions ? 'Verify email and phone to use this action' : (bookmarked ? "Remove bookmark" : "Bookmark event")}
               >
                 {bookmarked ? <BookmarkCheck className="w-6 h-6" /> : <Bookmark className="w-6 h-6" />}
               </button>
               <button
-                onClick={() => onSubscribe(event)}
-                className="text-white hover:text-yellow-300 transition-colors"
-                title="Subscribe to host updates"
+                onClick={() => { if (disabledActions) return; onSubscribe(event); }}
+                disabled={disabledActions}
+                className={`transition-colors ${disabledActions ? 'text-white/50 cursor-not-allowed' : 'text-white hover:text-yellow-300'}`}
+                title={disabledActions ? 'Verify email and phone to use this action' : (isSubscribed ? "Unfollow host" : "Follow host")}
               >
                 <Building2 className="w-6 h-6" />
               </button>
+              {onOpenHost && (
+                <button
+                  onClick={() => {
+                    const hid = event?.hostId && (event.hostId._id || event.hostId);
+                    if (hid) onOpenHost(hid);
+                  }}
+                  className="text-white hover:text-yellow-300 transition-colors"
+                  title="Go to Host"
+                >
+                  <ExternalLink className="w-6 h-6" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -108,7 +157,7 @@ const EventDetailModal = ({
               {event.imageUrl && (
                 <div className="rounded-xl overflow-hidden">
                   <img 
-                    src={event.imageUrl} 
+                    src={toAbsoluteUrl(event.imageUrl)} 
                     alt={event.title}
                     className="w-full h-64 object-cover"
                   />
@@ -290,6 +339,16 @@ const EventDetailModal = ({
                   {event.price === 0 && (
                     <p className="text-green-600 font-semibold mt-1">Free Event!</p>
                   )}
+                  {deadline && !deadlinePassed && (
+                    <div className="mt-2 text-sm">
+                      <span className="inline-block px-2 py-1 rounded bg-amber-100 text-amber-800 border border-amber-200">Registration closes in {fmtCountdown(deadline)}</span>
+                    </div>
+                  )}
+                  {deadline && deadlinePassed && (
+                    <div className="mt-2 text-sm">
+                      <span className="inline-block px-2 py-1 rounded bg-red-100 text-red-700 border border-red-200">Registration closed</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -320,14 +379,23 @@ const EventDetailModal = ({
                           <Trophy className="w-5 h-5" />
                           <span>Download Certificate</span>
                         </button>
+                        {certificateId && (
+                          <a
+                            href={`/certificate/${certificateId}`}
+                            className="block w-full text-center py-2 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
+                          >
+                            View Certificate
+                          </a>
+                        )}
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       <button
                         onClick={handleRegister}
-                        disabled={loading}
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 shadow-lg"
+                        disabled={loading || disabledActions || !!deadlinePassed}
+                        title={disabledActions ? 'Verify email and phone to register' : (deadlinePassed ? 'Registration closed' : undefined)}
+                        className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 flex items-center justify-center space-x-3 shadow-lg ${disabledActions ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed'}`}
                       >
                         {loading ? (
                           <>
@@ -337,7 +405,7 @@ const EventDetailModal = ({
                         ) : (
                           <>
                             <CreditCard className="w-6 h-6" />
-                            <span>Register Now</span>
+                            <span>{deadlinePassed ? 'Registration Closed' : 'Register Now'}</span>
                           </>
                         )}
                       </button>
@@ -380,23 +448,35 @@ const EventDetailModal = ({
                 <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
                 <div className="space-y-2">
                   <button
-                    onClick={() => onBookmark(event)}
-                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                      isBookmarked 
-                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    onClick={() => { if (disabledActions) return; onBookmark(event); }}
+                    disabled={disabledActions}
+                    title={disabledActions ? 'Verify email and phone to use this action' : undefined}
+                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${disabledActions ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : (isBookmarked ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')}`}
                   >
                     {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
                     <span>{isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
                   </button>
                   <button
-                    onClick={() => onSubscribe(event)}
-                    className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    onClick={() => { if (disabledActions) return; onSubscribe(event); }}
+                    disabled={disabledActions}
+                    title={disabledActions ? 'Verify email and phone to use this action' : undefined}
+                    className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${disabledActions ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                   >
                     <Building2 className="w-4 h-4" />
-                    <span>Subscribe to Host</span>
+                    <span>{isSubscribed ? 'Unfollow Host' : 'Follow Host'}</span>
                   </button>
+                  {onOpenHost && (
+                    <button
+                      onClick={() => {
+                        const hid = event?.hostId && (event.hostId._id || event.hostId);
+                        if (hid) onOpenHost(hid);
+                      }}
+                      className="w-full flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <span>Go to Host</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

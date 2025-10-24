@@ -82,6 +82,15 @@ router.post("/events/:eventId/reviews", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Event not found or not completed yet" });
     }
 
+    // Require that the student was registered AND marked as attended
+    const reg = (event.registrations || []).find(r => String(r.studentId) === String(req.user.id) && r.status === 'registered');
+    if (!reg) {
+      return res.status(403).json({ error: 'Only registered attendees can review this event' });
+    }
+    if (!reg.attended) {
+      return res.status(403).json({ error: 'Only students who attended can submit a review' });
+    }
+
     // Check if user has already reviewed this event
     const existingReview = await Review.findOne({ eventId: eid, reviewerId: req.user.id });
     if (existingReview) {

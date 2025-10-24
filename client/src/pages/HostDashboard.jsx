@@ -9,7 +9,7 @@ import {
   Users, 
   Star, 
   CheckCircle, 
-  Bell, 
+  BellRing, 
   Download,
   Eye,
   Clock,
@@ -24,10 +24,26 @@ import {
   TrendingUp,
   Award,
   MessageSquare,
-  Activity
+  Activity,
+  Upload,
+  Image as ImageIcon,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Menu,
+  Home,
+  UserCircle2,
+  UserPen,
+  ShieldCheck,
+  FileText,
+  
 } from "lucide-react";
 import api from "../utils/api";
 import config from "../config";
+import SupportChatbot from "../components/SupportChatbot";
+// Charts
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar } from "recharts";
 
 const bearer = () => {
   const token = localStorage.getItem("token");
@@ -35,6 +51,14 @@ const bearer = () => {
 };
 
 export default function HostDashboard() {
+  // Build absolute URL for server-hosted files (e.g., /uploads/..)
+  const toAbsoluteUrl = (u) => {
+    const s = String(u || "");
+    if (!s) return s;
+    if (/^https?:\/\//i.test(s)) return s;
+    // ensure no double slashes
+    return `${config.apiBaseUrl.replace(/\/$/, "")}${s.startsWith("/") ? "" : "/"}${s}`;
+  };
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +74,7 @@ export default function HostDashboard() {
     shortDescription: "",
     date: "", 
     endDate: "",
+    registrationDeadline: "",
     location: "", 
     address: "",
     city: "",
@@ -79,24 +104,442 @@ export default function HostDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [lightbox, setLightbox] = useState({ open: false, images: [], index: 0 });
+  // Registrations UI state
+  const [regSearch, setRegSearch] = useState("");
+  const [regStatus, setRegStatus] = useState("all");
+  // Analytics date range
+  const [dateStart, setDateStart] = useState("");
+  const [dateEnd, setDateEnd] = useState("");
+  // Analytics tab persistence
+  const ANALYTICS_TAB_KEY = "host.analytics.tab";
+  const [analyticsTab, setAnalyticsTab] = useState(() => {
+    try { return localStorage.getItem(ANALYTICS_TAB_KEY) || 'Overview'; } catch { return 'Overview'; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(ANALYTICS_TAB_KEY, analyticsTab); } catch {}
+  }, [analyticsTab]);
+  // Host profile edit state
+  const [hostProfile, setHostProfile] = useState({
+    bio: "",
+    website: "",
+    socials: { twitter: "", instagram: "", linkedin: "" },
+    profilePic: "",
+    bannerUrl: "",
+  });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [hostProfileErrors, setHostProfileErrors] = useState({});
+  const [hostTouched, setHostTouched] = useState({});
+  const [profileJustSavedAt, setProfileJustSavedAt] = useState(0);
 
   // Host notifications read-tracking in localStorage
   const HOST_NOTIF_READ_KEY = "host.notifications.read";
   const loadLS = (key, fallback) => {
     try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch { return fallback; }
   };
+
+  // Reorder via drag and drop
+  const onThumbDragStart = (e, idx) => {
+    e.dataTransfer.setData('text/plain', String(idx));
+  };
+  const onThumbDrop = async (ev, event, dropIndex) => {
+    ev.preventDefault();
+    const fromIndex = parseInt(ev.dataTransfer.getData('text/plain'), 10);
+    if (isNaN(fromIndex)) return;
+    const imgs = Array.isArray(event.images) ? [...event.images] : [];
+    const [moved] = imgs.splice(fromIndex, 1);
+    imgs.splice(dropIndex, 0, moved);
+    try {
+      await api.put(`/api/host/events/${event._id}`, { images: imgs }, { headers: bearer() });
+      toast.success('✅ Gallery order saved');
+      await fetchEvents();
+    } catch (e) {
+      toast.error('❌ ' + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  const importXlsxFile = async (file) => {
+    if (!file || !selectedEvent?._id) return;
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      await api.post(`/api/host/events/${selectedEvent._id}/registrations/import-xlsx`, fd, { headers: { ...bearer(), 'Content-Type': 'multipart/form-data' } });
+      await loadRegistrations(selectedEvent);
+      toast.success('✅ Attendance imported from XLSX');
+    } catch (e) {
+      toast.error('❌ ' + (e?.response?.data?.error || e.message));
+    }
+  };
+  const onThumbDragOver = (e) => e.preventDefault();
+
+  // Lightbox controls
+  useEffect(() => {
+    if (!lightbox.open) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setLightbox(prev => ({ ...prev, open: false }));
+      if (e.key === 'ArrowRight') setLightbox(prev => ({ ...prev, index: (prev.index + 1) % (prev.images.length || 1) }));
+      if (e.key === 'ArrowLeft') setLightbox(prev => ({ ...prev, index: (prev.index - 1 + (prev.images.length || 1)) % (prev.images.length || 1) }));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox.open, lightbox.images, lightbox.index]);
+
+  // ---------- Profile update & uploads ----------
+  const isHttpUrl = (v) => /^https?:\/\/.+/.test(String(v || "").trim());
+  const validateHostField = (field, value) => {
+    switch (field) {
+      case 'website':
+        if (!value) return '';
+        return isHttpUrl(value) ? '' : 'Website must start with http:// or https://';
+      case 'twitter':
+      case 'instagram':
+        if (!value) return '';
+        return /^@?\w{1,30}$/.test(value) ? '' : 'Use handle like @username';
+      case 'linkedin':
+        if (!value) return '';
+        // allow full URL or handle-like
+        return (isHttpUrl(value) || /^@?[-\w.]{1,100}$/.test(value)) ? '' : 'Use full URL or @handle';
+      case 'bio':
+        return (String(value||'').length <= 1000) ? '' : 'Bio is too long';
+      default:
+        return '';
+    }
+  };
+
+  const computeHostErrors = (profile) => {
+    const errs = {};
+    errs.website = validateHostField('website', profile.website);
+    errs.twitter = validateHostField('twitter', profile.socials?.twitter);
+    errs.instagram = validateHostField('instagram', profile.socials?.instagram);
+    errs.linkedin = validateHostField('linkedin', profile.socials?.linkedin);
+    errs.bio = validateHostField('bio', profile.bio);
+    return errs;
+  };
+
+  const validateHostProfileAll = () => {
+    const errs = computeHostErrors(hostProfile);
+    setHostProfileErrors(errs);
+    const hasAny = Object.values(errs).some(Boolean);
+    return !hasAny;
+  };
+
+  const hostProfileValid = React.useMemo(() => {
+    const errs = computeHostErrors(hostProfile);
+    return !Object.values(errs).some(Boolean);
+  }, [hostProfile]);
+
+  const handleHostFieldBlur = (field) => {
+    setHostTouched(prev => ({ ...prev, [field]: true }));
+    let value;
+    if (field === 'website' || field === 'bio') value = hostProfile[field];
+    else value = hostProfile.socials?.[field] || '';
+    const err = validateHostField(field, value);
+    setHostProfileErrors(prev => ({ ...prev, [field]: err }));
+  };
+
+  const saveHostProfile = async () => {
+    if (!validateHostProfileAll()) {
+      toast.error('❌ Please fix profile errors before saving');
+      return;
+    }
+    try {
+      setProfileSaving(true);
+      // Normalize socials: ensure '@' prefix for handles
+      const norm = { ...(hostProfile.socials || {}) };
+      const ensureAt = (v) => {
+        const s = String(v || '').trim();
+        if (!s) return '';
+        return s.startsWith('@') ? s : `@${s}`;
+      };
+      norm.twitter = norm.twitter && !/^https?:\/\//i.test(norm.twitter) ? ensureAt(norm.twitter) : (norm.twitter || '');
+      norm.instagram = norm.instagram && !/^https?:\/\//i.test(norm.instagram) ? ensureAt(norm.instagram) : (norm.instagram || '');
+      // LinkedIn: keep URL as-is; if not URL, treat like handle
+      norm.linkedin = norm.linkedin && !/^https?:\/\//i.test(norm.linkedin) ? ensureAt(norm.linkedin) : (norm.linkedin || '');
+      const payload = {
+        bio: hostProfile.bio,
+        website: hostProfile.website,
+        socials: norm,
+        profilePic: hostProfile.profilePic,
+        bannerUrl: hostProfile.bannerUrl,
+      };
+      const { data } = await api.put(`/api/host/profile`, payload, { headers: bearer() });
+      setHostProfile(prev => ({ ...prev, profilePic: data?.user?.profilePic || prev.profilePic, bannerUrl: data?.user?.bannerUrl || prev.bannerUrl }));
+      toast.success("✅ Profile saved");
+      setProfileJustSavedAt(Date.now());
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  // Show validation errors immediately on mount
+  useEffect(() => {
+    setHostTouched({ website: true, twitter: true, instagram: true, linkedin: true, bio: true });
+    validateHostProfileAll();
+  }, []);
+
+  const uploadHostImage = async (type, file) => {
+    if (!file) return;
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      const { data } = await api.post(`/api/host/profile/upload?type=${encodeURIComponent(type)}`, fd, { headers: { ...bearer(), "Content-Type": "multipart/form-data" } });
+      const abs = toAbsoluteUrl(data?.url);
+      if (type === "profile") setHostProfile(prev => ({ ...prev, profilePic: abs || prev.profilePic }));
+      else setHostProfile(prev => ({ ...prev, bannerUrl: abs || prev.bannerUrl }));
+      toast.success("✅ Uploaded");
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  const uploadEventCover = async (ev, file) => {
+    if (!file) return;
+    try {
+      const fd = new FormData();
+      fd.append("image", file);
+      await api.post(`/api/host/events/${ev._id}/cover`, fd, { headers: { ...bearer(), "Content-Type": "multipart/form-data" } });
+      toast.success("✅ Cover updated");
+      await fetchEvents();
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  const uploadEventImages = async (ev, files) => {
+    if (!files || !files.length) return;
+    try {
+      const fd = new FormData();
+      Array.from(files).forEach(f => fd.append("images", f));
+      await api.post(`/api/host/events/${ev._id}/images`, fd, { headers: { ...bearer(), "Content-Type": "multipart/form-data" } });
+      toast.success("✅ Images uploaded");
+      await fetchEvents();
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  const setEventCoverFromUrl = async (ev, url) => {
+    try {
+      await api.put(`/api/host/events/${ev._id}`, { imageUrl: url }, { headers: bearer() });
+      toast.success("✅ Cover set from gallery");
+      await fetchEvents();
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  const deleteEventImage = async (ev, url) => {
+    if (!window.confirm("Remove this image from the gallery?")) return;
+    try {
+      await api.delete(`/api/host/events/${ev._id}/images`, { headers: bearer(), params: { url } });
+      toast.success("✅ Image removed");
+      await fetchEvents();
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
   const saveLS = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const notifKey = (n) => `${n.type || "n"}|${n.eventId || "none"}|${n.at || 0}`;
 
   const [notifOpen, setNotifOpen] = useState(false);
   const [readSet, setReadSet] = useState(() => new Set(loadLS(HOST_NOTIF_READ_KEY, [])));
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  const [navOverlayOpen, setNavOverlayOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState(null);
+  // Attendance export helpers (CSV/XLSX)
 
   // Review field customization state
   const [showReviewFieldsForm, setShowReviewFieldsForm] = useState(false);
   const [selectedEventForReviewFields, setSelectedEventForReviewFields] = useState(null);
   const [reviewFields, setReviewFields] = useState([]);
 
+  // ---------- Derived: filtered registrations and analytics ----------
+  const filteredRegistrations = useMemo(() => {
+    let list = registrations || [];
+    if (regStatus !== "all") list = list.filter(r => r.status === regStatus);
+    const q = regSearch.trim().toLowerCase();
+    if (q) {
+      list = list.filter(r => {
+        const name = String(r.studentId?.fullname || "").toLowerCase();
+        const email = String(r.studentId?.email || "").toLowerCase();
+        return name.includes(q) || email.includes(q);
+      });
+    }
+    return list;
+  }, [registrations, regStatus, regSearch]);
+
+  // Registrations over time (by registeredAt day) within date range
+  const registrationsSeries = useMemo(() => {
+    const map = new Map();
+    (events||[]).forEach(e => {
+      (e.registrations||[]).forEach(r => {
+        if (r.status !== 'registered') return;
+        const d = r.registeredAt ? new Date(r.registeredAt) : null;
+        if (!d) return;
+        if (!inDateRange(d)) return;
+        const key = d.toISOString().slice(0,10);
+        map.set(key, (map.get(key) || 0) + 1);
+      });
+    });
+    const arr = Array.from(map.entries()).sort((a,b)=> a[0].localeCompare(b[0])).map(([date, count])=> ({ date, count }));
+    return arr;
+  }, [events, dateStart, dateEnd]);
+
+  // Analytics: registrations grouped by event (By Event)
+  const registrationsByEvent = useMemo(() => {
+    const map = new Map();
+    (events||[]).forEach(e => {
+      if (!dateStart && !dateEnd) {
+        map.set(e.title || 'Untitled', (e.registrations||[]).filter(r=>r.status==='registered').length + (map.get(e.title||'Untitled')||0));
+      } else {
+        if (!inDateRange(e.date)) return;
+        map.set(e.title || 'Untitled', (e.registrations||[]).filter(r=>r.status==='registered').length + (map.get(e.title||'Untitled')||0));
+      }
+    });
+    const arr = Array.from(map.entries()).map(([name,value])=>({ name, value })).sort((a,b)=> b.value - a.value).slice(0,10);
+    return arr;
+  }, [events, dateStart, dateEnd]);
+
+  // Analytics: events per day (By Day)
+  const eventsByDay = useMemo(() => {
+    const map = new Map();
+    (events||[]).forEach(e => {
+      if (!dateStart && !dateEnd) {
+        const key = new Date(e.date).toISOString().slice(0,10);
+        map.set(key, (map.get(key)||0)+1);
+      } else {
+        if (!inDateRange(e.date)) return;
+        const key = new Date(e.date).toISOString().slice(0,10);
+        map.set(key, (map.get(key)||0)+1);
+      }
+    });
+    return Array.from(map.entries()).sort((a,b)=> a[0].localeCompare(b[0])).map(([date,count])=>({ date, count }));
+  }, [events, dateStart, dateEnd]);
+
+  function inDateRange(d) {
+    const time = new Date(d).getTime();
+    if (isNaN(time)) return false;
+    const startOk = !dateStart || time >= new Date(dateStart).getTime();
+    const endOk = !dateEnd || time <= new Date(dateEnd).getTime() + 24*60*60*1000 - 1;
+    return startOk && endOk;
+  }
+
+  const statsOverRange = useMemo(() => {
+    const evs = (events||[]).filter(e => !dateStart && !dateEnd ? true : inDateRange(e.date));
+    const total = evs.length;
+    const completed = evs.filter(e=>e.isCompleted).length;
+    const upcoming = evs.filter(e=> new Date(e.date) > new Date()).length;
+    const totalRegistrations = evs.reduce((acc,e)=> acc + ((e.registrations||[]).filter(r=>r.status==='registered').length), 0);
+    // average rating placeholder (if available via feedbacks on events)
+    const allRatings = (evs||[]).flatMap(e => (e.feedbacks||[]).map(f=>f.overallRating||0)).filter(x=>x>0);
+    const avg = allRatings.length? (allRatings.reduce((a,b)=>a+b,0)/allRatings.length).toFixed(1) : '0.0';
+    return { total, completed, upcoming, totalRegistrations, avgRating: avg };
+  }, [events, dateStart, dateEnd]);
+
+  const notificationsOverRange = useMemo(() => {
+    if (!dateStart && !dateEnd) return notifications;
+    return (notifications||[]).filter(n => inDateRange(n.at));
+  }, [notifications, dateStart, dateEnd]);
+
+  // Events by status for current range
+  const eventsByStatus = useMemo(() => {
+    const evs = (events||[]).filter(e => !dateStart && !dateEnd ? true : inDateRange(e.date));
+    const completed = evs.filter(e=>e.isCompleted).length;
+    const upcoming = evs.filter(e=> new Date(e.date) > new Date()).length;
+    const total = evs.length;
+    return [
+      { name: 'Completed', value: completed },
+      { name: 'Upcoming', value: upcoming },
+      { name: 'Total', value: total }
+    ];
+  }, [events, dateStart, dateEnd]);
+
+  const exportRegistrationsCsv = () => {
+    const headers = ["Student Name","Email","Registered At","Status"]; 
+    if (selectedEvent) headers.unshift("Event Title");
+    const rows = [headers];
+    filteredRegistrations.forEach(r => {
+      const row = [
+        r.studentId?.fullname || "",
+        r.studentId?.email || "",
+        r.registeredAt ? new Date(r.registeredAt).toLocaleString() : "",
+        r.status || ""
+      ];
+      if (selectedEvent) row.unshift(selectedEvent.title || "");
+      rows.push(row);
+    });
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `registrations_${selectedEvent?._id || 'all'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    navigate("/");
+  };
+
+  const copyHostLink = async () => {
+    try {
+      const base = window.location.origin || '';
+      const link = `${base}/host/${user?._id || ''}`;
+      await navigator.clipboard.writeText(link);
+      toast.success("✅ Public link copied");
+    } catch (e) {
+      toast.error("❌ Failed to copy link");
+    }
+  };
+
+  useEffect(() => {
+    const u = localStorage.getItem("user");
+    setUser(u ? JSON.parse(u) : null);
+  }, []);
+
+  // Ensure profile prefill uses absolute URLs
+  const loadProfile = async () => {
+    try {
+      setProfileLoading(true);
+      const userRaw = localStorage.getItem("user");
+      const u = userRaw ? JSON.parse(userRaw) : null;
+      if (!u?._id) return;
+      const { data } = await api.get(`/api/host/public/host/${u._id}`, { headers: bearer() });
+      const h = data?.host || {};
+      setHostProfile({
+        bio: h.bio || "",
+        website: h.website || "",
+        socials: h.socials || { twitter: "", instagram: "", linkedin: "" },
+        profilePic: toAbsoluteUrl(h.profilePic || ""),
+        bannerUrl: toAbsoluteUrl(h.bannerUrl || ""),
+      });
+    } catch (e) {
+      // ignore
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const onClick = (e) => {
+      if (profileMenuOpen && !e.target.closest('.profile-menu')) {
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [profileMenuOpen]);
 
   // Validation functions
   const validateField = (field, value) => {
@@ -114,6 +557,19 @@ export default function HostDashboard() {
         if (!value) return "";
         if (!form.date) return "Please set start date first";
         return new Date(value) > new Date(form.date) ? "" : "End date must be after start date";
+      case "registrationDeadline":
+        if (!value) return "Registration deadline is required";
+        try {
+          const now = new Date();
+          const dl = new Date(value);
+          if (isNaN(dl.getTime())) return "Invalid deadline date";
+          if (dl < new Date(now.getTime() - 60*1000)) return "Deadline cannot be in the past";
+          if (form.date) {
+            const start = new Date(form.date);
+            if (!isNaN(start.getTime()) && dl >= start) return "Deadline must be before start date";
+          }
+          return "";
+        } catch { return "Invalid deadline date"; }
       case "location":
         return value.length >= 2 ? "" : "Location is required";
       case "address":
@@ -188,6 +644,12 @@ export default function HostDashboard() {
   };
 
   const handleFieldBlur = (field) => {
+    setTouchedFields(prev => ({ ...prev, [field]: true }));
+    const error = validateField(field, form[field]);
+    setFormErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const handleFieldFocus = (field) => {
     setTouchedFields(prev => ({ ...prev, [field]: true }));
     const error = validateField(field, form[field]);
     setFormErrors(prev => ({ ...prev, [field]: error }));
@@ -273,15 +735,42 @@ export default function HostDashboard() {
     fetchOtherCollegeEvents();
   }, []);
 
+  // Load current host profile for editing
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setProfileLoading(true);
+        const userRaw = localStorage.getItem("user");
+        const u = userRaw ? JSON.parse(userRaw) : null;
+        if (!u?._id) return;
+        const { data } = await api.get(`/api/host/public/host/${u._id}`, { headers: bearer() });
+        const h = data?.host || {};
+        setHostProfile({
+          bio: h.bio || "",
+          website: h.website || "",
+          socials: h.socials || { twitter: "", instagram: "", linkedin: "" },
+          profilePic: h.profilePic || "",
+          bannerUrl: h.bannerUrl || "",
+        });
+      } catch (e) {
+        // ignore
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    loadProfile();
+  }, []);
+
   const openCreate = () => {
     setEditingEvent(null);
-    setForm({ 
-      title: "", 
-      description: "", 
+    setForm({
+      title: "",
+      description: "",
       shortDescription: "",
-      date: "", 
+      date: "",
       endDate: "",
-      location: "", 
+      registrationDeadline: "",
+      location: "",
       address: "",
       city: "",
       state: "",
@@ -295,6 +784,7 @@ export default function HostDashboard() {
       agenda: "",
       contactEmail: "",
       contactPhone: "",
+      countryCode: "+91",
       website: "",
       imageUrl: "",
       isOnline: false,
@@ -314,6 +804,7 @@ export default function HostDashboard() {
       shortDescription: event.shortDescription || "",
       date: event.date ? new Date(event.date).toISOString().slice(0, 16) : "",
       endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
+      registrationDeadline: event.registrationDeadline ? new Date(event.registrationDeadline).toISOString().slice(0, 16) : "",
       location: event.location || "",
       address: event.address || "",
       city: event.city || "",
@@ -351,6 +842,7 @@ export default function HostDashboard() {
         ...form,
         date: form.date ? new Date(form.date).toISOString() : undefined,
         endDate: form.endDate ? new Date(form.endDate).toISOString() : undefined,
+        registrationDeadline: form.registrationDeadline ? new Date(form.registrationDeadline).toISOString() : undefined,
         tags: form.tags ? form.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [],
         capacity: parseInt(form.capacity) || 0,
         price: parseFloat(form.price) || 0,
@@ -406,6 +898,51 @@ export default function HostDashboard() {
       setRegistrations(res.data);
     } catch (e) {
       toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  // ---------- Attendance management ----------
+  const updateAttendance = async (eventId, studentId, attended) => {
+    try {
+      await api.put(`/api/host/events/${eventId}/registrations/${studentId}/attendance`, { attended }, { headers: bearer() });
+      setRegistrations(prev => prev.map(r => String(r.studentId?._id || r.studentId) === String(studentId) ? { ...r, attended } : r));
+      toast.success("✅ Attendance updated");
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  const downloadServerCsv = async () => {
+    if (!selectedEvent?._id) return;
+    try {
+      const res = await api.get(`/api/host/events/${selectedEvent._id}/registrations.csv`, { headers: { ...bearer() }, responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `registrations_${selectedEvent._id}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error("❌ " + (e?.response?.data?.error || e.message));
+    }
+  };
+
+  // Import options removed per request
+
+  const downloadServerXlsx = async () => {
+    if (!selectedEvent?._id) return;
+    try {
+      const res = await api.get(`/api/host/events/${selectedEvent._id}/registrations.xlsx`, { headers: { ...bearer() }, responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `registrations_${selectedEvent._id}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      toast.error('❌ ' + (e?.response?.data?.error || e.message));
     }
   };
 
@@ -510,11 +1047,6 @@ export default function HostDashboard() {
     return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [events, searchTerm, filterStatus]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/", { replace: true });
-  };
 
   const stats = useMemo(() => {
     const total = events.length;
@@ -533,419 +1065,739 @@ export default function HostDashboard() {
   }, [events]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
-      {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 px-6 py-4 sticky top-0 z-40">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Calendar className="w-7 h-7" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800">
+      {/* YouTube-like Header */}
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-full mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Left Section - Menu & Logo */}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setNavCollapsed(!navCollapsed)}
+                className="p-2 rounded-full hover:bg-slate-100 transition-colors duration-200"
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="w-6 h-6 text-slate-700" />
+              </button>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">
+                  <Calendar className="w-5 h-5 text-slate-700" />
+                </div>
+                <h1 className="text-xl font-bold text-slate-900">
+                  Evenite Host
+                </h1>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Host Dashboard
-              </h1>
-              <p className="text-gray-400">Manage your events and registrations</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4 relative">
-            <button
-              onClick={() => setNotifOpen((o) => !o)}
-              className="relative p-3 bg-gray-700/50 hover:bg-gray-600/50 rounded-xl transition-all duration-300 hover:scale-105"
-              aria-label="Notifications"
-            >
-              <Bell className="w-5 h-5" />
-              {(notifications || []).some(n => !n.read) && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
-                  {(notifications || []).filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
 
-            {notifOpen && (
-              <div className="absolute right-24 top-12 w-96 max-h-96 overflow-auto bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-50">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
-                  <span className="text-sm text-gray-300">Notifications</span>
+            {/* Center Section - Search Bar */}
+            <div className="flex-1 max-w-2xl mx-8">
+              <div className="relative">
+                <div className="flex items-center bg-white border border-slate-300 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={searchText}
+                    onChange={(e)=>setSearchText(e.target.value)}
+                    onKeyDown={(e)=>{ if(e.key==='Enter'){ setSearchQuery(searchText); } }}
+                    className="flex-1 px-4 py-3 bg-transparent text-slate-800 placeholder-slate-500 focus:outline-none rounded-l-full"
+                  />
                   <button
-                    onClick={() => {
-                      setReadSet((prev) => {
-                        const next = new Set(prev);
-                        (notifications || []).forEach(n => next.add(n._key));
-                        localStorage.setItem(HOST_NOTIF_READ_KEY, JSON.stringify(Array.from(next)));
-                        return next;
-                      });
-                      setNotifications((prev) => (prev || []).map(n => ({ ...n, read: true })));
-                    }}
-                    className="text-xs text-blue-400 hover:underline"
+                    onClick={()=> setSearchQuery(searchText)}
+                    className="px-4 py-3 border-l border-slate-300 hover:bg-slate-50 transition-colors duration-200"
                   >
-                    Mark all read
+                    <Search className="w-5 h-5 text-slate-600" />
                   </button>
                 </div>
-                <div className="divide-y divide-gray-800">
-                  {(notifications || []).length === 0 ? (
-                    <div className="p-3 text-sm text-gray-400">No notifications</div>
-                  ) : (
-                    (notifications || []).map((n, idx) => (
-                      <div key={n._key || idx} className="p-3 flex items-start gap-3">
-                        <div className={`w-2 h-2 rounded-full mt-2 ${n.read ? "bg-gray-600" : "bg-yellow-400"}`} />
-                        <div className="flex-1">
-                          <div className="text-sm text-gray-200">{n.message}</div>
-                          <div className="text-xs text-gray-500 mt-0.5">{new Date(n.at).toLocaleString()}</div>
+                
+              </div>
+            </div>
+
+            {/* Right Section - Actions & Profile */}
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <button
+                  onClick={()=> setNotifOpen(o=>!o)}
+                  className="p-2 rounded-full hover:bg-slate-100 transition-colors duration-200 relative"
+                >
+                  <BellRing className="w-6 h-6 text-slate-700" />
+                  {(notifications||[]).some(n=>!n.read) && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {(notifications||[]).filter(n=>!n.read).length}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 mt-2 w-96 max-h-96 overflow-auto bg-white rounded-xl border border-slate-200 shadow-xl z-50">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+                      <span className="text-sm text-slate-700">Notifications</span>
+                      <button
+                        onClick={() => {
+                          setReadSet((prev) => {
+                            const next = new Set(prev);
+                            (notifications || []).forEach(n => next.add(n._key));
+                            localStorage.setItem(HOST_NOTIF_READ_KEY, JSON.stringify(Array.from(next)));
+                            return next;
+                          });
+                          setNotifications((prev) => (prev || []).map(n => ({ ...n, read: true })));
+                        }}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Mark all read
+                      </button>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {(notifications||[]).length===0 ? (
+                        <div className="p-3 text-sm text-slate-500">No notifications</div>
+                      ) : (
+                        (notifications||[]).map((n, idx)=>(
+                          <div key={n._key || idx} className="p-3 flex items-start gap-3">
+                            <div className={`w-2 h-2 rounded-full mt-2 ${n.read? 'bg-slate-300':'bg-blue-500'}`}></div>
+                            <div className="flex-1">
+                              <div className="text-sm text-slate-800">{n.message || 'Notification'}</div>
+                              <div className="text-xs text-slate-500 mt-0.5">{n.at ? new Date(n.at).toLocaleString(): ''}</div>
+                            </div>
+                            {!n.read && (
+                              <button
+                                onClick={() => {
+                                  setReadSet((prev) => {
+                                    const next = new Set(prev);
+                                    next.add(n._key);
+                                    localStorage.setItem(HOST_NOTIF_READ_KEY, JSON.stringify(Array.from(next)));
+                                    return next;
+                                  });
+                                  setNotifications(prev => prev.map((x,i)=> i===idx ? {...x, read:true} : x));
+                                }}
+                                className="text-xs text-blue-600 hover:underline"
+                              >
+                                Mark read
+                              </button>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="relative profile-menu">
+                <button 
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  className="flex items-center space-x-2 p-1 rounded-full hover:bg-slate-100 transition-colors duration-200"
+                >
+                  <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                    <UserCircle2 className="w-5 h-5 text-slate-700" />
+                  </div>
+                </button>
+                {profileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl border border-slate-200 shadow-xl z-50 animate-in slide-in-from-top-2 duration-200">
+                    <div className="p-4">
+                      <div className="flex items-center space-x-3 mb-4 pb-4 border-b border-slate-100">
+                        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                          <UserCircle2 className="w-5 h-5 text-slate-700" />
                         </div>
-                        {!n.read && (
-                          <button
-                            onClick={() => {
-                              setReadSet((prev) => {
-                                const next = new Set(prev);
-                                next.add(n._key);
-                                localStorage.setItem(HOST_NOTIF_READ_KEY, JSON.stringify(Array.from(next)));
-                                return next;
-                              });
-                              setNotifications((prev) => prev.map(x => x._key === n._key ? { ...x, read: true } : x));
-                            }}
-                            className="text-xs text-blue-400 hover:underline"
-                          >
-                            Mark read
-                          </button>
-                        )}
+                        <div>
+                          <div className="font-semibold text-slate-900">{user?.fullname || user?.username}</div>
+                          <div className="text-sm text-slate-600">{user?.email}</div>
+                          <div className="text-xs text-slate-500 font-medium">Host</div>
+                        </div>
                       </div>
-                    ))
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => {
+                            setProfileMenuOpen(false);
+                            try {
+                              const id = user?.id || user?._id;
+                              if (id) {
+                                navigate(`/host/${id}`);
+                              } else {
+                                navigate('/profile');
+                              }
+                            } catch (_) {
+                              navigate('/profile');
+                            }
+                          }}
+                          className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                          <UserPen className="w-4 h-4" />
+                          <span>Profile</span>
+                        </button>
+                        <button onClick={() => { setProfileMenuOpen(false); handleLogout(); }} className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <LogOut className="w-4 h-4" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Lightbox Modal */}
+      {lightbox.open && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center">
+          <button className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full" onClick={()=> setLightbox(prev=> ({ ...prev, open: false }))}>
+            <X className="w-5 h-5 text-white" />
+          </button>
+          <button className="absolute left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full" onClick={()=> setLightbox(prev=> ({ ...prev, index: (prev.index - 1 + prev.images.length) % prev.images.length }))}>
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
+          <img src={lightbox.images[lightbox.index]} alt="Preview" className="max-w-[85vw] max-h-[85vh] object-contain rounded-lg" />
+          <button className="absolute right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full" onClick={()=> setLightbox(prev=> ({ ...prev, index: (prev.index + 1) % prev.images.length }))}>
+            <ChevronRight className="w-6 h-6 text-white" />
+          </button>
+        </div>
+      )}
+
+      {/* Main Content Layout */}
+      <div className="flex">
+        {/* YouTube-like Sidebar */}
+        <aside className={`bg-white/80 backdrop-blur-md border-r border-slate-200 transition-all duration-300 ease-in-out ${
+          navCollapsed ? 'w-16' : 'w-64'
+        } sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto`}>
+          <div className="p-4">
+            {/* Navigation Menu */}
+            <nav className="space-y-1">
+              {[
+                { id: "events", label: "Events", icon: Calendar },
+                { id: "registrations", label: "Registrations", icon: Users },
+                { id: "feedbacks", label: "Feedbacks", icon: Star },
+                { id: "analytics", label: "Analytics", icon: BarChart3 },
+              ].map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={`w-full flex items-center ${
+                    navCollapsed ? 'justify-center px-3' : 'justify-start px-4'
+                  } py-3 rounded-xl transition-all duration-200 group ${
+                    activeTab === id 
+                      ? 'bg-blue-100 text-blue-700 shadow-sm' 
+                      : 'text-slate-700 hover:bg-slate-100'
+                  }`}
+                  title={navCollapsed ? label : undefined}
+                >
+                  <Icon className={`w-5 h-5 ${activeTab === id ? 'text-blue-600' : 'text-slate-600 group-hover:text-slate-800'}`} />
+                  {!navCollapsed && (
+                    <span className={`ml-3 font-medium ${activeTab === id ? 'text-blue-700' : 'text-slate-700'}`}>
+                      {label}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+
+            {/* Sidebar quick block removed per request to de-gamify */}
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Content Header */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                {activeTab === "events" && "Events Management"}
+                {activeTab === "registrations" && "Event Registrations"}
+                {activeTab === "feedbacks" && "Event Feedbacks"}
+                {activeTab === "profile" && "Host Profile"}
+                {activeTab === "analytics" && "Analytics Dashboard"}
+              </h2>
+              <p className="text-slate-600">
+                {activeTab === "events" && "Create, edit, and manage your events"}
+                {activeTab === "registrations" && "View and manage event registrations"}
+                {activeTab === "feedbacks" && "Review feedback and ratings for your events"}
+                {activeTab === "profile" && "Update your public host page and account details"}
+                {activeTab === "analytics" && "Analyze your event performance and insights"}
+              </p>
+            </div>
+
+            {/* Stats Cards - only visible on Events tab */}
+            {activeTab === "events" && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                {[
+                  { label: "Total Events", value: stats.total, icon: Calendar },
+                  { label: "Completed", value: stats.completed, icon: CheckCircle },
+                  { label: "Upcoming", value: stats.upcoming, icon: Clock },
+                  { label: "Registrations", value: stats.totalRegistrations, icon: UserCheck },
+                ].map(({ label, value, icon: Icon }) => (
+                  <div 
+                    key={label}
+                    className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-slate-600 text-sm font-medium">{label}</p>
+                        <p className="text-3xl font-bold text-slate-900">{value}</p>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center">
+                        <Icon className="w-6 h-6 text-slate-700" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Profile Tab */}
+            {activeTab === "profile" && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold text-slate-900">Host Profile</h3>
+                    <p className="text-slate-600">Update your public host page and account details</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const id = user?.id || user?._id || user?.hostId || user?.host?._id;
+                        if (id) {
+                          navigate(`/host/${id}`);
+                        } else {
+                          toast.error('Host ID not available');
+                        }
+                      }}
+                      disabled={!(user?.id || user?._id || user?.hostId || user?.host?._id)}
+                      className={`px-4 py-2 rounded-xl transition-colors ${(user?.id || user?._id || user?.hostId || user?.host?._id) ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-slate-100 text-slate-400 cursor-not-allowed'}`}
+                      title="View your public host page"
+                    >
+                      View My Page
+                    </button>
+                    <button
+                      onClick={copyHostLink}
+                      className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition-colors"
+                    >
+                      Copy Public Link
+                    </button>
+                    <button
+                      onClick={saveHostProfile}
+                      disabled={profileSaving || !hostProfileValid}
+                      className={`px-4 py-2 rounded-xl transition-colors text-white ${profileSaving || !hostProfileValid ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                    >
+                      {profileSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    {profileJustSavedAt && (Date.now() - profileJustSavedAt < 3500) && (
+                      <span className="text-sm text-green-600">Saved!</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                  {/* Banner */}
+                  <div>
+                    <div className="text-sm font-medium text-slate-700 mb-2">Banner Image</div>
+                    {hostProfile.bannerUrl && (
+                      <img src={hostProfile.bannerUrl} alt="Banner" className="w-full h-40 object-cover rounded-lg mb-3" />
+                    )}
+                    <label className="inline-flex items-center gap-2 px-3 py-2 bg-purple-600/80 hover:bg-purple-700 text-white rounded-lg text-sm cursor-pointer">
+                      <Upload className="w-4 h-4" /> Upload Banner
+                      <input type="file" accept="image/*" className="hidden" onChange={(e)=> uploadHostImage('banner', e.target.files?.[0])} />
+                    </label>
+                  </div>
+
+                  {/* Avatar */}
+                  <div className="mt-6">
+                    <div className="text-sm font-medium text-slate-700 mb-2">Profile Picture</div>
+                    <div className="flex items-center gap-4">
+                      <img src={hostProfile.profilePic || ''} alt="Profile" className="w-16 h-16 rounded-full object-cover bg-slate-100 border border-slate-200" onError={(e)=>{ e.currentTarget.style.visibility='hidden'; }} />
+                      <label className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600/80 hover:bg-blue-700 text-white rounded-lg text-sm cursor-pointer">
+                        <Upload className="w-4 h-4" /> Upload Profile
+                        <input type="file" accept="image/*" className="hidden" onChange={(e)=> uploadHostImage('profile', e.target.files?.[0])} />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
+                      <textarea
+                        rows={4}
+                        value={hostProfile.bio}
+                        onChange={(e)=> setHostProfile(prev=> ({ ...prev, bio: e.target.value }))}
+                        className="w-full p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Tell attendees about you..."
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Website</label>
+                      <input
+                        type="url"
+                        value={hostProfile.website}
+                        onChange={(e)=> setHostProfile(prev=> ({ ...prev, website: e.target.value }))}
+                        onBlur={()=> handleHostFieldBlur('website')}
+                        className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 ${hostTouched.website && hostProfileErrors.website ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'}`}
+                        placeholder="https://example.com"
+                      />
+                      {hostTouched.website && hostProfileErrors.website && (
+                        <p className="text-sm text-red-600 mt-1">{hostProfileErrors.website}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Twitter</label>
+                      <input
+                        type="text"
+                        value={hostProfile.socials?.twitter || ''}
+                        onChange={(e)=> setHostProfile(prev=> {
+                          const val = e.target.value || '';
+                          const isUrl = /^https?:\/\//i.test(val);
+                          const v = isUrl ? val : (val.replace(/^@+/, '') ? '@' + val.replace(/^@+/, '') : '');
+                          return { ...prev, socials: { ...(prev.socials||{}), twitter: v } };
+                        })}
+                        onBlur={()=> handleHostFieldBlur('twitter')}
+                        className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 ${hostTouched.twitter && hostProfileErrors.twitter ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'}`}
+                        placeholder="@username"
+                      />
+                      {hostTouched.twitter && hostProfileErrors.twitter && (
+                        <p className="text-sm text-red-600 mt-1">{hostProfileErrors.twitter}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Instagram</label>
+                      <input
+                        type="text"
+                        value={hostProfile.socials?.instagram || ''}
+                        onChange={(e)=> setHostProfile(prev=> {
+                          const val = e.target.value || '';
+                          const isUrl = /^https?:\/\//i.test(val);
+                          const v = isUrl ? val : (val.replace(/^@+/, '') ? '@' + val.replace(/^@+/, '') : '');
+                          return { ...prev, socials: { ...(prev.socials||{}), instagram: v } };
+                        })}
+                        onBlur={()=> handleHostFieldBlur('instagram')}
+                        className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 ${hostTouched.instagram && hostProfileErrors.instagram ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'}`}
+                        placeholder="@username"
+                      />
+                      {hostTouched.instagram && hostProfileErrors.instagram && (
+                        <p className="text-sm text-red-600 mt-1">{hostProfileErrors.instagram}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">LinkedIn</label>
+                      <input
+                        type="text"
+                        value={hostProfile.socials?.linkedin || ''}
+                        onChange={(e)=> setHostProfile(prev=> {
+                          const val = e.target.value || '';
+                          const isUrl = /^https?:\/\//i.test(val);
+                          const v = isUrl ? val : (val.replace(/^@+/, '') ? '@' + val.replace(/^@+/, '') : '');
+                          return { ...prev, socials: { ...(prev.socials||{}), linkedin: v } };
+                        })}
+                        onBlur={()=> handleHostFieldBlur('linkedin')}
+                        className={`w-full p-3 rounded-xl border focus:outline-none focus:ring-2 ${hostTouched.linkedin && hostProfileErrors.linkedin ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'}`}
+                        placeholder="Profile URL or handle"
+                      />
+                      {hostTouched.linkedin && hostProfileErrors.linkedin && (
+                        <p className="text-sm text-red-600 mt-1">{hostProfileErrors.linkedin}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Events Tab */}
+            {activeTab === "events" && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-semibold text-slate-900">Your Events</h3>
+                    <p className="text-slate-600">Manage and organize your events</p>
+                  </div>
+                  <button
+                    onClick={openCreate}
+                    className="flex items-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span>Create Event</span>
+                  </button>
+                </div>
+
+                {/* Other colleges' published events */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-slate-900">Other Colleges' Events</h3>
+                    <button
+                      onClick={fetchOtherCollegeEvents}
+                      className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                  {otherCollegeEvents.length === 0 ? (
+                    <div className="text-slate-500 text-sm">No events found.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {otherCollegeEvents.slice(0, 6).map((ev) => (
+                        <div key={ev._id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-md transition-shadow">
+                          <div className="font-semibold text-slate-900 line-clamp-1">{ev.title}</div>
+                          <div className="text-xs text-slate-600 mt-1">{new Date(ev.date).toLocaleString()}</div>
+                          <div className="text-xs text-slate-600 mt-1">{ev.location || (ev.isOnline ? "Online" : "")}</div>
+                          {Array.isArray(ev.tags) && ev.tags.length > 0 && (
+                            <div className="mt-2 flex gap-1 flex-wrap">
+                              {ev.tags.slice(0, 3).map((t, i) => (
+                                <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] rounded">{t}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
             )}
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600/80 hover:bg-red-700 rounded-xl transition-all duration-300 hover:scale-105"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-72 bg-gray-900/50 backdrop-blur-sm border-r border-gray-700 min-h-screen p-6">
-          <nav className="space-y-2">
-            {[
-              { id: "events", label: "Events", icon: Calendar, color: "blue" },
-              { id: "registrations", label: "Registrations", icon: Users, color: "green" },
-              { id: "feedbacks", label: "Feedbacks", icon: Star, color: "yellow" },
-              { id: "analytics", label: "Analytics", icon: BarChart3, color: "purple" },
-            ].map(({ id, label, icon: Icon, color }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                  activeTab === id 
-                    ? `bg-${color}-600 text-white shadow-lg` 
-                    : "text-gray-400 hover:bg-gray-700/50 hover:text-white"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 p-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[
-              { 
-                label: "Total Events", 
-                value: stats.total, 
-                icon: Calendar, 
-                gradient: "from-blue-600 to-blue-700",
-                iconColor: "text-blue-200"
-              },
-              { 
-                label: "Completed", 
-                value: stats.completed, 
-                icon: CheckCircle, 
-                gradient: "from-green-600 to-green-700",
-                iconColor: "text-green-200"
-              },
-              { 
-                label: "Upcoming", 
-                value: stats.upcoming, 
-                icon: Clock, 
-                gradient: "from-yellow-600 to-yellow-700",
-                iconColor: "text-yellow-200"
-              },
-              { 
-                label: "Registrations", 
-                value: stats.totalRegistrations, 
-                icon: UserCheck, 
-                gradient: "from-purple-600 to-purple-700",
-                iconColor: "text-purple-200"
-              },
-            ].map(({ label, value, icon: Icon, gradient, iconColor }, index) => (
-              <div 
-                key={label}
-                className={`bg-gradient-to-r ${gradient} p-6 rounded-2xl shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-white/80 text-sm font-medium">{label}</p>
-                    <p className="text-4xl font-bold text-white">{value}</p>
+            {/* Search/Filter and Events Grid - only on Events tab */}
+            {activeTab === "events" && (
+              <>
+                {/* Search and Filter */}
+                <div className="flex items-center space-x-4">
+                  <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search events..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
                   </div>
-                  <Icon className={`w-10 h-10 ${iconColor}`} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Events Tab */}
-          {activeTab === "events" && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  Events Management
-                </h2>
-                <button
-                  onClick={openCreate}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
-                >
-                  <Plus className="w-5 h-5" />
-                  <span className="font-semibold">Create Event</span>
-                </button>
-              </div>
-
-              {/* Other colleges' published events */}
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">Other Colleges' Events</h3>
-                  <button
-                    onClick={fetchOtherCollegeEvents}
-                    className="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 rounded-lg"
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    Refresh
-                  </button>
+                    <option value="all">All Events</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="completed">Completed</option>
+                    <option value="past">Past</option>
+                  </select>
                 </div>
-                {otherCollegeEvents.length === 0 ? (
-                  <div className="text-gray-400 text-sm">No events found.</div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {otherCollegeEvents.slice(0, 6).map((ev) => (
-                      <div key={ev._id} className="p-4 bg-gray-900/50 rounded-xl border border-gray-700/50">
-                        <div className="font-semibold text-white line-clamp-1">{ev.title}</div>
-                        <div className="text-xs text-gray-400 mt-1">{new Date(ev.date).toLocaleString()}</div>
-                        <div className="text-xs text-gray-400 mt-1">{ev.location || (ev.isOnline ? "Online" : "")}</div>
-                        {Array.isArray(ev.tags) && ev.tags.length > 0 && (
-                          <div className="mt-2 flex gap-1 flex-wrap">
-                            {ev.tags.slice(0, 3).map((t, i) => (
-                              <span key={i} className="px-2 py-0.5 bg-gray-700 text-gray-300 text-[10px] rounded">{t}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+
+                {/* Events Grid */}
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
-                )}
-              </div>
-
-              {/* Search and Filter */}
-              <div className="flex items-center space-x-4">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search events..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all duration-300"
-                  />
-                </div>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm transition-all duration-300"
-                >
-                  <option value="all">All Events</option>
-                  <option value="upcoming">Upcoming</option>
-                  <option value="completed">Completed</option>
-                  <option value="past">Past</option>
-                </select>
-              </div>
-
-              {/* Events Grid */}
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredEvents.map((event, index) => (
-                    <div
-                      key={event._id}
-                      className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-gray-700/50"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-white line-clamp-2">{event.title}</h3>
-                          <div className="flex items-center space-x-2 mt-2">
-                            <span className="px-2 py-1 bg-blue-600/80 text-blue-100 text-xs rounded-full">
-                              {event.category}
-                            </span>
-                            {event.isOnline && (
-                              <span className="px-2 py-1 bg-purple-600/80 text-purple-100 text-xs rounded-full">
-                                Online
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredEvents.map((event, index) => (
+                      <div
+                        key={event._id}
+                        className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold text-slate-900 line-clamp-2">{event.title}</h3>
+                            <div className="flex items-center space-x-2 mt-2">
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                {event.category}
                               </span>
-                            )}
-                            {event.price > 0 && (
-                              <span className="px-2 py-1 bg-yellow-600/80 text-yellow-100 text-xs rounded-full">
-                                {event.currency} {event.price}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {event.isCompleted && (
-                            <span className="px-3 py-1 bg-green-600/80 text-green-100 text-xs rounded-full flex items-center animate-pulse">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Completed
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="text-gray-300 text-sm mb-4 line-clamp-2">
-                        {event.shortDescription || event.description}
-                      </p>
-
-                      <div className="space-y-3 mb-6">
-                        <div className="flex items-center text-gray-400 text-sm">
-                          <Clock className="w-4 h-4 mr-3 text-blue-400" />
-                          <div>
-                            <div>{new Date(event.date).toLocaleString()}</div>
-                            {event.endDate && (
-                              <div className="text-xs text-gray-500">
-                                to {new Date(event.endDate).toLocaleString()}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center text-gray-400 text-sm">
-                          <MapPin className="w-4 h-4 mr-3 text-green-400" />
-                          <div>
-                            <div>{event.location}</div>
-                            {event.address && (
-                              <div className="text-xs text-gray-500">
-                                {event.address}, {event.city}, {event.state}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center text-gray-400 text-sm">
-                          <Users className="w-4 h-4 mr-3 text-purple-400" />
-                          <div>
-                            <div>{event.registrations?.length || 0} / {event.capacity} registrations</div>
-                            {event.capacity > 0 && (
-                              <div className="text-xs text-gray-500">
-                                {Math.round(((event.registrations?.length || 0) / event.capacity) * 100)}% filled
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        {event.tags && event.tags.length > 0 && (
-                          <div className="flex items-center text-gray-400 text-sm">
-                            <div className="flex flex-wrap gap-1">
-                              {event.tags.slice(0, 3).map((tag, idx) => (
-                                <span key={idx} className="px-2 py-1 bg-gray-600/50 text-gray-300 text-xs rounded">
-                                  {tag}
+                              {event.isOnline && (
+                                <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                                  Online
                                 </span>
-                              ))}
-                              {event.tags.length > 3 && (
-                                <span className="px-2 py-1 bg-gray-600/50 text-gray-300 text-xs rounded">
-                                  +{event.tags.length - 3} more
+                              )}
+                              {event.price > 0 && (
+                                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
+                                  {event.currency} {event.price}
                                 </span>
                               )}
                             </div>
                           </div>
-                        )}
-                      </div>
+                          <div className="flex items-center space-x-2">
+                            {event.isCompleted && (
+                              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full flex items-center">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                Completed
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => openEdit(event)}
-                          className="flex items-center space-x-1 px-3 py-2 bg-blue-600/80 hover:bg-blue-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          onClick={() => loadRegistrations(event)}
-                          className="flex items-center space-x-1 px-3 py-2 bg-green-600/80 hover:bg-green-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                        >
-                          <Users className="w-4 h-4" />
-                          <span>Registrations</span>
-                        </button>
-                        <button
-                          onClick={() => loadFeedbacks(event)}
-                          className="flex items-center space-x-1 px-3 py-2 bg-yellow-600/80 hover:bg-yellow-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                        >
-                          <Star className="w-4 h-4" />
-                          <span>Feedbacks</span>
-                        </button>
-                        <button
-                          onClick={() => customizeReviewFields(event)}
-                          className="flex items-center space-x-1 px-3 py-2 bg-orange-600/80 hover:bg-orange-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                        >
-                          <Settings className="w-4 h-4" />
-                          <span>Customize Reviews</span>
-                        </button>
-                        {!event.isCompleted && (
-                          <button
-                            onClick={() => markCompleted(event)}
-                            className="flex items-center space-x-1 px-3 py-2 bg-purple-600/80 hover:bg-purple-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            <span>Complete</span>
-                          </button>
-                        )}
-                        {event.isCompleted && (
-                          <button
-                            onClick={() => generateCertificates(event)}
-                            className="flex items-center space-x-1 px-3 py-2 bg-indigo-600/80 hover:bg-indigo-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                          >
-                            <Trophy className="w-4 h-4" />
-                            <span>Certificates</span>
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteEvent(event)}
-                          className="flex items-center space-x-1 px-3 py-2 bg-red-600/80 hover:bg-red-700 rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span>Delete</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                        <p className="text-slate-700 text-sm mb-4 line-clamp-2">
+                          {event.shortDescription || event.description}
+                        </p>
 
-          {/* Registrations Tab */}
-          {activeTab === "registrations" && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                        {/* Event images management */}
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center gap-3">
+                            <label className="px-3 py-2 bg-blue-600/80 hover:bg-blue-700 rounded-lg text-sm cursor-pointer inline-flex items-center gap-2">
+                              <Upload className="w-4 h-4" /> Upload Cover
+                              <input type="file" accept="image/*" className="hidden" onChange={(e)=> uploadEventCover(event, e.target.files?.[0])} />
+                            </label>
+                            <label className="px-3 py-2 bg-purple-600/80 hover:bg-purple-700 rounded-lg text-sm cursor-pointer inline-flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4" /> Add Photos
+                              <input type="file" accept="image/*" multiple className="hidden" onChange={(e)=> uploadEventImages(event, e.target.files)} />
+                            </label>
+                          </div>
+                          {event.imageUrl && (
+                            <div className="mt-2">
+                              <div className="text-xs text-slate-600 mb-1">Cover</div>
+                              <div className="relative">
+                                <img src={toAbsoluteUrl(event.imageUrl)} alt="Cover" className="w-full h-28 object-cover rounded-lg cursor-pointer" onClick={()=> setLightbox({ open: true, images: [toAbsoluteUrl(event.imageUrl), ...((event.images||[]).map(toAbsoluteUrl))], index: 0 })} />
+                                <label className="absolute bottom-2 right-2 px-2 py-1 bg-blue-600/80 hover:bg-blue-700 rounded text-xs cursor-pointer inline-flex items-center gap-1">
+                                  <Upload className="w-3 h-3"/> Change Cover
+                                  <input type="file" accept="image/*" className="hidden" onChange={(e)=> uploadEventCover(event, e.target.files?.[0])} />
+                                </label>
+                              </div>
+                            </div>
+                          )}
+                          {Array.isArray(event.images) && event.images.length > 0 && (
+                            <div className="mt-2">
+                              <div className="grid grid-cols-4 gap-2">
+                                {event.images.map((img, i) => (
+                                  <div key={i} className="relative group" draggable onDragStart={(e)=> onThumbDragStart(e, i)} onDragOver={onThumbDragOver} onDrop={(e)=> onThumbDrop(e, event, i)}>
+                                    <img
+                                      src={toAbsoluteUrl(img)}
+                                      alt={`Gallery ${i+1}`}
+                                      className="w-full h-20 object-cover rounded-lg cursor-pointer"
+                                      onClick={() => setLightbox({ open: true, images: (event.images || []).map(toAbsoluteUrl), index: i })}
+                                    />
+                                    <div className="absolute inset-0 hidden group-hover:flex items-center justify-center gap-2 bg-black/50 rounded-lg">
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); setEventCoverFromUrl(event, img); }}
+                                        className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded"
+                                      >
+                                        Set Cover
+                                      </button>
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); deleteEventImage(event, img); }}
+                                        className="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-3 mb-6">
+                          <div className="flex items-center text-slate-600 text-sm">
+                            <Clock className="w-4 h-4 mr-3 text-blue-500" />
+                            <div>
+                              <div>{new Date(event.date).toLocaleString()}</div>
+                              {event.endDate && (
+                                <div className="text-xs text-slate-500">
+                                  to {new Date(event.endDate).toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center text-slate-600 text-sm">
+                            <MapPin className="w-4 h-4 mr-3 text-green-500" />
+                            <div>
+                              <div>{event.location}</div>
+                              {event.address && (
+                                <div className="text-xs text-slate-500">
+                                  {event.address}, {event.city}, {event.state}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center text-slate-600 text-sm">
+                            <Users className="w-4 h-4 mr-3 text-purple-500" />
+                            <div>
+                              <div>{event.registrations?.length || 0} / {event.capacity} registrations</div>
+                              {event.capacity > 0 && (
+                                <div className="text-xs text-slate-500">
+                                  {Math.round(((event.registrations?.length || 0) / event.capacity) * 100)}% filled
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {event.tags && event.tags.length > 0 && (
+                            <div className="flex items-center text-slate-600 text-sm">
+                              <div className="flex flex-wrap gap-1">
+                                {event.tags.slice(0, 3).map((tag, idx) => (
+                                  <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                    {tag}
+                                  </span>
+                                ))}
+                                {event.tags.length > 3 && (
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                    +{event.tags.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => openEdit(event)}
+                            className="flex items-center space-x-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span>Edit</span>
+                          </button>
+                          {!event.isCompleted && (
+                            <button
+                              onClick={() => markCompleted(event)}
+                              className="flex items-center space-x-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              <span>Complete</span>
+                            </button>
+                          )}
+                          {event.isCompleted && (
+                            <button
+                              onClick={() => generateCertificates(event)}
+                              className="flex items-center space-x-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                            >
+                              <Trophy className="w-4 h-4" />
+                              <span>Certificates</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteEvent(event)}
+                            className="flex items-center space-x-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span>Delete</span>
+                          </button>
+                          <button
+                            onClick={() => loadRegistrations(event)}
+                            className="flex items-center space-x-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-sm transition-all duration-300"
+                            title="View registrations"
+                          >
+                            <Users className="w-4 h-4" />
+                            <span className="hidden sm:inline">Registrations</span>
+                          </button>
+                          <button
+                            onClick={() => loadFeedbacks(event)}
+                            className="flex items-center space-x-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-sm transition-all duration-300"
+                            title="View reviews"
+                          >
+                            <Star className="w-4 h-4" />
+                            <span className="hidden sm:inline">Reviews</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            
+
+            {/* Registrations Tab */}
+            {activeTab === "registrations" && (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-slate-900">
                   Registrations {selectedEvent && `- ${selectedEvent.title}`}
                 </h2>
                 {selectedEvent && (
                   <button
                     onClick={() => setActiveTab("events")}
-                    className="px-4 py-2 bg-gray-600/80 hover:bg-gray-700 rounded-xl transition-all duration-300 hover:scale-105"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700"
                   >
                     Back to Events
                   </button>
@@ -953,39 +1805,69 @@ export default function HostDashboard() {
               </div>
 
               {selectedEvent ? (
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-                  {registrations.length === 0 ? (
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <input value={regSearch} onChange={e=> setRegSearch(e.target.value)} placeholder="Search name or email" className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none" />
+                      <select value={regStatus} onChange={e=> setRegStatus(e.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none">
+                        <option value="all">All</option>
+                        <option value="registered">Registered</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={downloadServerXlsx} className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg">Download XLSX</button>
+                      <label className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer">
+                        <span>Import XLSX</span>
+                        <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={(e)=> importXlsxFile(e.target.files?.[0])} />
+                      </label>
+                    </div>
+                  </div>
+
+                  {filteredRegistrations.length === 0 ? (
                     <div className="text-center py-12">
-                      <Users className="w-20 h-20 text-gray-400 mx-auto mb-4 animate-pulse" />
-                      <p className="text-gray-400 text-lg">No registrations yet</p>
+                      <Users className="w-16 h-16 text-slate-400 mx-auto mb-3" />
+                      <p className="text-slate-500">No registrations yet</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b border-gray-700">
-                            <th className="text-left py-4 px-4 font-semibold">Student Name</th>
-                            <th className="text-left py-4 px-4 font-semibold">Email</th>
-                            <th className="text-left py-4 px-4 font-semibold">Registered At</th>
-                            <th className="text-left py-4 px-4 font-semibold">Status</th>
+                          <tr className="border-b border-slate-200 bg-slate-50/50">
+                            <th className="text-left py-3 px-4 text-slate-600 text-sm font-semibold">Student Name</th>
+                            <th className="text-left py-3 px-4 text-slate-600 text-sm font-semibold">Email</th>
+                            <th className="text-left py-3 px-4 text-slate-600 text-sm font-semibold">Registered At</th>
+                            <th className="text-left py-3 px-4 text-slate-600 text-sm font-semibold">Status</th>
+                            <th className="text-left py-3 px-4 text-slate-600 text-sm font-semibold">Attended</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {registrations.map((reg, idx) => (
-                            <tr key={idx} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors duration-300">
-                              <td className="py-4 px-4 font-medium">{reg.studentId?.fullname || "-"}</td>
-                              <td className="py-4 px-4 text-gray-300">{reg.studentId?.email || "-"}</td>
-                              <td className="py-4 px-4 text-gray-400">
+                          {filteredRegistrations.map((reg, idx) => (
+                            <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                              <td className="py-3 px-4 font-medium text-slate-900">{reg.studentId?.fullname || "-"}</td>
+                              <td className="py-3 px-4 text-slate-600">{reg.studentId?.email || "-"}</td>
+                              <td className="py-3 px-4 text-slate-600">
                                 {reg.registeredAt ? new Date(reg.registeredAt).toLocaleString() : "-"}
                               </td>
-                              <td className="py-4 px-4">
+                              <td className="py-3 px-4">
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                   reg.status === "registered" 
-                                    ? "bg-green-600/80 text-green-100" 
-                                    : "bg-red-600/80 text-red-100"
+                                    ? "bg-green-100 text-green-700" 
+                                    : "bg-red-100 text-red-700"
                                 }`}>
                                   {reg.status}
                                 </span>
+                              </td>
+                              <td className="py-3 px-4">
+                                <select
+                                  value={reg.attended ? 'yes' : 'no'}
+                                  onChange={(e)=> updateAttendance(selectedEvent._id, (reg.studentId?._id || reg.studentId), e.target.value === 'yes')}
+                                  className="px-2 py-1 bg-white border border-slate-300 rounded text-sm"
+                                >
+                                  <option value="no">No</option>
+                                  <option value="yes">Yes</option>
+                                </select>
                               </td>
                             </tr>
                           ))}
@@ -995,9 +1877,23 @@ export default function HostDashboard() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <Users className="w-20 h-20 text-gray-400 mx-auto mb-4 animate-pulse" />
-                  <p className="text-gray-400 text-lg">Select an event to view registrations</p>
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-3">Select an event</h3>
+                  <div className="divide-y divide-slate-200">
+                    {(events||[]).map((ev) => (
+                      <button
+                        key={ev._id}
+                        onClick={() => loadRegistrations(ev)}
+                        className="w-full text-left py-3 px-2 hover:bg-slate-50 rounded-lg flex items-center justify-between"
+                      >
+                        <span className="font-medium text-slate-900 line-clamp-1">{ev.title}</span>
+                        <span className="text-sm text-slate-500">{new Date(ev.date).toLocaleString()}</span>
+                      </button>
+                    ))}
+                    {events.length === 0 && (
+                      <div className="text-sm text-slate-500 py-6">No events available</div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -1011,31 +1907,39 @@ export default function HostDashboard() {
                   Feedbacks {selectedEvent && `- ${selectedEvent.title}`}
                 </h2>
                 {selectedEvent && (
-                  <button
-                    onClick={() => setActiveTab("events")}
-                    className="px-4 py-2 bg-gray-600/80 hover:bg-gray-700 rounded-xl transition-all duration-300 hover:scale-105"
-                  >
-                    Back to Events
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setActiveTab("events")}
+                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
+                    >
+                      Back to Events
+                    </button>
+                    <button
+                      onClick={() => customizeReviewFields(selectedEvent)}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors"
+                    >
+                      Customize Reviews
+                    </button>
+                  </div>
                 )}
               </div>
 
               {selectedEvent ? (
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
+                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
                   {feedbacks.length === 0 ? (
                     <div className="text-center py-12">
-                      <Star className="w-20 h-20 text-gray-400 mx-auto mb-4 animate-pulse" />
-                      <p className="text-gray-400 text-lg">No feedback yet</p>
+                      <Star className="w-20 h-20 text-slate-400 mx-auto mb-4 animate-pulse" />
+                      <p className="text-slate-500 text-lg">No feedback yet</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {feedbacks.map((feedback, idx) => (
-                        <div key={idx} className="bg-gray-700/50 rounded-xl p-6 border border-gray-600/50 hover:bg-gray-700/70 transition-all duration-300">
+                        <div key={idx} className="bg-slate-50 rounded-xl p-6 border border-slate-200 hover:bg-slate-100 transition-all duration-300">
                           <div className="flex items-start justify-between mb-3">
                             <div>
-                              <p className="font-semibold text-white text-lg">{feedback.isAnonymous ? "Anonymous" : (feedback.reviewerId?.fullname || "Anonymous")}</p>
+                              <p className="font-semibold text-slate-900 text-lg">{feedback.isAnonymous ? "Anonymous" : (feedback.reviewerId?.fullname || "Anonymous")}</p>
                               {!feedback.isAnonymous && (
-                                <p className="text-gray-400 text-sm">{feedback.reviewerId?.email || ""}</p>
+                                <p className="text-slate-600 text-sm">{feedback.reviewerId?.email || ""}</p>
                               )}
                             </div>
                             <div className="flex items-center space-x-1">
@@ -1043,11 +1947,11 @@ export default function HostDashboard() {
                                 <Star
                                   key={i}
                                   className={`w-5 h-5 ${
-                                    i < (feedback.overallRating || 0) ? "text-yellow-400 fill-current" : "text-gray-400"
+                                    i < (feedback.overallRating || 0) ? "text-yellow-500 fill-current" : "text-slate-400"
                                   }`}
                                 />
                               ))}
-                              <span className="ml-2 text-gray-400 text-sm">({feedback.overallRating || 0}/5)</span>
+                              <span className="ml-2 text-slate-600 text-sm">({feedback.overallRating || 0}/5)</span>
                             </div>
                           </div>
 
@@ -1055,20 +1959,20 @@ export default function HostDashboard() {
                           {Array.isArray(feedback.reviewFields) && feedback.reviewFields.length > 0 && (
                             <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
                               {feedback.reviewFields.map((f, i) => (
-                                <div key={i} className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
-                                  <div className="text-xs text-gray-400">{f.fieldName}</div>
+                                <div key={i} className="bg-white rounded-lg p-3 border border-slate-200">
+                                  <div className="text-xs text-slate-600">{f.fieldName}</div>
                                   {f.fieldType === "rating" ? (
                                     <div className="flex items-center mt-1">
                                       {[...Array(5)].map((_, j) => (
                                         <Star
                                           key={j}
-                                          className={`w-4 h-4 ${j < (f.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-500"}`}
+                                          className={`w-4 h-4 ${j < (f.rating || 0) ? "text-yellow-500 fill-current" : "text-slate-400"}`}
                                         />
                                       ))}
-                                      <span className="ml-2 text-gray-400 text-xs">({f.rating || 0}/5)</span>
+                                      <span className="ml-2 text-slate-600 text-xs">({f.rating || 0}/5)</span>
                                     </div>
                                   ) : (
-                                    <div className="text-gray-300 text-sm mt-1 break-words">{String(f.value || "").trim() || "-"}</div>
+                                    <div className="text-slate-700 text-sm mt-1 break-words">{String(f.value || "").trim() || "-"}</div>
                                   )}
                                 </div>
                               ))}
@@ -1076,9 +1980,9 @@ export default function HostDashboard() {
                           )}
 
                           {feedback.comment && (
-                            <p className="text-gray-300 text-sm mt-3 leading-relaxed">{feedback.comment}</p>
+                            <p className="text-slate-700 text-sm mt-3 leading-relaxed">{feedback.comment}</p>
                           )}
-                          <p className="text-gray-500 text-xs mt-3">
+                          <p className="text-slate-500 text-xs mt-3">
                             {feedback.createdAt ? new Date(feedback.createdAt).toLocaleString() : ""}
                           </p>
                         </div>
@@ -1087,9 +1991,9 @@ export default function HostDashboard() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <Star className="w-20 h-20 text-gray-400 mx-auto mb-4 animate-pulse" />
-                  <p className="text-gray-400 text-lg">Select an event to view feedback</p>
+                <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
+                  <Star className="w-20 h-20 text-slate-400 mx-auto mb-4 animate-pulse" />
+                  <p className="text-slate-500 text-lg">Select an event to view feedback</p>
                 </div>
               )}
             </div>
@@ -1098,42 +2002,108 @@ export default function HostDashboard() {
           {/* Analytics Tab */}
           {activeTab === "analytics" && (
             <div className="space-y-6 animate-fadeIn">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Analytics Dashboard
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-                  <h3 className="text-xl font-semibold mb-6 flex items-center">
-                    <BarChart3 className="w-6 h-6 mr-2 text-blue-400" />
-                    Event Statistics
-                  </h3>
-                  <div className="space-y-4">
-                    {[
-                      { label: "Total Events", value: stats.total, color: "text-blue-400" },
-                      { label: "Completed Events", value: stats.completed, color: "text-green-400" },
-                      { label: "Upcoming Events", value: stats.upcoming, color: "text-yellow-400" },
-                      { label: "Total Registrations", value: stats.totalRegistrations, color: "text-purple-400" },
-                      { label: "Average Rating", value: stats.avgRating, color: "text-orange-400" },
-                    ].map(({ label, value, color }) => (
-                      <div key={label} className="flex justify-between items-center py-2">
-                        <span className="text-gray-400">{label}</span>
-                        <span className={`font-bold text-lg ${color}`}>{value}</span>
-                      </div>
-                    ))}
-                  </div>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-slate-900">Analytics</h2>
+                <div className="flex items-center gap-2">
+                  <input type="date" value={dateStart} onChange={e=> setDateStart(e.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none" />
+                  <span className="text-slate-500">to</span>
+                  <input type="date" value={dateEnd} onChange={e=> setDateEnd(e.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none" />
                 </div>
-                <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50">
-                  <h3 className="text-xl font-semibold mb-6 flex items-center">
-                    <Bell className="w-6 h-6 mr-2 text-yellow-400" />
+              </div>
+
+              {/* Pill tabs */}
+              <div className="flex items-center gap-2">
+                {['Overview','By Event','By Day'].map((t)=> (
+                  <button 
+                    key={t} 
+                    onClick={()=> setAnalyticsTab(t)}
+                    className={`px-3 py-1.5 rounded-full text-sm border ${t===analyticsTab ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center text-slate-900">
+                    <BarChart3 className="w-5 h-5 mr-2 text-blue-600" />
+                    {analyticsTab === 'Overview' ? 'Event Statistics' : analyticsTab}
+                  </h3>
+
+                  {analyticsTab === 'Overview' && (
+                    <>
+                      <div className="space-y-3 mb-4">
+                        {[
+                          { label: "Total Events", value: statsOverRange.total },
+                          { label: "Completed Events", value: statsOverRange.completed },
+                          { label: "Upcoming Events", value: statsOverRange.upcoming },
+                          { label: "Total Registrations", value: statsOverRange.totalRegistrations },
+                          { label: "Average Rating", value: statsOverRange.avgRating },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="flex justify-between items-center py-2">
+                            <span className="text-slate-600">{label}</span>
+                            <span className="font-semibold text-slate-900">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={registrationsSeries} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Legend />
+                            <Line type="monotone" dataKey="count" stroke="#2563eb" strokeWidth={2} dot={false} name="Registrations" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </>
+                  )}
+
+                  {analyticsTab === 'By Event' && (
+                    <div className="h-80">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={registrationsByEvent} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-25} textAnchor="end" height={60} />
+                          <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="value" fill="#6366f1" name="Registrations" radius={[6,6,0,0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {analyticsTab === 'By Day' && (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={eventsByDay} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                          <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={false} name="Events" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center text-slate-900">
+                    <BellRing className="w-5 h-5 mr-2 text-amber-600" />
                     Recent Notifications
                   </h3>
                   <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {notifications.slice(0, 5).map((notification, idx) => (
-                      <div key={idx} className="flex items-center space-x-3 p-4 bg-gray-700/50 rounded-xl hover:bg-gray-700/70 transition-all duration-300">
-                        <Bell className="w-5 h-5 text-blue-400" />
+                    {notificationsOverRange.slice(0, 5).map((notification, idx) => (
+                      <div key={idx} className="flex items-center space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <BellRing className="w-4 h-4 text-blue-600" />
                         <div className="flex-1">
-                          <p className="text-sm text-white font-medium">{notification.message}</p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-sm text-slate-900 font-medium">{notification.message}</p>
+                          <p className="text-xs text-slate-500">
                             {new Date(notification.at).toLocaleString()}
                           </p>
                         </div>
@@ -1141,16 +2111,30 @@ export default function HostDashboard() {
                     ))}
                     {notifications.length === 0 && (
                       <div className="text-center py-8">
-                        <Bell className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-400">No notifications</p>
+                        <BellRing className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+                        <p className="text-slate-500">No notifications</p>
                       </div>
                     )}
+                  </div>
+                  {/* Events by Status */}
+                  <div className="h-64 mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={eventsByStatus} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="value" fill="#10b981" name="Count" radius={[6,6,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
             </div>
           )}
-        </div>
+          </div>
+      </main>
       </div>
 
       {/* Review Fields Modal */}
@@ -1646,6 +2630,7 @@ export default function HostDashboard() {
           </div>
         </div>
       )}
+      <SupportChatbot />
     </div>
   );
 }

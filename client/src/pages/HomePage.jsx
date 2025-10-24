@@ -6,42 +6,62 @@ import "./HomePage.css";
 
 // Canvas particle background
 function BackgroundAnimation() {
+  const canvasRef = React.useRef(null);
   React.useEffect(() => {
-    const canvas = document.getElementById("bg-canvas");
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
-    let particles = [];
+    let raf = 0;
 
-    for (let i = 0; i < 100; i++) {
-      particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        r: Math.random() * 2 + 1,
-        dx: Math.random() * 0.5 - 0.25,
-        dy: Math.random() * 0.5 - 0.25,
-      });
-    }
+    const resize = () => {
+      // Full-screen background, simpler sizing to ensure visibility
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
 
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
-      particles.forEach((p) => {
+    const width = () => window.innerWidth;
+    const height = () => window.innerHeight;
+
+    // Create particles
+    const particles = Array.from({ length: 160 }, () => ({
+      x: Math.random() * width(),
+      y: Math.random() * height(),
+      r: Math.random() * 2 + 1,
+      dx: Math.random() * 0.6 - 0.3,
+      dy: Math.random() * 0.6 - 0.3,
+    }));
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width(), height());
+      for (const p of particles) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffffff88";
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.fill();
-        p.x += p.dx;
-        p.y += p.dy;
-        if (p.x < 0 || p.x > width) p.dx *= -1;
-        if (p.y < 0 || p.y > height) p.dy *= -1;
-      });
-      requestAnimationFrame(draw);
-    }
+        p.x += p.dx; p.y += p.dy;
+        if (p.x < 0 || p.x > width()) p.dx *= -1;
+        if (p.y < 0 || p.y > height()) p.dy *= -1;
+      }
+      raf = requestAnimationFrame(draw);
+    };
 
-    draw();
+    window.addEventListener('resize', resize);
+    raf = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+    };
   }, []);
 
-  return <canvas id="bg-canvas" className="absolute top-0 left-0 z-0" />;
+  return (
+    <canvas
+      id="bg-canvas"
+      ref={canvasRef}
+      className="fixed inset-0 z-10 w-screen h-screen pointer-events-none"
+    />
+  );
 }
 
 export default function HomePage() {
@@ -67,9 +87,12 @@ export default function HomePage() {
 
 
   return (
-    <div className="relative h-screen flex items-center justify-center text-white overflow-auto">
+    <div className="relative h-screen flex items-center justify-center text-white overflow-hidden">
+      {/* Gradient animated background layer */}
+      <div className="auth-bg" aria-hidden="true" />
+      {/* Particles canvas */}
       <BackgroundAnimation />
-      <div className="form-container">
+      <div className="form-container relative z-20">
      <h1
   style={{
     fontFamily: "'Poppins', sans-serif",

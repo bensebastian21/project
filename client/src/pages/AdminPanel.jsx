@@ -44,9 +44,12 @@ export default function AdminPanel() {
   const [editHostModal, setEditHostModal] = useState(false);
   const [editHostForm, setEditHostForm] = useState({});
   const [savingHost, setSavingHost] = useState(false);
-  // On-focus validation state for Edit Host modal
   const [editTouched, setEditTouched] = useState({});
   const [editErrors, setEditErrors] = useState({});
+  const [verifyItems, setVerifyItems] = useState([]);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
+  const [reasonById, setReasonById] = useState({});
   const navigate = useNavigate();
 
   // Validation functions
@@ -81,6 +84,64 @@ export default function AdminPanel() {
         return /^\+\d{1,4}$/.test(value) ? "" : "Invalid country code format";
       default:
         return "";
+    }
+  };
+
+  const fetchPendingVerifications = async () => {
+    try {
+      setVerifyLoading(true);
+      setVerifyError("");
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/verification/student-ids?status=pending`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setVerifyItems(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      setVerifyError(e.message || "Failed to load pending");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const approveVerification = async (userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/verification/student-id/${userId}/approve`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      await fetchPendingVerifications();
+    } catch (e) {
+      toast.error("Approve failed: " + e.message);
+    }
+  };
+
+  const rejectVerification = async (userId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const reason = reasonById[userId] || "";
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/admin/verification/student-id/${userId}/reject`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason })
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      setReasonById(prev => ({ ...prev, [userId]: "" }));
+      await fetchPendingVerifications();
+    } catch (e) {
+      toast.error("Reject failed: " + e.message);
     }
   };
 
@@ -122,6 +183,14 @@ export default function AdminPanel() {
     setHostErrors(prev => ({ ...prev, [field]: error }));
   };
 
+  // On-focus validation for Add Host form
+  const handleHostFieldFocus = (field) => {
+    setTouchedFields(prev => ({ ...prev, [field]: true }));
+    const val = (newHost[field] ?? "").toString();
+    const msg = validateField(field, val);
+    setHostErrors(prev => ({ ...prev, [field]: msg }));
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -147,6 +216,9 @@ export default function AdminPanel() {
   useEffect(() => {
     if (activeTab === "host-applications" || activeTab === "view-hosts") {
       fetchHostApplications();
+    }
+    if (activeTab === "verify-students") {
+      fetchPendingVerifications();
     }
   }, [activeTab]);
 
@@ -525,7 +597,14 @@ export default function AdminPanel() {
           <UserPlus size={20} /> Host Applications
         </button>
 
-        
+        <button
+          onClick={() => setActiveTab("verify-students")}
+          className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-300 ${
+            activeTab === "verify-students" ? "bg-teal-600 scale-105 shadow-lg" : "hover:bg-gray-700"
+          }`}
+        >
+          <CheckCircle2 size={20} /> Verify Students
+        </button>
 
         <button
           onClick={() => setActiveTab("events")}
@@ -611,6 +690,90 @@ export default function AdminPanel() {
                   View All Hosts
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "verify-students" && (
+          <div className="animate-fadeIn">
+            <h1 className="text-3xl font-bold mb-6 flex items-center gap-2">
+              <CheckCircle2 size={28} /> Verify Students
+            </h1>
+            <div className="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Pending Submissions ({verifyItems.length})</h2>
+                <button
+                  onClick={fetchPendingVerifications}
+                  className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded"
+                  disabled={verifyLoading}
+                >
+                  {verifyLoading ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+              {verifyError && (
+                <div className="mb-4 p-3 bg-red-900/40 border border-red-700 rounded text-red-200">{verifyError}</div>
+              )}
+              {verifyItems.length === 0 && !verifyLoading ? (
+                <div className="text-gray-400">No pending submissions.</div>
+              ) : (
+                <div className="space-y-4">
+                  {verifyItems.map(u => {
+                    const id = u._id || u.id;
+                    const toUrl = (p) => {
+                      if (!p) return "";
+                      const idx = String(p).lastIndexOf("uploads");
+                      const rel = idx >= 0 ? String(p).slice(idx).replace(/\\\\/g, "/") : String(p).replace(/\\\\/g, "/");
+                      return `${config.apiBaseUrl}/${rel}`;
+                    };
+                    const studentIdUrl = toUrl(u.studentIdPath);
+                    const secondDocUrl = toUrl(u.secondDocPath);
+                    return (
+                      <div key={id} className="bg-gray-800/60 border border-gray-700 rounded p-4">
+                        <div className="flex flex-wrap justify-between gap-3">
+                          <div>
+                            <div className="font-semibold text-lg">{u.fullname}</div>
+                            <div className="text-gray-400 text-sm">{u.institute}</div>
+                            <div className="text-gray-500 text-sm">{u.email} {u.phone ? `• ${u.phone}` : ""}</div>
+                            {u.ocrMismatch ? (
+                              <div className="mt-1 inline-block text-xs px-2 py-1 rounded bg-yellow-900/40 border border-yellow-700 text-yellow-200">OCR mismatch flagged</div>
+                            ) : null}
+                          </div>
+                          <div className="flex gap-3 items-start">
+                            {studentIdUrl ? (
+                              <a href={studentIdUrl} target="_blank" rel="noreferrer" className="block">
+                                <img src={studentIdUrl} alt="Student ID" className="w-24 h-24 object-cover rounded border border-gray-600" onError={(e)=>{ e.currentTarget.style.display='none'; }} />
+                                <div className="text-xs text-blue-300 hover:underline mt-1">Open ID</div>
+                              </a>
+                            ) : (
+                              <div className="text-xs text-gray-500">No ID file</div>
+                            )}
+                            {secondDocUrl ? (
+                              <a href={secondDocUrl} target="_blank" rel="noreferrer" className="block">
+                                <img src={secondDocUrl} alt="Second Doc" className="w-24 h-24 object-cover rounded border border-gray-600" onError={(e)=>{ e.currentTarget.style.display='none'; }} />
+                                <div className="text-xs text-blue-300 hover:underline mt-1">Open Doc</div>
+                              </a>
+                            ) : (
+                              <div className="text-xs text-gray-500">No second doc</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-col md:flex-row gap-2 md:items-center">
+                          <input
+                            className="flex-1 p-2 rounded bg-gray-900 border border-gray-700"
+                            placeholder="Reason (for rejection)"
+                            value={reasonById[id] || ""}
+                            onChange={(e)=> setReasonById(prev=> ({ ...prev, [id]: e.target.value }))}
+                          />
+                          <div className="flex gap-2">
+                            <button className="px-3 py-2 bg-green-600 hover:bg-green-700 rounded" onClick={()=> approveVerification(id)}>Approve</button>
+                            <button className="px-3 py-2 bg-red-600 hover:bg-red-700 rounded" onClick={()=> rejectVerification(id)}>Reject</button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -813,6 +976,7 @@ export default function AdminPanel() {
                     placeholder="Institution email address"
                     value={newHost.email}
                     onChange={(e) => handleHostFieldChange("email", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("email")}
                     onBlur={() => handleHostFieldBlur("email")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.email ? 'border-red-500' : 'border-gray-600'
@@ -833,6 +997,7 @@ export default function AdminPanel() {
                     placeholder="e.g., ABC College of Engineering"
                     value={newHost.institute}
                     onChange={(e) => handleHostFieldChange("institute", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("institute")}
                     onBlur={() => handleHostFieldBlur("institute")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.institute ? 'border-red-500' : 'border-gray-600'
@@ -853,6 +1018,7 @@ export default function AdminPanel() {
                     placeholder="e.g., Computer Science Department"
                     value={newHost.course}
                     onChange={(e) => handleHostFieldChange("course", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("course")}
                     onBlur={() => handleHostFieldBlur("course")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.course ? 'border-red-500' : 'border-gray-600'
@@ -892,6 +1058,7 @@ export default function AdminPanel() {
                     placeholder="Primary contact full name"
                     value={newHost.fullname}
                     onChange={(e) => handleHostFieldChange("fullname", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("fullname")}
                     onBlur={() => handleHostFieldBlur("fullname")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.fullname ? 'border-red-500' : 'border-gray-600'
@@ -912,6 +1079,7 @@ export default function AdminPanel() {
                     placeholder="Create username for contact person"
                     value={newHost.username}
                     onChange={(e) => handleHostFieldChange("username", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("username")}
                     onBlur={() => handleHostFieldBlur("username")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.username ? 'border-red-500' : 'border-gray-600'
@@ -932,6 +1100,7 @@ export default function AdminPanel() {
                   placeholder="Create a password"
                   value={newHost.password}
                   onChange={(e) => handleHostFieldChange("password", e.target.value)}
+                  onFocus={() => handleHostFieldFocus("password")}
                   onBlur={() => handleHostFieldBlur("password")}
                   className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                     hostErrors.password ? 'border-red-500' : 'border-gray-600'
@@ -952,6 +1121,7 @@ export default function AdminPanel() {
                   placeholder="Confirm the password"
                   value={newHost.confirmPassword}
                   onChange={(e) => handleHostFieldChange("confirmPassword", e.target.value)}
+                  onFocus={() => handleHostFieldFocus("confirmPassword")}
                   onBlur={() => handleHostFieldBlur("confirmPassword")}
                   className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                     hostErrors.confirmPassword ? 'border-red-500' : 'border-gray-600'
@@ -972,6 +1142,7 @@ export default function AdminPanel() {
                     placeholder="e.g., 30"
                     value={newHost.age}
                     onChange={(e) => handleHostFieldChange("age", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("age")}
                     onBlur={() => handleHostFieldBlur("age")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.age ? 'border-red-500' : 'border-gray-600'
@@ -996,6 +1167,7 @@ export default function AdminPanel() {
                     placeholder="e.g., +91"
                     value={newHost.countryCode}
                     onChange={(e) => handleHostFieldChange("countryCode", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("countryCode")}
                     onBlur={() => handleHostFieldBlur("countryCode")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.countryCode ? 'border-red-500' : 'border-gray-600'
@@ -1015,6 +1187,7 @@ export default function AdminPanel() {
                     placeholder="Institution main contact number"
                     value={newHost.phone}
                     onChange={(e) => handleHostFieldChange("phone", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("phone")}
                     onBlur={() => handleHostFieldBlur("phone")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.phone ? 'border-red-500' : 'border-gray-600'
@@ -1038,6 +1211,7 @@ export default function AdminPanel() {
                     placeholder="e.g., 123, College Road"
                     value={newHost.street}
                     onChange={(e) => handleHostFieldChange("street", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("street")}
                     onBlur={() => handleHostFieldBlur("street")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.street ? 'border-red-500' : 'border-gray-600'
@@ -1058,6 +1232,7 @@ export default function AdminPanel() {
                     placeholder="e.g., Chennai"
                     value={newHost.city}
                     onChange={(e) => handleHostFieldChange("city", e.target.value)}
+                    onFocus={() => handleHostFieldFocus("city")}
                     onBlur={() => handleHostFieldBlur("city")}
                     className={`w-full p-3 rounded-lg bg-gray-700 focus:ring-2 focus:ring-blue-500 border ${
                       hostErrors.city ? 'border-red-500' : 'border-gray-600'

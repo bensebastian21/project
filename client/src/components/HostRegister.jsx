@@ -5,6 +5,17 @@ import { useNavigate } from "react-router-dom";
 import { UserPlus, Building2, MapPin, Phone, Mail, Lock, FileText, ArrowLeft } from "lucide-react";
 import config from "../config";
 import "react-toastify/dist/ReactToastify.css";
+import { INSTITUTES } from "../data/institutes";
+
+const COUNTRIES = ["India"];
+const STATES_BY_COUNTRY = { India: ["Kerala", "Tamil Nadu", "Karnataka", "Andhra Pradesh", "Telangana"] };
+const DISTRICTS_BY_STATE = {
+  Kerala: ["Kottayam", "Ernakulam", "Alappuzha", "Idukki", "Pathanamthitta", "Kollam", "Thiruvananthapuram", "Thrissur", "Palakkad", "Malappuram", "Kozhikode", "Wayanad", "Kannur", "Kasaragod"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+  Karnataka: ["Bengaluru Urban", "Mysuru", "Mangaluru"],
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada"],
+  Telangana: ["Hyderabad", "Warangal"],
+};
 
 export default function HostRegister() {
   const [formData, setFormData] = useState({
@@ -21,10 +32,16 @@ export default function HostRegister() {
     countryCode: "+91",
     password: "",
     confirmPassword: "",
+    country: "",
+    state: "",
+    district: "",
   });
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [instQuery, setInstQuery] = useState("");
+  const [instOpen, setInstOpen] = useState(false);
   const navigate = useNavigate();
 
   const validate = (field, value) => {
@@ -41,9 +58,28 @@ export default function HostRegister() {
         return /^\d{10}$/.test(value) ? "" : "Phone must be 10 digits";
       case "pincode":
         return /^\d{6}$/.test(value) ? "" : "Pincode must be 6 digits";
+      case "country":
+      case "state":
+      case "district":
+        return value && value.toString().trim() ? "" : "Required";
       default:
         return value.trim() ? "" : "This field is required";
     }
+  };
+
+  const checkAvailability = async (field, val) => {
+    try {
+      const params = new URLSearchParams({ [field]: String(val) });
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/check-availability?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const available = data?.available?.[field];
+      if (available === false) {
+        const msg = field === 'username' ? 'Username already in use' : field === 'email' ? 'Email already in use' : 'Phone number already in use';
+        setErrors(prev => ({ ...prev, [field]: msg }));
+        toast.error(`❌ ${msg}`);
+      }
+    } catch (_) {}
   };
 
   const handleChange = (e) => {
@@ -52,9 +88,20 @@ export default function HostRegister() {
     setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
   };
 
+  const handleFocus = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    // run immediate validation to give early feedback
+    setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
+  };
+
   const handleBlur = (e) => {
     const { name, value } = e.target;
-    setErrors((prev) => ({ ...prev, [name]: validate(name, value) }));
+    const msg = validate(name, value);
+    setErrors((prev) => ({ ...prev, [name]: msg }));
+    if (!msg && (name === 'username' || name === 'email' || name === 'phone')) {
+      checkAvailability(name, value);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -79,7 +126,7 @@ export default function HostRegister() {
         return;
       }
     } else if (currentStep === 2) {
-      const step2Fields = ['street', 'city', 'pincode', 'age', 'course', 'phone'];
+      const step2Fields = ['street', 'city', 'pincode', 'age', 'course', 'phone', 'country', 'state', 'district'];
       const step2Errors = {};
       step2Fields.forEach(field => {
         const error = validate(field, formData[field]);
@@ -174,9 +221,10 @@ export default function HostRegister() {
             }`}
             value={formData.username}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.username && <p className="text-red-400 text-sm mt-1">{errors.username}</p>}
+          {touched.username && errors.username && <p className="text-red-400 text-sm mt-1">{errors.username}</p>}
         </div>
 
         <div>
@@ -193,9 +241,10 @@ export default function HostRegister() {
             }`}
             value={formData.fullname}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.fullname && <p className="text-red-400 text-sm mt-1">{errors.fullname}</p>}
+          {touched.fullname && errors.fullname && <p className="text-red-400 text-sm mt-1">{errors.fullname}</p>}
         </div>
       </div>
 
@@ -204,18 +253,71 @@ export default function HostRegister() {
           <Building2 className="w-4 h-4 inline mr-2" />
           Institute/Organization *
         </label>
-        <input
-          name="institute"
-          type="text"
-          placeholder="Your institution or organization"
-          className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
-            errors.institute ? 'border-red-500' : 'border-gray-600'
-          }`}
-          value={formData.institute}
-          onChange={handleChange}
-          onBlur={handleBlur}
-        />
-        {errors.institute && <p className="text-red-400 text-sm mt-1">{errors.institute}</p>}
+        <div className="relative">
+          <input
+            name="institute"
+            type="text"
+            placeholder="Select institute"
+            className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
+              errors.institute ? 'border-red-500' : 'border-gray-600'
+            }`}
+            value={formData.institute}
+            onChange={(e)=>{
+              const q = e.target.value;
+              setInstQuery(q);
+              setFormData(prev=> ({ ...prev, institute: q }));
+              setInstOpen(true);
+            }}
+            onFocus={(e)=>{ setInstOpen(true); handleFocus(e); }}
+            onBlur={(e)=>{ setTimeout(()=> setInstOpen(false), 120); handleBlur(e); }}
+            autoComplete="off"
+          />
+          {instOpen && (
+            <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto no-scrollbar bg-white text-slate-900 border border-slate-200 rounded-lg shadow-lg">
+              {INSTITUTES
+                .filter(i=> (instQuery||formData.institute||"").toLowerCase().split(" ").every(p=> i.name.toLowerCase().includes(p)))
+                .slice(0,50)
+                .map(i=> (
+                  <button
+                    type="button"
+                    key={i.name}
+                    className="w-full text-left px-3 py-2 hover:bg-slate-100"
+                    onMouseDown={(e)=> e.preventDefault()}
+                    onClick={()=>{
+                      setFormData(prev=> ({ ...prev, institute: i.name, pincode: i.pincode }));
+                      setInstQuery("");
+                      setInstOpen(false);
+                    }}
+                    title={`${i.address}${i.phone? ` • ${i.phone}`: ''}`}
+                  >
+                    <div className="font-medium truncate">{i.name}</div>
+                    <div className="text-xs text-slate-600 truncate">{i.address}{i.pincode? ` • ${i.pincode}`: ''}</div>
+                  </button>
+                ))}
+              <div className="border-t border-slate-200 my-1"></div>
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e)=> e.preventDefault()}
+                onClick={()=>{
+                  // Keep current typed value; just close the list to allow manual entry
+                  setInstOpen(false);
+                }}
+              >
+                Other (not listed) — type your institute
+              </button>
+              {INSTITUTES.filter(i=> (instQuery||formData.institute||"").toLowerCase().split(" ").every(p=> i.name.toLowerCase().includes(p))).length===0 && (
+                <div className="px-3 py-2 text-sm text-slate-600">No matches</div>
+              )}
+            </div>
+          )}
+        </div>
+        {touched.institute && errors.institute && <p className="text-red-400 text-sm mt-1">{errors.institute}</p>}
+        {formData.institute && (
+          <p className="text-xs text-gray-400 mt-1">
+            Selected: {formData.institute} {formData.pincode && `• Pincode auto-filled: ${formData.pincode}`}
+          </p>
+        )}
       </div>
 
       <div>
@@ -232,9 +334,10 @@ export default function HostRegister() {
           }`}
           value={formData.email}
           onChange={handleChange}
+          onFocus={handleFocus}
           onBlur={handleBlur}
         />
-        {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+        {touched.email && errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
       </div>
     </div>
   );
@@ -252,37 +355,39 @@ export default function HostRegister() {
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
           <MapPin className="w-4 h-4 inline mr-2" />
-          Street Address *
+          Address Line 1 *
         </label>
         <input
           name="street"
           type="text"
-          placeholder="Your complete street address"
+          placeholder="Address Line 1"
           className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
             errors.street ? 'border-red-500' : 'border-gray-600'
           }`}
           value={formData.street}
           onChange={handleChange}
+          onFocus={handleFocus}
           onBlur={handleBlur}
         />
-        {errors.street && <p className="text-red-400 text-sm mt-1">{errors.street}</p>}
+        {touched.street && errors.street && <p className="text-red-400 text-sm mt-1">{errors.street}</p>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">City *</label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Address Line 2 *</label>
           <input
             name="city"
             type="text"
-            placeholder="City"
+            placeholder="Address Line 2"
             className={`w-full p-3 rounded-lg bg-gray-800/60 border focus:ring-2 focus:ring-orange-500 transition-all ${
               errors.city ? 'border-red-500' : 'border-gray-600'
             }`}
             value={formData.city}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.city && <p className="text-red-400 text-sm mt-1">{errors.city}</p>}
+          {touched.city && errors.city && <p className="text-red-400 text-sm mt-1">{errors.city}</p>}
         </div>
 
         <div>
@@ -296,9 +401,10 @@ export default function HostRegister() {
             }`}
             value={formData.pincode}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.pincode && <p className="text-red-400 text-sm mt-1">{errors.pincode}</p>}
+          {touched.pincode && errors.pincode && <p className="text-red-400 text-sm mt-1">{errors.pincode}</p>}
         </div>
 
         <div>
@@ -312,9 +418,10 @@ export default function HostRegister() {
             }`}
             value={formData.age}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.age && <p className="text-red-400 text-sm mt-1">{errors.age}</p>}
+          {touched.age && errors.age && <p className="text-red-400 text-sm mt-1">{errors.age}</p>}
         </div>
       </div>
 
@@ -332,9 +439,10 @@ export default function HostRegister() {
           }`}
           value={formData.course}
           onChange={handleChange}
+          onFocus={handleFocus}
           onBlur={handleBlur}
         />
-        {errors.course && <p className="text-red-400 text-sm mt-1">{errors.course}</p>}
+        {touched.course && errors.course && <p className="text-red-400 text-sm mt-1">{errors.course}</p>}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -366,9 +474,10 @@ export default function HostRegister() {
             }`}
             value={formData.phone}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
+          {touched.phone && errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
         </div>
       </div>
     </div>
@@ -399,9 +508,10 @@ export default function HostRegister() {
             }`}
             value={formData.password}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
+          {touched.password && errors.password && <p className="text-red-400 text-sm mt-1">{errors.password}</p>}
         </div>
 
         <div>
@@ -418,9 +528,10 @@ export default function HostRegister() {
             }`}
             value={formData.confirmPassword}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
-          {errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>}
+          {touched.confirmPassword && errors.confirmPassword && <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>}
         </div>
       </div>
 

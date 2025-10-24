@@ -44,6 +44,11 @@ const hostSchema = new mongoose.Schema({
 
 // Add indexes for better performance
 hostSchema.index({ email: 1 }, { unique: true });
+// Ensure phone numbers are unique when provided (allow multiple empty strings)
+hostSchema.index(
+  { phone: 1 },
+  { unique: true, partialFilterExpression: { phone: { $type: "string", $ne: "" } } }
+);
 hostSchema.index({ approvalStatus: 1 });
 hostSchema.index({ isDeleted: 1 });
 hostSchema.index({ createdAt: -1 });

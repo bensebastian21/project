@@ -4,8 +4,14 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const authRoutes = require("./routes/auth");
 const hostRoutes = require("./routes/host");
+const usersRoutes = require("./routes/users");
+const friendsRoutes = require("./routes/friends");
 const reviewRoutes = require("./routes/reviews");
 const bookmarksRoutes = require("./routes/bookmarks");
+const certificatesRoutes = require("./routes/certificates");
+const subscriptionsRoutes = require("./routes/subscriptions");
+const supportRoutes = require("./routes/support");
+const chatRoutes = require("./routes/chat");
 const path = require("path");
 
 dotenv.config();
@@ -128,8 +134,14 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/host", hostRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/friends", friendsRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/bookmarks", bookmarksRoutes);
+app.use("/api/certificates", certificatesRoutes);
+app.use("/api/subscriptions", subscriptionsRoutes);
+app.use("/api/support", supportRoutes);
+app.use("/api/chat", chatRoutes);
 
 const PORT = process.env.PORT || 5000;
 console.log("Starting server on port:", PORT);

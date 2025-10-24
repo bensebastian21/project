@@ -41,6 +41,8 @@ export default function ReviewPage() {
     isAnonymous: false
   });
 
+  const canReview = Boolean(event?.isCompleted);
+
   useEffect(() => {
     fetchEventData();
   }, [eventId]);
@@ -132,6 +134,10 @@ export default function ReviewPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canReview) {
+      toast.info("Reviews will be available once the host marks this event as completed.");
+      return;
+    }
     
     if (formData.overallRating === 0) {
       toast.error("Please provide an overall rating");
@@ -334,26 +340,35 @@ export default function ReviewPage() {
             {existingReview ? "Update Your Review" : "Write a Review"}
           </h3>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Overall Rating */}
-            <div className="space-y-3">
-              <label className="block text-lg font-medium text-gray-300">
-                Overall Rating <span className="text-red-400">*</span>
-              </label>
-              <div className="flex items-center space-x-2">
-                {renderStarRating(formData.overallRating, handleRatingChange, "w-8 h-8")}
-                <span className="text-gray-400 ml-2">
-                  {formData.overallRating > 0 ? `${formData.overallRating}/5` : "Rate this event"}
-                </span>
-              </div>
+          {!canReview && (
+            <div className="mb-4 p-4 rounded-xl border border-yellow-700/50 bg-yellow-900/30 text-yellow-200">
+              Reviews are disabled until the host marks this event as completed.
             </div>
+          )}
 
+          <form onSubmit={handleSubmit} className="space-y-6" aria-disabled={!canReview}>
+            {/* Overall Rating */}
+            <div className="space-y-2">
+              <label className="block text-lg font-medium text-gray-300">
+                Overall rating <span className="text-red-400">*</span>
+              </label>
+              <div className={canReview ? "" : "opacity-60 pointer-events-none"}>
+                {renderStarRating(formData.overallRating, (r) => canReview && handleRatingChange(r), "w-7 h-7")}
+              </div>
+              {formData.overallRating > 0 && (
+                <div className="text-sm text-gray-400">You rated this {formData.overallRating} out of 5</div>
+              )}
+            </div>
             {/* Custom Fields */}
             {reviewFields.length > 0 && (
               <div className="space-y-6">
                 <h4 className="text-lg font-medium text-gray-300">Additional Feedback</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {reviewFields.map(renderField)}
+                  {reviewFields.map((f) => (
+                    <div key={f.fieldName} className={canReview ? "" : "opacity-60 pointer-events-none"}>
+                      {renderField(f)}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
@@ -365,9 +380,10 @@ export default function ReviewPage() {
               </label>
               <textarea
                 value={formData.comment}
-                onChange={(e) => setFormData(prev => ({ ...prev, comment: e.target.value }))}
+                onChange={(e) => canReview && setFormData(prev => ({ ...prev, comment: e.target.value }))}
                 placeholder="Share your detailed experience..."
                 rows="4"
+                disabled={!canReview}
                 className="w-full p-3 rounded-xl bg-gray-700/50 border border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               />
             </div>
@@ -378,7 +394,7 @@ export default function ReviewPage() {
                 type="checkbox"
                 id="isAnonymous"
                 checked={formData.isAnonymous}
-                onChange={(e) => setFormData(prev => ({ ...prev, isAnonymous: e.target.checked }))}
+                onChange={(e) => canReview && setFormData(prev => ({ ...prev, isAnonymous: e.target.checked }))}
                 className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
               />
               <label htmlFor="isAnonymous" className="text-gray-300">
@@ -390,7 +406,7 @@ export default function ReviewPage() {
             <div className="flex items-center space-x-4 pt-6">
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !canReview}
                 className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50"
               >
                 <Send className="w-5 h-5" />

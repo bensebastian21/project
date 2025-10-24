@@ -27,16 +27,9 @@ html, body {
   max-width: 500px;
   backdrop-filter: blur(12px);
   max-height: 90vh;
-  overflow-y: scroll;       /* enable scrolling */
-  scrollbar-width: none;    /* Firefox - hide scrollbar */
-  -ms-overflow-style: none; /* IE & Edge */
+  overflow: hidden;         /* disable scrolling entirely */
   animation: slideIn 0.5s ease-out;
   text-align: center;
-}
-
-/* Chrome, Safari, Edge */
-.form-container::-webkit-scrollbar {
-  display: none;
 }
 
 .form-container h1 {

@@ -1,5 +1,5 @@
 // src/components/PasswordReset.jsx
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -15,14 +15,40 @@ export default function PasswordReset() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({});
+  const [errors, setErrors] = useState({});
   
   const navigate = useNavigate();
 
+  const validate = (name, value, ctx={}) => {
+    switch (name) {
+      case 'email':
+        return /\S+@\S+\.\S+/.test(String(value||'').trim()) ? '' : 'Enter a valid email';
+      case 'code':
+        return String(value||'').trim().length >= 4 ? '' : 'Enter a valid code';
+      case 'newPassword':
+        return String(value||'').length >= 6 ? '' : 'Password must be at least 6 characters';
+      case 'confirmPassword':
+        return String(value||'') === String(ctx.newPassword||'') ? '' : 'Passwords do not match';
+      default:
+        return '';
+    }
+  };
+
+  const handleFocus = (e) => {
+    const { name, value } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
+    const msg = validate(name, value, { newPassword });
+    if (msg) setErrors(prev => ({ ...prev, [name]: msg }));
+  };
+
   const handleRequestReset = async (e) => {
     e.preventDefault();
-    if (!email.trim()) {
-      return toast.error("Please enter your email address");
-    }
+    if (!email.trim()) return toast.error("Please enter your email address");
+    // inline validation state
+    const msg = validate('email', email);
+    setErrors(prev => ({ ...prev, email: msg }));
+    if (msg) return;
 
     setLoading(true);
     try {
@@ -52,21 +78,12 @@ export default function PasswordReset() {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     
-    if (!code.trim()) {
-      return toast.error("Please enter the verification code");
-    }
-    
-    if (!newPassword.trim()) {
-      return toast.error("Please enter a new password");
-    }
-    
-    if (newPassword.length < 6) {
-      return toast.error("Password must be at least 6 characters");
-    }
-    
-    if (newPassword !== confirmPassword) {
-      return toast.error("Passwords do not match");
-    }
+    // inline validation state
+    const vCode = validate('code', code);
+    const vNew = validate('newPassword', newPassword);
+    const vConf = validate('confirmPassword', confirmPassword, { newPassword });
+    setErrors(prev => ({ ...prev, code: vCode, newPassword: vNew, confirmPassword: vConf }));
+    if (vCode || vNew || vConf) return;
 
     setLoading(true);
     try {
@@ -142,13 +159,18 @@ export default function PasswordReset() {
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="email"
+                  name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onFocus={handleFocus}
                   placeholder="Enter your email"
                   className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
                   required
                 />
               </div>
+              {touched.email && errors.email && (
+                <p className="text-red-400 text-sm mt-1">{errors.email}</p>
+              )}
             </div>
 
             <button
@@ -179,12 +201,17 @@ export default function PasswordReset() {
               </label>
               <input
                 type="text"
+                name="code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
+                onFocus={handleFocus}
                 placeholder="Enter the 6-digit code from your email"
                 className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
                 required
               />
+              {touched.code && errors.code && (
+                <p className="text-red-400 text-sm mt-1">{errors.code}</p>
+              )}
             </div>
 
             <div>
@@ -195,12 +222,17 @@ export default function PasswordReset() {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type={showPassword ? "text" : "password"}
+                  name="newPassword"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  onFocus={handleFocus}
                   placeholder="Enter new password"
                   className="w-full pl-10 pr-12 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
                   required
                 />
+                {touched.newPassword && errors.newPassword && (
+                  <p className="text-red-400 text-sm mt-1">{errors.newPassword}</p>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -219,12 +251,17 @@ export default function PasswordReset() {
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  onFocus={handleFocus}
                   placeholder="Confirm new password"
                   className="w-full pl-10 pr-12 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-400"
                   required
                 />
+                {touched.confirmPassword && errors.confirmPassword && (
+                  <p className="text-red-400 text-sm mt-1">{errors.confirmPassword}</p>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}

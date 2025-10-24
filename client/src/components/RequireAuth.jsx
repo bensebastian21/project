@@ -1,6 +1,7 @@
 // src/components/RequireAuth.jsx
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import OnboardingGuard from "./OnboardingGuard";
 
 // Guards routes by checking token and (optionally) allowed roles
 export default function RequireAuth({ children, allowedRoles }) {
@@ -19,6 +20,15 @@ export default function RequireAuth({ children, allowedRoles }) {
 
   if (!authorized) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  // For students, check onboarding completion
+  if (user && user.role === "student") {
+    return (
+      <OnboardingGuard user={user}>
+        {children}
+      </OnboardingGuard>
+    );
   }
 
   return children;

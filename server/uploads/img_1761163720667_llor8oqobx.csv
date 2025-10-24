@@ -1,0 +1,16 @@
+"Event Title","Student Name","Email","Registered At","Status","Attended","StudentId"
+"Hackathon","Bhavya ","killswitch0021@gmail.com","2025-09-25T09:31:41.787Z","registered","FALSE","{
+  _id: new ObjectId(""68d4b8c9b75acfaf28b78471""),
+  fullname: 'Bhavya ',
+  email: 'killswitch0021@gmail.com'
+}"
+"Hackathon","Abin Abraham","bensebastian2026@mca.ajce.in","2025-09-25T09:44:02.940Z","registered","FALSE","{
+  _id: new ObjectId(""68d4c68ee758eae3619cc9b9""),
+  fullname: 'Abin Abraham',
+  email: 'bensebastian2026@mca.ajce.in'
+}"
+"Hackathon","Savio Joseph","vortexsolutionzz@gmail.com","2025-10-06T10:52:40.850Z","registered","FALSE","{
+  _id: new ObjectId(""68d5213096af53e80cc2b013""),
+  fullname: 'Savio Joseph',
+  email: 'vortexsolutionzz@gmail.com'
+}"

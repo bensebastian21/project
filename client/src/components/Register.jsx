@@ -1,8 +1,20 @@
 // src/components/Register.jsx
 import React, { useState } from "react";
+import Tesseract from "tesseract.js";
 import { toast } from "react-toastify";
 import config from "../config";
 import "react-toastify/dist/ReactToastify.css";
+import { INSTITUTES } from "../data/institutes";
+
+const COUNTRIES = ["India"];
+const STATES_BY_COUNTRY = { India: ["Kerala", "Tamil Nadu", "Karnataka", "Andhra Pradesh", "Telangana"] };
+const DISTRICTS_BY_STATE = {
+  Kerala: ["Kottayam", "Ernakulam", "Alappuzha", "Idukki", "Pathanamthitta", "Kollam", "Thiruvananthapuram", "Thrissur", "Palakkad", "Malappuram", "Kozhikode", "Wayanad", "Kannur", "Kasaragod"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai"],
+  Karnataka: ["Bengaluru Urban", "Mysuru", "Mangaluru"],
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada"],
+  Telangana: ["Hyderabad", "Warangal"],
+};
 
 const initialForm = {
   username: "",
@@ -17,12 +29,22 @@ const initialForm = {
   phone: "",
   countryCode: "+91",
   studentId: null,
+  secondDoc: null, // bonafide letter OR fee receipt
   password: "",
   confirmPassword: "",
+  country: "",
+  state: "",
+  district: "",
+  agreeVerification: false,
+  ocrRaw: "",
+  ocrMismatch: false,
 };
 
 export default function Register({ onSwitchToLogin }) {
   const [formData, setFormData] = useState(initialForm);
+  const [instQuery, setInstQuery] = useState("");
+  const [instOpen, setInstOpen] = useState(false);
+  const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false); // for normal signup
   const [isGoogleLoading, setIsGoogleLoading] = useState(false); // separate for Google signup
@@ -46,8 +68,11 @@ export default function Register({ onSwitchToLogin }) {
       case "confirmPassword":
         return value === formData.password ? "" : "Passwords do not match";
       case "institute":
+        return value && value.toString().trim() ? "" : "Institute is required";
       case "street":
+        return value && value.toString().trim() ? "" : "Address line 1 is required";
       case "city":
+        return "";
       case "course":
         return /^[A-Za-z\s]+$/.test(value.trim())
           ? ""
@@ -56,6 +81,10 @@ export default function Register({ onSwitchToLogin }) {
         return /^[0-9]{6}$/.test(value)
           ? ""
           : "Pincode must be 6 digits only";
+      case "country":
+      case "state":
+      case "district":
+        return value && value.toString().trim() ? "" : "Required";
       case "age":
         return /^[0-9]+$/.test(value) && value >= 5 && value <= 40
           ? ""
@@ -74,19 +103,73 @@ export default function Register({ onSwitchToLogin }) {
     }
   };
 
+  const checkAvailability = async (field, val) => {
+    try {
+      const params = new URLSearchParams({ [field]: String(val) });
+      const res = await fetch(`${config.apiBaseUrl}/api/auth/check-availability?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const available = data?.available?.[field];
+      if (available === false) {
+        const msg = field === 'username' ? 'Username already in use' : field === 'email' ? 'Email already in use' : 'Phone number already in use';
+        setErrors(prev => ({ ...prev, [field]: msg }));
+        toast.error(`❌ ${msg}`);
+      }
+    } catch (_) {}
+  };
+
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    const val = name === "studentId" ? files[0] : value;
+    const { name, value, files, type, checked } = e.target;
+    const isFile = type === "file";
+    const val = isFile ? files?.[0] : type === "checkbox" ? !!checked : value;
     setFormData((prev) => ({ ...prev, [name]: val }));
+    const errorMsg = validate(name, val);
+    setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    if (isFile && (name === "studentId" || name === "secondDoc") && val) {
+      runOcr(val);
+    }
+  };
+
+  const handleFocus = (e) => {
+    const { name, value, files, type, checked } = e.target;
+    const val = type === "file" ? files?.[0] : type === "checkbox" ? !!checked : value;
+    setTouched((prev) => ({ ...prev, [name]: true }));
     const errorMsg = validate(name, val);
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
   };
 
   const handleBlur = (e) => {
-    const { name, value, files } = e.target;
-    const val = name === "studentId" ? files?.[0] : value;
+    const { name, value, files, type, checked } = e.target;
+    const val = type === "file" ? files?.[0] : type === "checkbox" ? !!checked : value;
     const errorMsg = validate(name, val);
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    if (!errorMsg && (name === "username" || name === "email" || name === "phone")) {
+      checkAvailability(name, val);
+    }
+  };
+
+  // Simple OCR pipeline: extract raw text and compare against entered fullname/institute
+  const runOcr = async (file) => {
+    try {
+      const { data } = await Tesseract.recognize(file, 'eng');
+      const raw = (data?.text || '').trim();
+      const txt = raw.toLowerCase();
+      const nameToken = (formData.fullname || '').toLowerCase().split(/\s+/).filter(Boolean)[0] || '';
+      const instToken = (formData.institute || '').toLowerCase().split(/\s+/).filter(Boolean)[0] || '';
+      const nameOk = nameToken ? txt.includes(nameToken) : true;
+      const instOk = instToken ? txt.includes(instToken) : true;
+      const mismatch = !(nameOk && instOk);
+      setFormData((prev)=> ({ ...prev, ocrRaw: raw, ocrMismatch: mismatch }));
+      if (mismatch) {
+        toast.warn("⚠️ ID text doesn't seem to match name or institute. Admin will review.");
+      } else {
+        toast.success("✅ Student ID looks consistent (pre-check)");
+      }
+    } catch (err) {
+      console.error('OCR error', err);
+      toast.error("❌ Could not read the document text. You can still submit.");
+      setFormData((prev)=> ({ ...prev, ocrRaw: '', ocrMismatch: false }));
+    }
   };
 
   const storeInMongoDB = async (userData) => {
@@ -121,8 +204,6 @@ export default function Register({ onSwitchToLogin }) {
     }
   };
 
-  // Removed Firebase storage
-
   const handleRegister = async (e) => {
     e.preventDefault();
     if (isLoading) return;
@@ -132,6 +213,15 @@ export default function Register({ onSwitchToLogin }) {
     for (const key in formData) {
       const error = validate(key, formData[key]);
       if (error) newErrors[key] = error;
+    }
+    // At least one verification document required
+    if (!formData.studentId && !formData.secondDoc) {
+      newErrors.studentId = newErrors.studentId || "Student ID or Bonafide/Receipt is required";
+      newErrors.secondDoc = newErrors.secondDoc || "Upload at least one document";
+    }
+    // Consent required
+    if (!formData.agreeVerification) {
+      newErrors.agreeVerification = "You must agree to verification";
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -156,8 +246,15 @@ export default function Register({ onSwitchToLogin }) {
         phone: formData.phone,
         countryCode: formData.countryCode,
         studentId: formData.studentId, // file object handled by storeInMongoDB
+        secondDoc: formData.secondDoc, // optional second verification doc
         password: formData.password,
         role: "student",
+        country: formData.country,
+        state: formData.state,
+        district: formData.district,
+        agreeVerification: formData.agreeVerification ? "true" : "false",
+        ocrRaw: formData.ocrRaw,
+        ocrMismatch: formData.ocrMismatch ? "true" : "false",
       };
 
       const mongoSaved = await storeInMongoDB(userData);
@@ -168,8 +265,8 @@ export default function Register({ onSwitchToLogin }) {
 
       toast.success("✅ Registration successful!");
       setTimeout(() => {
-        onSwitchToLogin();
-        setFormData(initialForm);
+        // Redirect to login page where user can sign in and trigger onboarding
+        window.location.href = "/login";
       }, 1500);
     } catch (err) {
       // Surface server message if present
@@ -186,7 +283,7 @@ export default function Register({ onSwitchToLogin }) {
   };
 
   return (
-    <div className="space-y-3 animate-fadeIn">
+    <div className="space-y-3 animate-fadeIn max-h-[70vh] md:max-h-[75vh] overflow-y-auto no-scrollbar pr-2">
 
       <form
         className="space-y-3"
@@ -217,33 +314,94 @@ export default function Register({ onSwitchToLogin }) {
           {errors.fullname && <p className="error">{errors.fullname}</p>}
         </div>
 
-        <div>
+        <div className="relative">
           <input
             name="institute"
-            placeholder="College/School"
+            placeholder="Select institute"
             className="input"
             value={formData.institute}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            onChange={(e) => {
+              const q = e.target.value;
+              setInstQuery(q);
+              setFormData((prev) => ({ ...prev, institute: q }));
+              setInstOpen(true);
+            }}
+            onFocus={() => setInstOpen(true)}
+            onBlur={(e) => {
+              // small timeout to allow click selection before closing
+              setTimeout(() => setInstOpen(false), 120);
+              handleBlur(e);
+            }}
+            autoComplete="off"
           />
+          {instOpen && (
+            <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto no-scrollbar bg-white text-slate-900 border border-slate-200 rounded-lg shadow-lg">
+              {INSTITUTES
+                .filter((i) =>
+                  (instQuery || formData.institute || "").toLowerCase().split(" ").every((p) => i.name.toLowerCase().includes(p))
+                )
+                .slice(0, 50)
+                .map((i) => (
+                  <button
+                    type="button"
+                    key={i.name}
+                    className="w-full text-left px-3 py-2 hover:bg-slate-100"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, institute: i.name }));
+                      setInstQuery("");
+                      setInstOpen(false);
+                    }}
+                    title={`${i.address}${i.phone ? ` • ${i.phone}` : ""}`}
+                  >
+                    <div className="font-medium truncate">{i.name}</div>
+                    <div className="text-xs text-slate-600 truncate">{i.address}{i.pincode ? ` • ${i.pincode}` : ""}</div>
+                  </button>
+                ))}
+              <div className="border-t border-slate-200 my-1"></div>
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  // Keep current typed value; just close the list to allow manual entry
+                  setInstOpen(false);
+                }}
+              >
+                Other (not listed) — type your institute
+              </button>
+              {INSTITUTES.filter((i) =>
+                (instQuery || formData.institute || "").toLowerCase().split(" ").every((p) => i.name.toLowerCase().includes(p))
+              ).length === 0 && (
+                <div className="px-3 py-2 text-sm text-slate-600">No matches</div>
+              )}
+            </div>
+          )}
           {errors.institute && <p className="error">{errors.institute}</p>}
+          {formData.institute && (
+            <p className="text-xs text-slate-400 mt-1">
+              Selected: {formData.institute}
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2">
           <input
             name="street"
-            placeholder="Street"
+            placeholder="Address Line 1"
             className="input"
             value={formData.street}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
           <input
             name="city"
-            placeholder="City"
+            placeholder="Address Line 2"
             className="input"
             value={formData.city}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
           <input
@@ -252,12 +410,62 @@ export default function Register({ onSwitchToLogin }) {
             className="input"
             value={formData.pincode}
             onChange={handleChange}
+            onFocus={handleFocus}
             onBlur={handleBlur}
           />
         </div>
-        {errors.street && <p className="error">{errors.street}</p>}
-        {errors.city && <p className="error">{errors.city}</p>}
-        {errors.pincode && <p className="error">{errors.pincode}</p>}
+        {touched.street && errors.street && <p className="error">{errors.street}</p>}
+        {touched.city && errors.city && <p className="error">{errors.city}</p>}
+        {touched.pincode && errors.pincode && <p className="error">{errors.pincode}</p>}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <select
+            name="country"
+            className="input"
+            value={formData.country || ""}
+            onChange={(e)=>{
+              const val = e.target.value;
+              setFormData(prev=> ({ ...prev, country: val, state: "", district: "" }));
+              setErrors(prev=> ({ ...prev, country: validate("country", val), state: "", district: "" }));
+            }}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          >
+            <option value="">Select Country</option>
+            {COUNTRIES.map(c=> (<option key={c} value={c}>{c}</option>))}
+          </select>
+          <select
+            name="state"
+            className="input"
+            value={formData.state || ""}
+            onChange={(e)=>{
+              const val = e.target.value;
+              setFormData(prev=> ({ ...prev, state: val, district: "" }));
+              setErrors(prev=> ({ ...prev, state: validate("state", val), district: "" }));
+            }}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            disabled={!formData.country}
+          >
+            <option value="">Select State</option>
+            {(STATES_BY_COUNTRY[formData.country] || []).map(s=> (<option key={s} value={s}>{s}</option>))}
+          </select>
+          <select
+            name="district"
+            className="input"
+            value={formData.district || ""}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            disabled={!formData.state}
+          >
+            <option value="">Select District</option>
+            {(DISTRICTS_BY_STATE[formData.state] || []).map(d=> (<option key={d} value={d}>{d}</option>))}
+          </select>
+        </div>
+        {touched.country && errors.country && <p className="error">{errors.country}</p>}
+        {touched.state && errors.state && <p className="error">{errors.state}</p>}
+        {touched.district && errors.district && <p className="error">{errors.district}</p>}
 
         <div>
           <input
@@ -341,6 +549,29 @@ export default function Register({ onSwitchToLogin }) {
         </div>
 
         <div>
+          <label className="text-sm mt-2 block text-gray-300">
+            Bonafide Letter or Current Fee Receipt (optional, image/PDF)
+          </label>
+          <input
+            name="secondDoc"
+            type="file"
+            accept="image/*,.pdf"
+            className="input"
+            onChange={handleChange}
+            onBlur={handleBlur}
+          />
+          {errors.secondDoc && <p className="error">{errors.secondDoc}</p>}
+          {formData.ocrRaw && (
+            <p className="text-xs text-slate-400 mt-1 truncate" title={formData.ocrRaw}>
+              OCR preview: {formData.ocrRaw}
+            </p>
+          )}
+          {formData.ocrMismatch && (
+            <p className="text-xs text-yellow-400 mt-1">⚠️ The text on your document may not match your name or institute. Admin will review.</p>
+          )}
+        </div>
+
+        <div>
           <input
             name="password"
             type="password"
@@ -366,7 +597,28 @@ export default function Register({ onSwitchToLogin }) {
           {errors.confirmPassword && <p className="error">{errors.confirmPassword}</p>}
         </div>
 
-        <button type="submit" className="btn btn-register" disabled={isLoading}>
+        <div className="flex items-start gap-2 my-2">
+          <input
+            id="agreeVerification"
+            name="agreeVerification"
+            type="checkbox"
+            className="mt-1"
+            checked={!!formData.agreeVerification}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+          />
+          <label htmlFor="agreeVerification" className="text-sm text-gray-300">
+            I confirm that the uploaded document is my own student ID or valid proof and consent to its use for verification.
+          </label>
+        </div>
+        {errors.agreeVerification && <p className="error">{errors.agreeVerification}</p>}
+
+        <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-3 text-sm text-blue-200">
+          📋 Your account will be created immediately, and your documents will be reviewed by an admin. You’ll be notified when verification is complete.
+        </div>
+
+        <button type="submit" className="btn btn-register mt-2" disabled={isLoading}>
           {isLoading ? "Registering..." : "Register"}
         </button>
       </form>
