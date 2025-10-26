@@ -142,14 +142,31 @@ export default function Dashboard() {
   const filteredEvents = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     let base = events || [];
+    
     // Exclude completed/past events in Explore/Home
     const now = new Date();
+    
     base = base.filter(e => {
+      // Filter out completed events
+      if (e?.isCompleted) return false;
+      
       const start = e?.date ? new Date(e.date) : null;
       const end = e?.endDate ? new Date(e.endDate) : null;
-      if (e?.isCompleted) return false;
-      return end ? end > now : (start ? start > now : true);
+      
+      // If event has an end date, check if it has passed
+      if (end) {
+        return end > now;
+      }
+      
+      // If no end date, check if start date has passed
+      if (start) {
+        return start > now;
+      }
+      
+      // If no dates, exclude by default (invalid event)
+      return false;
     });
+    
     if (hostFilterId) {
       base = base.filter(e => String(e.hostId?._id || e.hostId) === String(hostFilterId));
     }

@@ -26,6 +26,13 @@
 - **Profile Updates**: Easy to update and manage user information
 - **Secure Storage**: Data stored securely in both Firebase and MongoDB
 
+### 5. Cloudinary Integration
+- **Image Uploads**: Profile pictures, banners, and documents stored in Cloudinary
+- **Scalable Storage**: Cloud-based image storage with CDN delivery
+- **Image Transformations**: Automatic image optimization and resizing
+- **Secure Uploads**: Direct uploads to Cloudinary with signed URLs
+- **Fallback Support**: Backward compatibility with local uploads
+
 ## Component Structure
 
 ### HomePage.jsx
@@ -91,6 +98,7 @@
 - **MongoDB**: Secondary user profile data storage, password reset tokens, and backup
 - **Google Auth Provider**: Google sign-in integration
 - **Security Rules**: Built-in data protection in both systems
+- **Cloudinary**: Cloud-based image storage and delivery
 
 ## Data Storage Strategy
 
@@ -98,7 +106,8 @@
 1. **Firebase Auth**: Creates user account
 2. **Firestore**: Stores complete user profile
 3. **MongoDB**: Stores complete user profile + Firebase UID (backup)
-4. **Success Message**: Shows which databases were successfully updated
+4. **Cloudinary**: Stores profile pictures, banners, and documents
+5. **Success Message**: Shows which databases were successfully updated
 
 ### Login Process
 1. **Firebase Auth**: Authenticates user
@@ -112,6 +121,25 @@
 3. **Token Verification**: MongoDB validates reset token
 4. **Password Update**: New password hashed and stored in MongoDB
 5. **Security**: Reset tokens expire after 1 hour for security
+
+## Cloudinary Integration Details
+
+### Image Upload Process
+1. **Direct Upload**: Files uploaded directly to Cloudinary from the browser
+2. **Signed URLs**: Secure uploads using upload presets
+3. **Automatic Optimization**: Images automatically optimized for web delivery
+4. **Transformations**: Real-time image resizing, cropping, and formatting
+5. **CDN Delivery**: Fast global delivery through Cloudinary's CDN
+
+### Supported Image Types
+- **Profile Pictures**: JPG, PNG, GIF formats
+- **Banners**: JPG, PNG formats with automatic resizing
+- **Documents**: JPG, PNG, PDF formats for verification
+
+### Folders Structure
+- **Profiles**: `/student-events/profiles/`
+- **Banners**: `/student-events/banners/`
+- **Documents**: `/student-events/documents/`
 
 ## Usage
 
@@ -145,6 +173,12 @@
 3. User data automatically stored in both databases
 4. Seamless integration with existing system
 
+### Image Uploads
+1. Select image file in profile or registration forms
+2. File automatically uploaded to Cloudinary
+3. Cloudinary URL stored in user profile
+4. Images displayed with automatic optimization
+
 ## Error Handling
 
 The app provides specific error messages for common scenarios:
@@ -158,12 +192,16 @@ The app provides specific error messages for common scenarios:
 - Too many failed attempts
 - Account disabled
 - Network errors
+- Image upload failures
+- Cloudinary configuration errors
 
 ## Dependencies
 
 - `firebase`: Core Firebase SDK for authentication and Firestore
 - `react-toastify`: For user notifications
 - `react-router-dom`: For navigation
+- `cloudinary`: Cloudinary SDK for image management
+- `multer-storage-cloudinary`: Multer storage engine for Cloudinary
 
 ## Benefits of Hybrid Database Approach
 
@@ -177,11 +215,15 @@ The app provides specific error messages for common scenarios:
 8. **Enhanced Security**: Password reset tokens stored securely in MongoDB
 9. **Email Delivery**: Firebase handles reliable email delivery
 10. **Token Management**: Secure token generation and validation
+11. **Cloud Storage**: Scalable image storage with Cloudinary
+12. **Image Optimization**: Automatic image optimization and delivery
+13. **Global CDN**: Fast image delivery worldwide
 
 ## Database Priority
 
 1. **Primary**: Firebase Firestore (real-time, immediate access)
 2. **Secondary**: MongoDB (backup, fallback access, password reset tokens)
-3. **Fallback**: Basic user info from Firebase Auth
+3. **Image Storage**: Cloudinary (scalable image storage and delivery)
+4. **Fallback**: Basic user info from Firebase Auth
 
-This hybrid approach ensures maximum data availability, user experience reliability, and secure password reset functionality. 
+This hybrid approach ensures maximum data availability, user experience reliability, and secure password reset functionality.

@@ -1,8 +1,10 @@
-﻿// src/pages/Profile.jsx
+﻿﻿﻿// src/pages/Profile.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../utils/api";
+import { uploadProfilePicture, uploadBanner } from "../utils/cloudinary";
+import { getProfilePictureUrl, getBannerUrl } from "../utils/imageUtils";
 import { Mail, Phone, ShieldCheck, Send, CheckCircle2, Save, UserCircle2, Edit3, AlertCircle, CheckCircle, Loader2, Trophy, MapPin, ArrowLeft, ImagePlus, Upload } from "lucide-react";
 
 // Local UI helpers
@@ -275,9 +277,17 @@ const [selectedBadges, setSelectedBadges] = useState([]);
     try {
       setUploading(true);
       const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append('banner', selectedBanner);
-      await api.post('/api/auth/upload-banner', formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } });
+      
+      // Upload to Cloudinary
+      const uploadResult = await uploadBanner(selectedBanner);
+      if (!uploadResult.success) {
+        toast.error(uploadResult.error || 'Failed to upload banner');
+        return;
+      }
+      
+      // Update user profile with Cloudinary URL
+      await api.put('/api/auth/me', { bannerUrl: uploadResult.url }, { headers: { Authorization: `Bearer ${token}` } });
+      
       toast.success('Banner updated');
       const meRes = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
       setMe(meRes.data);
@@ -475,14 +485,17 @@ const [selectedBadges, setSelectedBadges] = useState([]);
     try {
       setUploading(true);
       const token = localStorage.getItem("token");
-      const formData = new FormData();
-      formData.append('profilePic', selectedFile);
-      const { data } = await api.post("/api/auth/upload-profile-pic", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      
+      // Upload to Cloudinary
+      const uploadResult = await uploadProfilePicture(selectedFile);
+      if (!uploadResult.success) {
+        toast.error(uploadResult.error || 'Failed to upload profile picture');
+        return;
+      }
+      
+      // Update user profile with Cloudinary URL
+      await api.put('/api/auth/me', { profilePic: uploadResult.url }, { headers: { Authorization: `Bearer ${token}` } });
+      
       toast.success("Profile picture updated");
       const meRes = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
       setMe(meRes.data);
@@ -541,14 +554,14 @@ const [selectedBadges, setSelectedBadges] = useState([]);
         <div className="mb-6 rounded-xl overflow-hidden border border-[#2a2a30] bg-[#0e0e10]">
           <div className="relative h-40 sm:h-56 md:h-64 w-full bg-[#141418]">
             {form.bannerUrl ? (
-              <img src={`http://localhost:5000/${form.bannerUrl}?v=${imgBust}`} alt="Banner" className="w-full h-full object-cover" />
+              <img src={getBannerUrl(form.bannerUrl)} alt="Banner" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-r from-blue-700/40 to-indigo-700/30" />
             )}
             {/* Avatar overlay */}
             <div className="absolute -bottom-4 left-6 w-24 h-24 rounded-full border-4 border-[#0b0b0c] overflow-hidden bg-[#151518] flex items-center justify-center shadow-[0_6px_20px_rgba(0,0,0,0.35)]">
               {form.profilePic ? (
-                <img src={`http://localhost:5000/${form.profilePic}?v=${imgBust}`} alt="Profile" className="w-full h-full object-cover" />
+                <img src={getProfilePictureUrl(form.profilePic)} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <UserCircle2 className="w-10 h-10 text-yellow-400" />
               )}
@@ -887,7 +900,7 @@ const [selectedBadges, setSelectedBadges] = useState([]);
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full bg-[#151518] border border-[#2a2a30] flex items-center justify-center overflow-hidden">
                   {form.profilePic ? (
-                    <img src={`http://localhost:5000/${form.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={getProfilePictureUrl(form.profilePic)} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <UserCircle2 className="w-10 h-10 text-yellow-400" />
                   )}

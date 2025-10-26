@@ -1,176 +1,165 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const authRoutes = require("./routes/auth");
-const hostRoutes = require("./routes/host");
-const usersRoutes = require("./routes/users");
-const friendsRoutes = require("./routes/friends");
-const reviewRoutes = require("./routes/reviews");
-const bookmarksRoutes = require("./routes/bookmarks");
-const certificatesRoutes = require("./routes/certificates");
-const subscriptionsRoutes = require("./routes/subscriptions");
-const supportRoutes = require("./routes/support");
-const chatRoutes = require("./routes/chat");
-const path = require("path");
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
 
-dotenv.config();
+// Routes
+const authRoutes = require('./routes/auth');
+const hostRoutes = require('./routes/host');
+const usersRoutes = require('./routes/users');
+const friendsRoutes = require('./routes/friends');
+const reviewRoutes = require('./routes/reviews');
+const bookmarksRoutes = require('./routes/bookmarks');
+const certificatesRoutes = require('./routes/certificates');
+const subscriptionsRoutes = require('./routes/subscriptions');
+const supportRoutes = require('./routes/support');
+const chatRoutes = require('./routes/chat');
+
 const app = express();
 
-// Improve Mongoose debug visibility in development
-if ((process.env.NODE_ENV || "development") !== "production") {
-  mongoose.set("debug", false);
+// ======= Environment Variables =======
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
+
+// Fail fast if critical env vars are missing
+if (!MONGO_URI) {
+  console.error('❌ MONGO_URI is required!');
+  process.exit(1);
 }
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET is required!');
+  process.exit(1);
+}
+
+// ======= CORS Setup =======
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'http://localhost:3004',
+  'http://localhost:3005',
+  'http://localhost:3006',
+  'http://localhost:3007',
+  'http://localhost:3008',
+  'http://localhost:3009',
+  CLIENT_ORIGIN
+].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    // List of allowed origins
-    const allowedOrigins = [
-      "http://localhost:3000",
-      "http://localhost:3001", 
-      "http://localhost:3002",
-      "http://localhost:3003",
-      "http://localhost:3004",
-      "http://localhost:3005",
-      "http://localhost:3006",
-      "http://localhost:3007",
-      "http://localhost:3008",
-      "http://localhost:3009",
-      process.env.CLIENT_ORIGIN
-    ].filter(Boolean); // Remove any undefined values
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log(`CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.log(`CORS blocked origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
 }));
 
+// ======= Body Parsing =======
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// ======= Static Files =======
+// Keep local uploads for backward compatibility, but Cloudinary is now preferred
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Environment variable validation
-if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
-  console.warn("⚠️ MONGODB_URI is not set in environment. Using default.");
-  process.env.MONGODB_URI = "mongodb://localhost:27017/student_event_db";
-}
-if (!process.env.JWT_SECRET) {
-  console.warn("⚠️ JWT_SECRET is not set in environment. Using default.");
-  process.env.JWT_SECRET = "your_jwt_secret_key_here_change_this_in_production";
-}
-
-// Use MONGODB_URI if available, otherwise fall back to MONGO_URI
-const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || "mongodb://localhost:27017/student_event_db";
+// ======= MongoDB Connection =======
 let mongoConnected = false;
 
-// MongoDB connection function
 async function connectWithRetry(retries = 5, delayMs = 3000) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      await mongoose.connect(mongoUri, {
+      await mongoose.connect(MONGO_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
       mongoConnected = true;
-      console.log("✅ MongoDB Connected");
-      console.log("MongoDB URI:", mongoUri);
+      console.log('✅ MongoDB Connected');
       break;
     } catch (err) {
       mongoConnected = false;
       console.log(`❌ DB connection attempt ${attempt}/${retries} failed:`);
-      console.log(err?.message || err);
+      console.log(err.message || err);
       if (attempt < retries) {
-        console.log(`⏳ Retrying in ${Math.round(delayMs / 1000)}s...`);
-        await new Promise((r) => setTimeout(r, delayMs));
+        console.log(`⏳ Retrying in ${delayMs / 1000}s...`);
+        await new Promise(r => setTimeout(r, delayMs));
       } else {
-        console.log("⚠️ Giving up after max retries. Server will continue without DB.");
+        console.log('⚠️ Max retries reached. Server will continue without DB.');
       }
     }
   }
 }
 
-// Connect to MongoDB
+// Connect immediately
 connectWithRetry();
 
-// Handle connection events
-mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB connection error:', err);
-});
+// MongoDB events
+mongoose.connection.on('error', err => console.error('❌ MongoDB connection error:', err));
+mongoose.connection.on('disconnected', () => console.warn('⚠️ MongoDB disconnected. Retrying...'));
+mongoose.connection.on('reconnected', () => console.log('✅ MongoDB reconnected'));
 
-mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
-});
-
-mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected');
-});
-
-// Health check endpoint
-app.get("/health", (req, res) => {
+// ======= Health Check =======
+app.get('/health', (req, res) => {
   res.json({
     ok: true,
     uptime: process.uptime(),
-    env: process.env.NODE_ENV || "development",
+    env: process.env.NODE_ENV || 'development',
     mongo: { connected: mongoConnected },
     timestamp: new Date().toISOString()
   });
 });
 
-// API Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/host", hostRoutes);
-app.use("/api/users", usersRoutes);
-app.use("/api/friends", friendsRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/bookmarks", bookmarksRoutes);
-app.use("/api/certificates", certificatesRoutes);
-app.use("/api/subscriptions", subscriptionsRoutes);
-app.use("/api/support", supportRoutes);
-app.use("/api/chat", chatRoutes);
+// ======= API Routes =======
+app.use('/api/auth', authRoutes);
+app.use('/api/host', hostRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/friends', friendsRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/bookmarks', bookmarksRoutes);
+app.use('/api/certificates', certificatesRoutes);
+app.use('/api/subscriptions', subscriptionsRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/chat', chatRoutes);
 
-// Error handling middleware
+// ======= Cloudinary Image Proxy (for backward compatibility with local images) =======
+// This endpoint can be used to serve images from Cloudinary with transformations
+app.get('/cloudinary/:publicId', (req, res) => {
+  const { publicId } = req.params;
+  const transformations = req.query.t || 'c_fill,w_800,h_600';
+  
+  // If it's already a Cloudinary URL, redirect to it directly
+  if (publicId.startsWith('http')) {
+    return res.redirect(publicId);
+  }
+  
+  // Construct Cloudinary URL
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  if (!cloudName) {
+    return res.status(400).json({ error: 'Cloudinary not configured' });
+  }
+  
+  const cloudinaryUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${transformations}/${publicId}`;
+  res.redirect(cloudinaryUrl);
+});
+
+// ======= Error Handling =======
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// For Vercel serverless functions
-module.exports = async (req, res) => {
-  // Connect to database if not already connected
-  if (mongoose.connection.readyState === 0) {
-    await connectWithRetry();
-  }
-  
-  // Handle the request
-  app(req, res);
-};
-
-// For local development
-if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
-  console.log("Starting server on port:", PORT);
-  console.log("Environment variables:");
-  console.log("- MONGODB_URI:", mongoUri);
-  console.log("- JWT_SECRET:", process.env.JWT_SECRET ? "SET" : "NOT SET");
-  console.log("- CLIENT_ORIGIN:", process.env.CLIENT_ORIGIN || "http://localhost:3000");
-  console.log("- CORS: Allowing multiple localhost ports (3000-3009)");
-
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
-    console.log(`CORS: Allowing localhost ports 3000-3009 and ${process.env.CLIENT_ORIGIN || "default origin"}`);
-  });
-}
+// ======= Start Server =======
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`MongoDB URI: ${MONGO_URI}`);
+  console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET' : 'NOT SET'}`);
+  console.log(`CORS: Allowing ${allowedOrigins.join(', ')}`);
+});

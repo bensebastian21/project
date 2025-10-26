@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { UserPlus, Building2, MapPin, Phone, Mail, Lock, FileText, ArrowLeft } from "lucide-react";
 import config from "../config";
+import { uploadDocument } from "../utils/cloudinary";
 import "react-toastify/dist/ReactToastify.css";
 import { INSTITUTES } from "../data/institutes";
 
@@ -171,17 +172,30 @@ export default function HostRegister() {
     }
 
     try {
+      // Upload document to Cloudinary
+      const uploadResult = await uploadDocument(formData.document);
+      if (!uploadResult.success) {
+        toast.error(uploadResult.error || 'Failed to upload document');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Prepare form data without the file
       const formDataToSend = new FormData();
       Object.keys(formData).forEach((key) => {
         if (key !== "confirmPassword" && key !== "document") {
           formDataToSend.append(key, formData[key]);
         }
       });
-      formDataToSend.append("document", formData.document);
+      // Add the Cloudinary URL instead of the file
+      formDataToSend.append("document", uploadResult.url);
 
       const res = await fetch(`${config.apiBaseUrl}/api/auth/register-host`, {
         method: "POST",
-        body: formDataToSend,
+        body: JSON.stringify(Object.fromEntries(formDataToSend)),
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       const data = await res.json();

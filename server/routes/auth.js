@@ -10,6 +10,7 @@ const https = require("https");
 const User = require("../models/User");
 const Host = require("../models/Host");
 const { sendSmsTwilio } = require("../utils/sms");
+const { profileStorage, bannerStorage, documentStorage } = require("../utils/cloudinary");
 
 // Helper to POST form-encoded data without fetch (for Node versions < 18)
 // Create a reusable nodemailer transporter from environment
@@ -442,11 +443,10 @@ router.put("/settings", authenticateToken, async (req, res) => {
 // =========================
 // Multer File Upload Config
 // =========================
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, "..", "uploads")),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
+// Replace the existing storage configuration with Cloudinary storage
+const uploadProfile = multer({ storage: profileStorage });
+const uploadBanner = multer({ storage: bannerStorage });
+const uploadDocument = multer({ storage: documentStorage });
 
 // =========================
 // Test Endpoint
@@ -605,15 +605,16 @@ router.put("/display-badges", authenticateToken, async (req, res) => {
   }
 });
 
-router.post("/upload-profile-pic", authenticateToken, upload.single('profilePic'), async (req, res) => {
+router.post("/upload-profile-pic", authenticateToken, uploadProfile.single('profilePic'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rel = `uploads/${req.file.filename}`.replace(/\\/g, '/');
-    user.profilePic = rel;
+    
+    // Store the Cloudinary URL in the database
+    user.profilePic = req.file.path; // Cloudinary URL
     await user.save();
-    res.json({ message: "Profile picture updated", profilePic: rel });
+    res.json({ message: "Profile picture updated", profilePic: req.file.path });
   } catch (err) {
     console.error("upload-profile-pic error:", err);
     res.status(500).json({ error: "Server error" });
@@ -621,15 +622,16 @@ router.post("/upload-profile-pic", authenticateToken, upload.single('profilePic'
 });
 
 // Banner upload route (after router, storage, and authenticateToken are defined)
-router.post("/upload-banner", authenticateToken, upload.single('banner'), async (req, res) => {
+router.post("/upload-banner", authenticateToken, uploadBanner.single('banner'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
-    const rel = `uploads/${req.file.filename}`.replace(/\\/g, '/');
-    user.bannerUrl = rel;
+    
+    // Store the Cloudinary URL in the database
+    user.bannerUrl = req.file.path; // Cloudinary URL
     await user.save();
-    res.json({ message: "Banner updated", bannerUrl: rel });
+    res.json({ message: "Banner updated", bannerUrl: req.file.path });
   } catch (err) {
     console.error("upload-banner error:", err);
     res.status(500).json({ error: "Server error" });
@@ -893,10 +895,43 @@ router.post("/test-email", async (req, res) => {
   }
 });
 
+router.post("/upload-profile-pic", authenticateToken, uploadProfile.single('profilePic'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    // Store the Cloudinary URL in the database
+    user.profilePic = req.file.path; // Cloudinary URL
+    await user.save();
+    res.json({ message: "Profile picture updated", profilePic: req.file.path });
+  } catch (err) {
+    console.error("upload-profile-pic error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Banner upload route (after router, storage, and authenticateToken are defined)
+router.post("/upload-banner", authenticateToken, uploadBanner.single('banner'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    // Store the Cloudinary URL in the database
+    user.bannerUrl = req.file.path; // Cloudinary URL
+    await user.save();
+    res.json({ message: "Banner updated", bannerUrl: req.file.path });
+  } catch (err) {
+    console.error("upload-banner error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // =========================
 // Register User
 // =========================
-router.post("/register", upload.fields([
+router.post("/register", uploadDocument.fields([
   { name: "studentId", maxCount: 1 },
   { name: "secondDoc", maxCount: 1 },
 ]), async (req, res) => {
@@ -968,8 +1003,8 @@ router.post("/register", upload.fields([
       phone: phoneStr,
       countryCode: countryCode || "+91",
       password: hashedPassword,                    // null for Google accounts
-      studentIdPath: (studentIdFile && studentIdFile.path) || studentId || null,
-      secondDocPath: (secondDocFile && secondDocFile.path) || null,
+      studentIdPath: (studentIdFile && studentIdFile.path) || studentId || null, // Cloudinary URL
+      secondDocPath: (secondDocFile && secondDocFile.path) || null, // Cloudinary URL
       // Manual verification defaults
       isStudentIdVerified: false,
       studentIdVerifiedAt: null,
@@ -993,7 +1028,7 @@ router.post("/register", upload.fields([
 // =========================
 // Register Host
 // =========================
-router.post("/register-host", upload.single("document"), async (req, res) => {
+router.post("/register-host", async (req, res) => {
   try {
     const {
       email,
@@ -1008,34 +1043,35 @@ router.post("/register-host", upload.single("document"), async (req, res) => {
       course,
       phone,
       countryCode,
+      document, // Cloudinary URL
     } = req.body;
 
-    // Check if user already exists in User collection
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ error: "User already exists" });
-
-    // Check if host already exists in Host collection
-    const existingHost = await Host.findOne({ email });
-    if (existingHost) return res.status(400).json({ error: "Host already exists" });
-
-    if (!req.file) {
-      return res.status(400).json({ error: "Document upload is required" });
-    }
+    // Check if user already exists
+    const existsUserByEmail = await User.findOne({ email });
+    const existsHostByEmail = await Host.findOne({ email });
+    if (existsUserByEmail || existsHostByEmail) return res.status(400).json({ error: "Email already in use" });
+    
+    const existsUserByUsername = await User.findOne({ username });
+    const existsHostByUsername = await Host.findOne({ username });
+    if (existsUserByUsername || existsHostByUsername) return res.status(400).json({ error: "Username already in use" });
 
     // Normalize and validate phone
     const phoneStr = String(phone || "").trim();
     if (!/^\d{10}$/.test(phoneStr)) {
       return res.status(400).json({ error: "Phone must be 10 digits" });
     }
+    
     // Ensure unique phone across Users and Hosts
-    const phoneInUsers2 = await User.findOne({ phone: phoneStr });
-    const phoneInHosts2 = await Host.findOne({ phone: phoneStr });
-    if (phoneInUsers2 || phoneInHosts2) {
+    const phoneInUsers = await User.findOne({ phone: phoneStr });
+    const phoneInHosts = await Host.findOne({ phone: phoneStr });
+    if (phoneInUsers || phoneInHosts) {
       return res.status(400).json({ error: "Phone number already in use" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create host
     const hostData = {
       username,
       fullname,

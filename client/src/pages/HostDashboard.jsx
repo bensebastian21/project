@@ -37,6 +37,7 @@ import {
   UserPen,
   ShieldCheck,
   FileText,
+  RefreshCw,
   
 } from "lucide-react";
 import api from "../utils/api";
@@ -104,6 +105,7 @@ export default function HostDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [discoverSearch, setDiscoverSearch] = useState("");
   const [lightbox, setLightbox] = useState({ open: false, images: [], index: 0 });
   // Registrations UI state
   const [regSearch, setRegSearch] = useState("");
@@ -1047,6 +1049,21 @@ export default function HostDashboard() {
     return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [events, searchTerm, filterStatus]);
 
+  const filteredDiscoverEvents = useMemo(() => {
+    if (!discoverSearch) return otherCollegeEvents;
+    
+    const searchLower = discoverSearch.toLowerCase();
+    return otherCollegeEvents.filter(event => 
+      event.title?.toLowerCase().includes(searchLower) ||
+      event.description?.toLowerCase().includes(searchLower) ||
+      event.location?.toLowerCase().includes(searchLower) ||
+      event.hostId?.fullname?.toLowerCase().includes(searchLower) ||
+      event.hostId?.email?.toLowerCase().includes(searchLower) ||
+      event.category?.toLowerCase().includes(searchLower) ||
+      (Array.isArray(event.tags) && event.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+    );
+  }, [otherCollegeEvents, discoverSearch]);
+
 
   const stats = useMemo(() => {
     const total = events.length;
@@ -1264,6 +1281,7 @@ export default function HostDashboard() {
                 { id: "events", label: "Events", icon: Calendar },
                 { id: "registrations", label: "Registrations", icon: Users },
                 { id: "feedbacks", label: "Feedbacks", icon: Star },
+                { id: "discover", label: "Discover", icon: Search },
                 { id: "analytics", label: "Analytics", icon: BarChart3 },
               ].map(({ id, label, icon: Icon }) => (
                 <button
@@ -1299,15 +1317,13 @@ export default function HostDashboard() {
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-slate-900 mb-2">
                 {activeTab === "events" && "Events Management"}
-                {activeTab === "registrations" && "Event Registrations"}
-                {activeTab === "feedbacks" && "Event Feedbacks"}
+                {activeTab === "discover" && "Discover Events"}
                 {activeTab === "profile" && "Host Profile"}
                 {activeTab === "analytics" && "Analytics Dashboard"}
               </h2>
               <p className="text-slate-600">
                 {activeTab === "events" && "Create, edit, and manage your events"}
-                {activeTab === "registrations" && "View and manage event registrations"}
-                {activeTab === "feedbacks" && "Review feedback and ratings for your events"}
+                {activeTab === "discover" && "Explore events from other hosts and colleges"}
                 {activeTab === "profile" && "Update your public host page and account details"}
                 {activeTab === "analytics" && "Analyze your event performance and insights"}
               </p>
@@ -1512,39 +1528,6 @@ export default function HostDashboard() {
                     <span>Create Event</span>
                   </button>
                 </div>
-
-                {/* Other colleges' published events */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold text-slate-900">Other Colleges' Events</h3>
-                    <button
-                      onClick={fetchOtherCollegeEvents}
-                      className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
-                    >
-                      Refresh
-                    </button>
-                  </div>
-                  {otherCollegeEvents.length === 0 ? (
-                    <div className="text-slate-500 text-sm">No events found.</div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {otherCollegeEvents.slice(0, 6).map((ev) => (
-                        <div key={ev._id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-md transition-shadow">
-                          <div className="font-semibold text-slate-900 line-clamp-1">{ev.title}</div>
-                          <div className="text-xs text-slate-600 mt-1">{new Date(ev.date).toLocaleString()}</div>
-                          <div className="text-xs text-slate-600 mt-1">{ev.location || (ev.isOnline ? "Online" : "")}</div>
-                          {Array.isArray(ev.tags) && ev.tags.length > 0 && (
-                            <div className="mt-2 flex gap-1 flex-wrap">
-                              {ev.tags.slice(0, 3).map((t, i) => (
-                                <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] rounded">{t}</span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             )}
 
@@ -1580,204 +1563,195 @@ export default function HostDashboard() {
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
+                ) : filteredEvents.length === 0 ? (
+                  <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
+                    <Calendar className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                    <h3 className="text-xl font-semibold text-slate-700 mb-2">No Events Found</h3>
+                    <p className="text-slate-500 mb-6">
+                      {searchTerm ? "Try adjusting your search" : "Create your first event to get started"}
+                    </p>
+                  </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredEvents.map((event, index) => (
+                    {filteredEvents.map((event) => (
                       <div
                         key={event._id}
-                        className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200"
-                        style={{ animationDelay: `${index * 0.1}s` }}
+                        className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
                       >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <h3 className="text-xl font-bold text-slate-900 line-clamp-2">{event.title}</h3>
-                            <div className="flex items-center space-x-2 mt-2">
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
-                                {event.category}
-                              </span>
-                              {event.isOnline && (
-                                <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
-                                  Online
-                                </span>
-                              )}
-                              {event.price > 0 && (
-                                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
-                                  {event.currency} {event.price}
-                                </span>
-                              )}
+                        {/* Event Image Header */}
+                        <div className="relative h-48 bg-gradient-to-br from-blue-100 to-purple-100 overflow-hidden">
+                          {event.imageUrl ? (
+                            <img
+                              src={toAbsoluteUrl(event.imageUrl)}
+                              alt={event.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+                              onClick={() => setLightbox({ open: true, images: [toAbsoluteUrl(event.imageUrl), ...((event.images||[]).map(toAbsoluteUrl))], index: 0 })}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ImageIcon className="w-16 h-16 text-slate-300" />
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {event.isCompleted && (
-                              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full flex items-center">
-                                <CheckCircle className="w-3 h-3 mr-1" />
+                          )}
+                          
+                          {/* Status Badge */}
+                          <div className="absolute top-3 right-3">
+                            {event.isCompleted ? (
+                              <span className="px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full shadow-lg flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
                                 Completed
+                              </span>
+                            ) : event.isPublished ? (
+                              <span className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded-full shadow-lg">
+                                Published
+                              </span>
+                            ) : (
+                              <span className="px-3 py-1 bg-gray-500 text-white text-xs font-medium rounded-full shadow-lg">
+                                Draft
                               </span>
                             )}
                           </div>
-                        </div>
 
-                        <p className="text-slate-700 text-sm mb-4 line-clamp-2">
-                          {event.shortDescription || event.description}
-                        </p>
-
-                        {/* Event images management */}
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center gap-3">
-                            <label className="px-3 py-2 bg-blue-600/80 hover:bg-blue-700 rounded-lg text-sm cursor-pointer inline-flex items-center gap-2">
-                              <Upload className="w-4 h-4" /> Upload Cover
-                              <input type="file" accept="image/*" className="hidden" onChange={(e)=> uploadEventCover(event, e.target.files?.[0])} />
-                            </label>
-                            <label className="px-3 py-2 bg-purple-600/80 hover:bg-purple-700 rounded-lg text-sm cursor-pointer inline-flex items-center gap-2">
-                              <ImageIcon className="w-4 h-4" /> Add Photos
-                              <input type="file" accept="image/*" multiple className="hidden" onChange={(e)=> uploadEventImages(event, e.target.files)} />
-                            </label>
-                          </div>
-                          {event.imageUrl && (
-                            <div className="mt-2">
-                              <div className="text-xs text-slate-600 mb-1">Cover</div>
-                              <div className="relative">
-                                <img src={toAbsoluteUrl(event.imageUrl)} alt="Cover" className="w-full h-28 object-cover rounded-lg cursor-pointer" onClick={()=> setLightbox({ open: true, images: [toAbsoluteUrl(event.imageUrl), ...((event.images||[]).map(toAbsoluteUrl))], index: 0 })} />
-                                <label className="absolute bottom-2 right-2 px-2 py-1 bg-blue-600/80 hover:bg-blue-700 rounded text-xs cursor-pointer inline-flex items-center gap-1">
-                                  <Upload className="w-3 h-3"/> Change Cover
-                                  <input type="file" accept="image/*" className="hidden" onChange={(e)=> uploadEventCover(event, e.target.files?.[0])} />
-                                </label>
-                              </div>
+                          {/* Category Badge */}
+                          {event.category && (
+                            <div className="absolute top-3 left-3">
+                              <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-blue-700 text-xs font-medium rounded-full shadow-lg">
+                                {event.category}
+                              </span>
                             </div>
                           )}
+
+                          {/* Upload Cover Overlay */}
+                          <label className="absolute bottom-3 right-3 px-3 py-1.5 bg-white/90 hover:bg-white text-slate-700 text-xs font-medium rounded-lg cursor-pointer shadow-lg backdrop-blur-sm transition-all flex items-center gap-1">
+                            <Upload className="w-3 h-3" />
+                            Change Cover
+                            <input type="file" accept="image/*" className="hidden" onChange={(e)=> uploadEventCover(event, e.target.files?.[0])} />
+                          </label>
+                        </div>
+
+                        {/* Event Info */}
+                        <div className="p-5">
+                          <h3 className="text-lg font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                            {event.title}
+                          </h3>
+                          <p className="text-sm text-slate-600 mb-4 line-clamp-2">
+                            {event.shortDescription || event.description || "No description"}
+                          </p>
+
+                          {/* Event Meta */}
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <Clock className="w-4 h-4 text-blue-500" />
+                              <span>{new Date(event.date).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <MapPin className="w-4 h-4 text-green-500" />
+                              <span className="line-clamp-1">{event.location || "TBA"}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <Users className="w-4 h-4 text-purple-500" />
+                              <span>
+                                {event.registrations?.filter((r) => r.status === "registered").length || 0}
+                                {event.capacity > 0 ? ` / ${event.capacity}` : ""} Registered
+                              </span>
+                            </div>
+                            {event.isOnline && (
+                              <div className="flex items-center gap-2 text-sm text-purple-600">
+                                <span className="font-medium">🌐 Online Event</span>
+                              </div>
+                            )}
+                            {event.price > 0 && (
+                              <div className="flex items-center gap-2 text-sm text-green-600 font-semibold">
+                                💰 {event.currency} {event.price}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Tags */}
+                          {event.tags && event.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-4">
+                              {event.tags.slice(0, 3).map((tag, idx) => (
+                                <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                                  {tag}
+                                </span>
+                              ))}
+                              {event.tags.length > 3 && (
+                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full">
+                                  +{event.tags.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Action Buttons */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => openEdit(event)}
+                                className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => deleteEvent(event)}
+                                className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                                title="Delete Event"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!event.isCompleted && (
+                                <button
+                                  onClick={() => markCompleted(event)}
+                                  className="flex-1 px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                                >
+                                  <CheckCircle className="w-3 h-3" />
+                                  Mark Complete
+                                </button>
+                              )}
+                              {event.isCompleted && (
+                                <button
+                                  onClick={() => generateCertificates(event)}
+                                  className="flex-1 px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                                >
+                                  <Trophy className="w-3 h-3" />
+                                  Certificates
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Gallery Section */}
                           {Array.isArray(event.images) && event.images.length > 0 && (
-                            <div className="mt-2">
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                              <div className="text-xs font-medium text-slate-700 mb-2">Gallery ({event.images.length})</div>
                               <div className="grid grid-cols-4 gap-2">
-                                {event.images.map((img, i) => (
-                                  <div key={i} className="relative group" draggable onDragStart={(e)=> onThumbDragStart(e, i)} onDragOver={onThumbDragOver} onDrop={(e)=> onThumbDrop(e, event, i)}>
+                                {event.images.slice(0, 4).map((img, i) => (
+                                  <div key={i} className="relative group aspect-square">
                                     <img
                                       src={toAbsoluteUrl(img)}
                                       alt={`Gallery ${i+1}`}
-                                      className="w-full h-20 object-cover rounded-lg cursor-pointer"
+                                      className="w-full h-full object-cover rounded-lg cursor-pointer"
                                       onClick={() => setLightbox({ open: true, images: (event.images || []).map(toAbsoluteUrl), index: i })}
                                     />
-                                    <div className="absolute inset-0 hidden group-hover:flex items-center justify-center gap-2 bg-black/50 rounded-lg">
-                                      <button
-                                        onClick={(e)=>{ e.stopPropagation(); setEventCoverFromUrl(event, img); }}
-                                        className="px-2 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded"
-                                      >
-                                        Set Cover
-                                      </button>
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                                       <button
                                         onClick={(e)=>{ e.stopPropagation(); deleteEventImage(event, img); }}
-                                        className="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 rounded"
+                                        className="p-1 bg-red-500 hover:bg-red-600 text-white rounded-full"
                                       >
-                                        Delete
+                                        <X className="w-3 h-3" />
                                       </button>
                                     </div>
                                   </div>
                                 ))}
                               </div>
+                              <label className="mt-2 inline-flex items-center gap-1 px-3 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-xs cursor-pointer transition-colors">
+                                <ImageIcon className="w-3 h-3" /> Add Photos
+                                <input type="file" accept="image/*" multiple className="hidden" onChange={(e)=> uploadEventImages(event, e.target.files)} />
+                              </label>
                             </div>
                           )}
-                        </div>
-
-                        <div className="space-y-3 mb-6">
-                          <div className="flex items-center text-slate-600 text-sm">
-                            <Clock className="w-4 h-4 mr-3 text-blue-500" />
-                            <div>
-                              <div>{new Date(event.date).toLocaleString()}</div>
-                              {event.endDate && (
-                                <div className="text-xs text-slate-500">
-                                  to {new Date(event.endDate).toLocaleString()}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center text-slate-600 text-sm">
-                            <MapPin className="w-4 h-4 mr-3 text-green-500" />
-                            <div>
-                              <div>{event.location}</div>
-                              {event.address && (
-                                <div className="text-xs text-slate-500">
-                                  {event.address}, {event.city}, {event.state}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center text-slate-600 text-sm">
-                            <Users className="w-4 h-4 mr-3 text-purple-500" />
-                            <div>
-                              <div>{event.registrations?.length || 0} / {event.capacity} registrations</div>
-                              {event.capacity > 0 && (
-                                <div className="text-xs text-slate-500">
-                                  {Math.round(((event.registrations?.length || 0) / event.capacity) * 100)}% filled
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {event.tags && event.tags.length > 0 && (
-                            <div className="flex items-center text-slate-600 text-sm">
-                              <div className="flex flex-wrap gap-1">
-                                {event.tags.slice(0, 3).map((tag, idx) => (
-                                  <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                    {tag}
-                                  </span>
-                                ))}
-                                {event.tags.length > 3 && (
-                                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                    +{event.tags.length - 3} more
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            onClick={() => openEdit(event)}
-                            className="flex items-center space-x-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                            <span>Edit</span>
-                          </button>
-                          {!event.isCompleted && (
-                            <button
-                              onClick={() => markCompleted(event)}
-                              className="flex items-center space-x-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                              <span>Complete</span>
-                            </button>
-                          )}
-                          {event.isCompleted && (
-                            <button
-                              onClick={() => generateCertificates(event)}
-                              className="flex items-center space-x-1 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                            >
-                              <Trophy className="w-4 h-4" />
-                              <span>Certificates</span>
-                            </button>
-                          )}
-                          <button
-                            onClick={() => deleteEvent(event)}
-                            className="flex items-center space-x-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-all duration-300 hover:scale-105"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            <span>Delete</span>
-                          </button>
-                          <button
-                            onClick={() => loadRegistrations(event)}
-                            className="flex items-center space-x-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-sm transition-all duration-300"
-                            title="View registrations"
-                          >
-                            <Users className="w-4 h-4" />
-                            <span className="hidden sm:inline">Registrations</span>
-                          </button>
-                          <button
-                            onClick={() => loadFeedbacks(event)}
-                            className="flex items-center space-x-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-sm transition-all duration-300"
-                            title="View reviews"
-                          >
-                            <Star className="w-4 h-4" />
-                            <span className="hidden sm:inline">Reviews</span>
-                          </button>
                         </div>
                       </div>
                     ))}
@@ -1792,14 +1766,15 @@ export default function HostDashboard() {
               <div className="space-y-6 animate-fadeIn">
                 <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-slate-900">
-                  Registrations {selectedEvent && `- ${selectedEvent.title}`}
+                  {selectedEvent ? `Registrations - ${selectedEvent.title}` : "Event Registrations"}
                 </h2>
                 {selectedEvent && (
                   <button
-                    onClick={() => setActiveTab("events")}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700"
+                    onClick={() => setSelectedEvent(null)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors flex items-center gap-2"
                   >
-                    Back to Events
+                    <ChevronLeft className="w-4 h-4" />
+                    Back to Events List
                   </button>
                 )}
               </div>
@@ -1878,22 +1853,92 @@ export default function HostDashboard() {
                 </div>
               ) : (
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-slate-900 mb-3">Select an event</h3>
-                  <div className="divide-y divide-slate-200">
-                    {(events||[]).map((ev) => (
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Select an event to view registrations</h3>
+                  {events.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Calendar className="w-16 h-16 text-slate-400 mx-auto mb-3" />
+                      <p className="text-slate-500">No events available</p>
                       <button
-                        key={ev._id}
-                        onClick={() => loadRegistrations(ev)}
-                        className="w-full text-left py-3 px-2 hover:bg-slate-50 rounded-lg flex items-center justify-between"
+                        onClick={() => setActiveTab("events")}
+                        className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                       >
-                        <span className="font-medium text-slate-900 line-clamp-1">{ev.title}</span>
-                        <span className="text-sm text-slate-500">{new Date(ev.date).toLocaleString()}</span>
+                        Create Your First Event
                       </button>
-                    ))}
-                    {events.length === 0 && (
-                      <div className="text-sm text-slate-500 py-6">No events available</div>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {events.map((ev) => (
+                        <div key={ev._id} className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+                          {/* Event Image */}
+                          <div className="relative h-32 bg-gradient-to-br from-blue-100 to-indigo-100">
+                            {ev.imageUrl ? (
+                              <img
+                                src={toAbsoluteUrl(ev.imageUrl)}
+                                alt={ev.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Calendar className="w-10 h-10 text-slate-300" />
+                              </div>
+                            )}
+                            {ev.isCompleted && (
+                              <span className="absolute top-2 right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-medium rounded-full">
+                                Completed
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Event Info */}
+                          <div className="p-4">
+                            <h4 className="font-bold text-slate-900 line-clamp-2 mb-2">{ev.title}</h4>
+                            <div className="space-y-1.5 mb-3">
+                              <div className="flex items-center gap-2 text-xs text-slate-600">
+                                <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                                <span>{new Date(ev.date).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-slate-600">
+                                <MapPin className="w-3.5 h-3.5 text-green-500" />
+                                <span className="line-clamp-1">{ev.location || (ev.isOnline ? "Online" : "Location not set")}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <Users className="w-3.5 h-3.5 text-purple-500" />
+                                <span className="font-semibold text-purple-700">
+                                  {ev.registrations?.filter(r => r.status === 'registered').length || 0} Registered
+                                </span>
+                                {ev.capacity > 0 && (
+                                  <span className="text-slate-500">/ {ev.capacity}</span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Progress Bar */}
+                            {ev.capacity > 0 && (
+                              <div className="mb-3">
+                                <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                  <div
+                                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all"
+                                    style={{ width: `${Math.min(100, Math.round(((ev.registrations?.filter(r => r.status === 'registered').length || 0) / ev.capacity) * 100))}%` }}
+                                  ></div>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">
+                                  {Math.round(((ev.registrations?.filter(r => r.status === 'registered').length || 0) / ev.capacity) * 100)}% capacity
+                                </p>
+                              </div>
+                            )}
+                            
+                            <button
+                              onClick={() => loadRegistrations(ev)}
+                              className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                              <Users className="w-4 h-4" />
+                              View Registrations
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1903,24 +1948,17 @@ export default function HostDashboard() {
           {activeTab === "feedbacks" && (
             <div className="space-y-6 animate-fadeIn">
               <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  Feedbacks {selectedEvent && `- ${selectedEvent.title}`}
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {selectedEvent ? `Feedbacks - ${selectedEvent.title}` : "Event Feedbacks"}
                 </h2>
                 {selectedEvent && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setActiveTab("events")}
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
-                    >
-                      Back to Events
-                    </button>
-                    <button
-                      onClick={() => customizeReviewFields(selectedEvent)}
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors"
-                    >
-                      Customize Reviews
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setSelectedEvent(null)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors flex items-center gap-2"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Back to Events List
+                  </button>
                 )}
               </div>
 
@@ -1991,11 +2029,247 @@ export default function HostDashboard() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-12 bg-white rounded-2xl border border-slate-200">
-                  <Star className="w-20 h-20 text-slate-400 mx-auto mb-4 animate-pulse" />
-                  <p className="text-slate-500 text-lg">Select an event to view feedback</p>
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-4">Select an event to view feedbacks</h3>
+                  {events.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Calendar className="w-16 h-16 text-slate-400 mx-auto mb-3" />
+                      <p className="text-slate-500">No events available</p>
+                      <button
+                        onClick={() => setActiveTab("events")}
+                        className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                      >
+                        Create Your First Event
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {events.map((ev) => (
+                        <div key={ev._id} className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+                          {/* Event Image */}
+                          <div className="relative h-32 bg-gradient-to-br from-amber-100 to-orange-100">
+                            {ev.imageUrl ? (
+                              <img
+                                src={toAbsoluteUrl(ev.imageUrl)}
+                                alt={ev.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Star className="w-10 h-10 text-slate-300" />
+                              </div>
+                            )}
+                            {ev.isCompleted && (
+                              <span className="absolute top-2 right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-medium rounded-full">
+                                Completed
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Event Info */}
+                          <div className="p-4">
+                            <h4 className="font-bold text-slate-900 line-clamp-2 mb-2">{ev.title}</h4>
+                            <div className="space-y-1.5 mb-3">
+                              <div className="flex items-center gap-2 text-xs text-slate-600">
+                                <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                                <span>{new Date(ev.date).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-slate-600">
+                                <MapPin className="w-3.5 h-3.5 text-green-500" />
+                                <span className="line-clamp-1">{ev.location || (ev.isOnline ? "Online" : "Location not set")}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs">
+                                <Star className="w-3.5 h-3.5 text-yellow-500" />
+                                <span className="font-semibold text-amber-700">
+                                  {ev.feedbacks?.length || 0} Feedbacks
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className="space-y-2">
+                              <button
+                                onClick={() => loadFeedbacks(ev)}
+                                className="w-full px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                              >
+                                <Star className="w-4 h-4" />
+                                View Feedback
+                              </button>
+                              <button
+                                onClick={() => customizeReviewFields(ev)}
+                                className="w-full px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                              >
+                                <Settings className="w-4 h-4" />
+                                Customize Review
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Discover Tab - Events from Other Hosts */}
+          {activeTab === "discover" && (
+            <div className="space-y-6 animate-fadeIn">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Events from Other Hosts</h2>
+                  <p className="text-slate-600 mt-1">Explore and discover events from other colleges and institutions</p>
+                </div>
+                <button
+                  onClick={fetchOtherCollegeEvents}
+                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh Events
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative max-w-2xl">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  value={discoverSearch}
+                  onChange={(e) => setDiscoverSearch(e.target.value)}
+                  placeholder="Search by title, location, host, category, or tags..."
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all placeholder-slate-400"
+                />
+                {discoverSearch && (
+                  <button
+                    onClick={() => setDiscoverSearch("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+                  >
+                    <X className="w-4 h-4 text-slate-400" />
+                  </button>
+                )}
+              </div>
+
+              {/* Search Results Count */}
+              {discoverSearch && (
+                <div className="text-sm text-slate-600">
+                  Found <span className="font-semibold text-slate-900">{filteredDiscoverEvents.length}</span> event{filteredDiscoverEvents.length !== 1 ? 's' : ''}
+                </div>
+              )}
+
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                {filteredDiscoverEvents.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Search className="w-20 h-20 text-slate-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-slate-700 mb-2">
+                      {discoverSearch ? "No Matching Events" : "No Events Found"}
+                    </h3>
+                    <p className="text-slate-500 mb-6">
+                      {discoverSearch 
+                        ? `No events match "${discoverSearch}". Try different keywords.`
+                        : "Discover events from other hosts and colleges"}
+                    </p>
+                    {!discoverSearch && (
+                      <button
+                        onClick={fetchOtherCollegeEvents}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Load Events
+                      </button>
+                    )}
+                    {discoverSearch && (
+                      <button
+                        onClick={() => setDiscoverSearch("")}
+                        className="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Clear Search
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredDiscoverEvents.map((ev) => (
+                      <div key={ev._id} className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                        {/* Event Image */}
+                        <div className="relative h-48 bg-gradient-to-br from-purple-100 to-pink-100 overflow-hidden">
+                          {ev.imageUrl ? (
+                            <img
+                              src={toAbsoluteUrl(ev.imageUrl)}
+                              alt={ev.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Calendar className="w-16 h-16 text-slate-300" />
+                            </div>
+                          )}
+                          {ev.isOnline && (
+                            <span className="absolute top-3 right-3 px-3 py-1 bg-purple-500 text-white text-xs font-medium rounded-full shadow-lg">
+                              Online
+                            </span>
+                          )}
+                          {ev.category && (
+                            <span className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-sm text-purple-700 text-xs font-medium rounded-full shadow-lg">
+                              {ev.category}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* Event Info */}
+                        <div className="p-5">
+                          <h4 className="font-bold text-slate-900 text-lg mb-2 line-clamp-2">{ev.title}</h4>
+                          <p className="text-sm text-slate-600 mb-4 line-clamp-2">
+                            {ev.shortDescription || ev.description || "No description available"}
+                          </p>
+                          
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <Calendar className="w-4 h-4 text-blue-500" />
+                              <span>{new Date(ev.date).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <MapPin className="w-4 h-4 text-green-500" />
+                              <span className="line-clamp-1">{ev.location || "TBA"}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <Users className="w-4 h-4 text-purple-500" />
+                              <span className="font-medium text-purple-700">
+                                {ev.hostId?.fullname || ev.hostId?.email || "Unknown Host"}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {Array.isArray(ev.tags) && ev.tags.length > 0 && (
+                            <div className="flex gap-1 flex-wrap mb-4">
+                              {ev.tags.slice(0, 4).map((t, i) => (
+                                <span key={i} className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                                  {t}
+                                </span>
+                              ))}
+                              {ev.tags.length > 4 && (
+                                <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
+                                  +{ev.tags.length - 4}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                            <div className="text-sm text-slate-600">
+                              <span className="font-semibold">{ev.registrations?.length || 0}</span> registered
+                            </div>
+                            {ev.price > 0 ? (
+                              <span className="text-sm font-semibold text-green-600">{ev.currency} {ev.price}</span>
+                            ) : (
+                              <span className="text-sm font-semibold text-green-600">Free</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

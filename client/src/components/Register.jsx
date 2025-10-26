@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Tesseract from "tesseract.js";
 import { toast } from "react-toastify";
 import config from "../config";
+import { uploadDocument } from "../utils/cloudinary";
 import "react-toastify/dist/ReactToastify.css";
 import { INSTITUTES } from "../data/institutes";
 
@@ -174,21 +175,44 @@ export default function Register({ onSwitchToLogin }) {
 
   const storeInMongoDB = async (userData) => {
     try {
-      const mongoForm = new FormData();
+      // Handle file uploads to Cloudinary
+      let studentIdUrl = null;
+      let secondDocUrl = null;
+      
       if (userData.studentId && typeof userData.studentId === "object") {
-        mongoForm.append("studentId", userData.studentId);
+        const uploadResult = await uploadDocument(userData.studentId);
+        if (uploadResult.success) {
+          studentIdUrl = uploadResult.url;
+        } else {
+          toast.error(uploadResult.error || 'Failed to upload student ID');
+          return false;
+        }
       }
-      Object.entries(userData).forEach(([k, v]) => {
-        if (k !== "studentId" && v != null) mongoForm.append(k, v);
-      });
+      
+      if (userData.secondDoc && typeof userData.secondDoc === "object") {
+        const uploadResult = await uploadDocument(userData.secondDoc);
+        if (uploadResult.success) {
+          secondDocUrl = uploadResult.url;
+        } else {
+          toast.error(uploadResult.error || 'Failed to upload second document');
+          return false;
+        }
+      }
 
       const response = await fetch(`${config.apiBaseUrl}/api/auth/register`, {
         method: "POST",
-        body: mongoForm,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...userData,
+          studentId: studentIdUrl,
+          secondDoc: secondDocUrl
+        }),
       });
 
       if (!response.ok) {
-        let message = "MongoDB storage failed";
+        let message = "Registration failed";
         try {
           const data = await response.json();
           if (data?.error) message = data.error;

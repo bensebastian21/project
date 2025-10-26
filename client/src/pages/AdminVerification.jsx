@@ -1,9 +1,14 @@
 // src/pages/AdminVerification.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import config from "../config";
+import { getImageUrl } from "../utils/imageUtils";
 
 function buildFileUrl(p) {
   if (!p) return "";
+  // If it's already a full URL (including Cloudinary), return as is
+  if (p.startsWith('http')) {
+    return p;
+  }
   // Normalize to relative uploads path if absolute
   const idx = p.lastIndexOf("uploads");
   const rel = idx >= 0 ? p.slice(idx).replace(/\\/g, "/") : p.replace(/\\/g, "/");
@@ -126,7 +131,7 @@ export default function AdminVerification() {
                   <div className="flex gap-3 items-start">
                     {studentIdUrl ? (
                       <a href={studentIdUrl} target="_blank" rel="noreferrer" className="block">
-                        <img src={studentIdUrl} alt="Student ID" className="w-24 h-24 object-cover rounded border border-gray-600" onError={(e)=>{ e.currentTarget.style.display='none'; }} />
+                        <img src={getImageUrl(studentIdUrl)} alt="Student ID" className="w-24 h-24 object-cover rounded border border-gray-600" onError={(e)=>{ e.currentTarget.style.display='none'; }} />
                         <div className="text-xs text-blue-300 hover:underline mt-1">Open ID</div>
                       </a>
                     ) : (
@@ -134,7 +139,7 @@ export default function AdminVerification() {
                     )}
                     {secondDocUrl ? (
                       <a href={secondDocUrl} target="_blank" rel="noreferrer" className="block">
-                        <img src={secondDocUrl} alt="Second Doc" className="w-24 h-24 object-cover rounded border border-gray-600" onError={(e)=>{ /* show link if not image */ e.currentTarget.style.display='none'; }} />
+                        <img src={getImageUrl(secondDocUrl)} alt="Second Doc" className="w-24 h-24 object-cover rounded border border-gray-600" onError={(e)=>{ /* show link if not image */ e.currentTarget.style.display='none'; }} />
                         <div className="text-xs text-blue-300 hover:underline mt-1">Open Doc</div>
                       </a>
                     ) : (

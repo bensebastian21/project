@@ -1,9 +1,11 @@
 // src/pages/LandingPage.jsx
+// src/pages/LandingPage.jsx
 import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
 // Note: Place your images under public/assets and update the file names below
 // e.g., d:\\ben\\Project\\client\\public\\assets\\hero.jpg
+// For now, using local assets. Cloudinary can be used later for uploaded images.
 const IMG = {
   hero: "/assets/hero.jpg", // Big header background
   tour1: "/assets/hackathon.jpg",
