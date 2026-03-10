@@ -1,0 +1,49 @@
+@startuml
+title Evenite Core Workflows
+
+actor User
+actor Student
+actor Host
+
+participant "Frontend" as FE
+participant "Auth Service" as Auth
+participant "Event Service" as EventS
+participant "Database" as DB
+participant "Notification Service" as Notif
+
+' User Registration
+User -> FE: Register
+FE -> Auth: Validate & Hash
+Auth -> DB: Save User
+DB --> Auth: Confirm
+Auth --> FE: Success
+
+' User Login
+User -> FE: Login
+FE -> Auth: Validate
+Auth -> DB: Check Credentials
+DB --> Auth: Return Data
+Auth --> FE: JWT Token
+
+' Event Registration
+Student -> FE: Browse Events
+FE -> EventS: Get Events
+EventS -> DB: Fetch Events
+DB --> EventS: Events Data
+EventS --> FE: Display
+
+Student -> FE: Register for Event
+FE -> EventS: Process Registration
+EventS -> DB: Save Registration
+DB --> EventS: Confirm
+EventS -> Notif: Send Notification
+EventS --> FE: Success
+
+' Event Creation
+Host -> FE: Create Event
+FE -> EventS: Validate & Save
+EventS -> DB: Save Event
+DB --> EventS: Confirm
+EventS --> FE: Event Created
+
+@enduml

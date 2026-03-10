@@ -1,0 +1,7 @@
+Connecting...
+Connected successfully to server
+Finding user: jomygeorge@duck.com
+--- USER FOUND ---
+emailVerified: true
+phoneVerified: true
+------------------

@@ -1,0 +1,53 @@
+@startuml
+' State Chart Diagrams for Evenite System
+title Evenite: Event Management System - State Chart Diagrams
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+' State Chart Diagram 1: User Authentication
+[*] --> LoggedOut
+LoggedOut --> LoggingIn : submit credentials
+LoggingIn --> Authenticated : valid credentials
+LoggingIn --> Error : invalid credentials
+Error --> LoggingIn : retry
+Authenticated --> LoggedOut : logout
+Authenticated --> Active : continue session
+Active --> Authenticated : session timeout
+Active --> LoggedOut : logout
+
+state LoggingIn {
+  [*] --> ValidatingInput
+  ValidatingInput --> CheckingCredentials : input valid
+  CheckingCredentials --> AuthSuccess : credentials valid
+  CheckingCredentials --> AuthFailure : credentials invalid
+  AuthSuccess --> [*]
+  AuthFailure --> [*]
+}
+
+' State Chart Diagram 2: Event Lifecycle
+[*] --> Draft
+Draft --> Published : publish event
+Draft --> Cancelled : cancel event
+Published --> RegistrationOpen : open registration
+RegistrationOpen --> RegistrationClosed : close registration
+RegistrationClosed --> InProgress : event starts
+InProgress --> Completed : event ends
+Completed --> CertificateGeneration : generate certificates
+CertificateGeneration --> FeedbackCollection : collect feedback
+FeedbackCollection --> Archived : archive event
+Cancelled --> [*]
+Archived --> [*]
+
+Draft : Event created
+Published : Event visible to users
+RegistrationOpen : Users can register
+RegistrationClosed : Registration deadline passed
+InProgress : Event is happening
+Completed : Event finished
+CertificateGeneration : Creating certificates
+FeedbackCollection : Collecting feedback
+Archived : Event archived
+Cancelled : Event cancelled
+@enduml

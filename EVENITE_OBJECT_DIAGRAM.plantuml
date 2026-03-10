@@ -1,0 +1,47 @@
+@startuml
+' Object Diagram for Evenite System
+title Evenite: Event Management System - Object Diagram
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+object "student1: Student" as s1 {
+  userId = "S001"
+  username = "john_doe"
+  email = "john@example.com"
+  role = "student"
+}
+
+object "host1: Host" as h1 {
+  userId = "H001"
+  username = "tech_fest_org"
+  email = "contact@techfest.com"
+  role = "host"
+}
+
+object "event1: Event" as e1 {
+  eventId = "E001"
+  title = "Tech Fest 2025"
+  date = "2025-12-15"
+  location = "Main Auditorium"
+  capacity = 200
+}
+
+object "registration1: Registration" as r1 {
+  registrationId = "R001"
+  status = "confirmed"
+  attended = false
+}
+
+object "feedback1: Feedback" as f1 {
+  feedbackId = "F001"
+  rating = 5
+  comment = "Great event!"
+}
+
+s1 --> r1
+h1 --> e1
+e1 --> r1
+r1 --> f1
+@enduml

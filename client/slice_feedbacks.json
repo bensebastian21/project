@@ -1,0 +1,5 @@
+{
+  "top_half": "Expected corresponding JSX closing tag for <main>. (2252:30)",
+  "middle_half": "Unexpected token, expected \",\" (2346:26)",
+  "bottom_half": "Unexpected token, expected \":\" (2404:17)"
+}

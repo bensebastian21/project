@@ -1,0 +1,589 @@
+const express = require('express');
+const router = express.Router();
+const Review = require('../models/Review');
+const ReviewField = require('../models/ReviewField');
+const Event = require('../models/Event');
+const User = require('../models/User');
+const gamificationController = require('../controllers/gamificationController');
+const {
+  analyzeSentiment,
+  generateEventAIInsights,
+  generateCrossEventInsights,
+} = require('../utils/aiFeedbackAnalyzer');
+
+// Reuse auth helpers from auth routes
+const jwt = require('jsonwebtoken');
+
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Access token required' });
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid or expired token' });
+    req.user = user;
+    next();
+  });
+};
+
+// Get all reviews submitted by the current student
+router.get('/my', authenticateToken, async (req, res) => {
+  try {
+    const reviews = await Review.find({ reviewerId: req.user.id, isDeleted: { $ne: true } })
+      .populate('eventId', 'title date locationImageUrl')
+      .sort({ createdAt: -1 });
+    res.json(reviews);
+  } catch (err) {
+    console.error('Get my reviews error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get cross-event portfolio AI insights for all host events (MUST be before :eventId routes)
+router.get('/host/ai-portfolio', authenticateToken, async (req, res) => {
+  try {
+    const events = await Event.find({ hostId: req.user.id }).lean();
+    if (!events || events.length === 0) {
+      return res.status(204).end();
+    }
+    const { Types } = require('mongoose');
+    const eventsData = await Promise.all(
+      events.map(async (ev) => {
+        const filter = Types.ObjectId.isValid(String(ev._id))
+          ? { eventId: new Types.ObjectId(ev._id), isDeleted: { $ne: true } }
+          : { eventId: ev._id, isDeleted: { $ne: true } };
+        const reviews = await Review.find(filter)
+          .select('overallRating sentimentLabel sentimentScore comment createdAt')
+          .lean();
+        const avgRating = reviews.length
+          ? reviews.reduce((s, r) => s + (r.overallRating || 0), 0) / reviews.length
+          : 0;
+        const sentimentBreakdown = { Positive: 0, Neutral: 0, Negative: 0 };
+        reviews.forEach((r) => {
+          if (sentimentBreakdown[r.sentimentLabel] !== undefined)
+            sentimentBreakdown[r.sentimentLabel]++;
+        });
+        const ratingTrend = reviews.map((r, idx) => ({
+          index: idx + 1,
+          rating: r.overallRating || 0,
+          date: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '',
+        }));
+        return {
+          _id: ev._id,
+          title: ev.title,
+          date: ev.date,
+          reviews,
+          avgRating: parseFloat(avgRating.toFixed(2)),
+          sentimentBreakdown,
+          ratingTrend,
+          reviewCount: reviews.length,
+        };
+      }),
+    );
+    const portfolioInsights = await generateCrossEventInsights(eventsData);
+    res.json({
+      events: eventsData.map((ev) => ({
+        _id: ev._id,
+        title: ev.title,
+        date: ev.date,
+        avgRating: ev.avgRating,
+        reviewCount: ev.reviewCount,
+        sentimentBreakdown: ev.sentimentBreakdown,
+        ratingTrend: ev.ratingTrend,
+      })),
+      portfolioInsights,
+    });
+  } catch (err) {
+    console.error('Portfolio AI insights error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get review fields for an event (public)
+router.get('/events/:eventId/fields', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const fields = await ReviewField.find({ eventId }).sort({ order: 1 });
+    res.json(fields);
+  } catch (err) {
+    console.error('Get review fields error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create/Update review fields for an event (host only)
+router.post('/events/:eventId/fields', authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { fields } = req.body;
+
+    // Verify the user is the host of this event
+    const event = await Event.findOne({ _id: eventId, hostId: req.user.id });
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found or access denied' });
+    }
+
+    // Delete existing fields
+    await ReviewField.deleteMany({ eventId });
+
+    // Create new fields
+    const newFields = fields.map((field, index) => ({
+      eventId,
+      fieldName: field.fieldName,
+      fieldType: field.fieldType,
+      isRequired: field.isRequired || false,
+      placeholder: field.placeholder || '',
+      order: index,
+    }));
+
+    const createdFields = await ReviewField.insertMany(newFields);
+    res.json({ message: '✅ Review fields updated', fields: createdFields });
+  } catch (err) {
+    console.error('Create review fields error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Submit a review for an event
+router.post('/events/:eventId/reviews', authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { overallRating, reviewFields, comment, isAnonymous } = req.body;
+
+    const { Types } = require('mongoose');
+    if (!Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({ error: 'Invalid event id' });
+    }
+    const eid = new Types.ObjectId(eventId);
+
+    // Check if event exists and is completed and not soft-deleted
+    const event = await Event.findOne({ _id: eid, isCompleted: true, isDeleted: { $ne: true } });
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found or not completed yet' });
+    }
+
+    // Require that the student was registered AND marked as attended
+    const reg = (event.registrations || []).find(
+      (r) => String(r.studentId) === String(req.user.id) && r.status === 'registered',
+    );
+    if (!reg) {
+      return res.status(403).json({ error: 'Only registered attendees can review this event' });
+    }
+    if (!reg.attended) {
+      return res.status(403).json({ error: 'Only students who attended can submit a review' });
+    }
+
+    // Check if user has already reviewed this event
+    const existingReview = await Review.findOne({ eventId: eid, reviewerId: req.user.id });
+    if (existingReview) {
+      return res.status(400).json({ error: 'You have already reviewed this event' });
+    }
+
+    // Validate review fields
+    const eventFields = await ReviewField.find({ eventId: eid }).sort({ order: 1 });
+    const validatedFields = [];
+
+    for (const field of eventFields) {
+      const submittedField = (reviewFields || []).find((f) => f.fieldName === field.fieldName);
+
+      if (field.isRequired && !submittedField) {
+        return res.status(400).json({ error: `Field '${field.fieldName}' is required` });
+      }
+
+      if (submittedField) {
+        // Validate field value based on type
+        if (field.fieldType === 'rating') {
+          if (
+            typeof submittedField.rating !== 'number' ||
+            submittedField.rating < 1 ||
+            submittedField.rating > 5
+          ) {
+            return res
+              .status(400)
+              .json({ error: `Field '${field.fieldName}' must be a rating between 1-5` });
+          }
+        } else if (field.fieldType === 'text' || field.fieldType === 'textarea') {
+          if (
+            typeof submittedField.value !== 'string' ||
+            submittedField.value.trim().length === 0
+          ) {
+            return res.status(400).json({ error: `Field '${field.fieldName}' cannot be empty` });
+          }
+        }
+
+        // Push only relevant keys to match schema requirements
+        const fieldDoc = { fieldName: field.fieldName, fieldType: field.fieldType };
+        if (field.fieldType === 'rating') {
+          fieldDoc.rating = submittedField.rating;
+        } else {
+          fieldDoc.value = submittedField.value;
+        }
+        validatedFields.push(fieldDoc);
+      }
+    }
+
+    // Analyze sentiment if there is a comment
+    let sentimentLabel = null;
+    let sentimentScore = null;
+    if (comment && comment.trim().length > 0) {
+      const sentiment = await analyzeSentiment(comment);
+      sentimentLabel = sentiment.label;
+      sentimentScore = sentiment.score;
+    }
+
+    // Create the review
+    const review = new Review({
+      eventId: eid,
+      reviewerId: req.user.id,
+      overallRating,
+      reviewFields: validatedFields,
+      comment: comment || '',
+      sentimentLabel,
+      sentimentScore,
+      isAnonymous: isAnonymous || false,
+    });
+
+    await review.save();
+
+    // Populate reviewer info for response
+    await review.populate('reviewerId', 'fullname email');
+
+    // Gamification: Award points
+    await gamificationController.awardPoints(req.user.id, 'WRITE_REVIEW');
+
+    res.json({ message: '✅ Review submitted successfully', review });
+  } catch (err) {
+    console.error('Submit review error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get reviews for an event (public) excluding soft-deleted
+router.get('/events/:eventId/reviews', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    // Normalize pagination params
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+
+    const { Types } = require('mongoose');
+    const isValidId = Types.ObjectId.isValid(eventId);
+
+    // Build filter with safe casting and soft-delete exclusion
+    const baseFilter = isValidId ? { eventId: new Types.ObjectId(eventId) } : { eventId };
+    const filter = { ...baseFilter, isDeleted: { $ne: true } };
+
+    let reviews = [];
+    let total = 0;
+
+    // Fetch reviews with pagination and count
+    try {
+      reviews = await Review.find(filter)
+        .populate('reviewerId', 'fullname email')
+        .sort({ createdAt: -1 })
+        .limit(limitNum)
+        .skip((pageNum - 1) * limitNum);
+
+      total = await Review.countDocuments(filter);
+    } catch (findErr) {
+      console.error('Reviews find/count error:', findErr);
+      return res.json({
+        reviews: [],
+        totalPages: 0,
+        currentPage: pageNum,
+        totalReviews: 0,
+        averageRating: 0,
+      });
+    }
+
+    // Calculate average rating robustly (exclude soft-deleted)
+    let averageRating = 0;
+    if (isValidId) {
+      try {
+        const agg = await Review.aggregate([
+          { $match: { eventId: new Types.ObjectId(eventId), isDeleted: { $ne: true } } },
+          { $group: { _id: null, average: { $avg: '$overallRating' } } },
+        ]);
+        averageRating = agg?.[0]?.average || 0;
+      } catch (aggErr) {
+        console.error('Reviews average aggregate error:', aggErr);
+        if (reviews.length > 0) {
+          averageRating = reviews.reduce((s, r) => s + (r.overallRating || 0), 0) / reviews.length;
+        }
+      }
+    } else {
+      // Fallback: compute average from fetched page if ID is not a valid ObjectId
+      if (reviews.length > 0) {
+        averageRating = reviews.reduce((s, r) => s + (r.overallRating || 0), 0) / reviews.length;
+      }
+    }
+
+    return res.json({
+      reviews,
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
+      totalReviews: total,
+      averageRating,
+    });
+  } catch (err) {
+    console.error('Get reviews error:', err);
+    return res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get user's review for an event
+router.get('/events/:eventId/reviews/my', authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const review = await Review.findOne({ eventId, reviewerId: req.user.id }).populate(
+      'reviewerId',
+      'fullname email',
+    );
+
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    res.json(review);
+  } catch (err) {
+    console.error('Get my review error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update user's review
+router.put('/events/:eventId/reviews/my', authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { overallRating, reviewFields, comment, isAnonymous } = req.body;
+
+    const review = await Review.findOne({ eventId, reviewerId: req.user.id });
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+
+    // Validate review fields (same logic as create)
+    const eventFields = await ReviewField.find({ eventId }).sort({ order: 1 });
+    const validatedFields = [];
+
+    for (const field of eventFields) {
+      const submittedField = reviewFields.find((f) => f.fieldName === field.fieldName);
+
+      if (field.isRequired && !submittedField) {
+        return res.status(400).json({ error: `Field '${field.fieldName}' is required` });
+      }
+
+      if (submittedField) {
+        if (field.fieldType === 'rating') {
+          if (
+            typeof submittedField.rating !== 'number' ||
+            submittedField.rating < 1 ||
+            submittedField.rating > 5
+          ) {
+            return res
+              .status(400)
+              .json({ error: `Field '${field.fieldName}' must be a rating between 1-5` });
+          }
+        } else if (field.fieldType === 'text' || field.fieldType === 'textarea') {
+          if (
+            typeof submittedField.value !== 'string' ||
+            submittedField.value.trim().length === 0
+          ) {
+            return res.status(400).json({ error: `Field '${field.fieldName}' cannot be empty` });
+          }
+        }
+
+        validatedFields.push({
+          fieldName: field.fieldName,
+          fieldType: field.fieldType,
+          value: submittedField.value,
+          rating: submittedField.rating,
+        });
+      }
+    }
+
+    // Analyze sentiment if the comment changed
+    if (comment !== review.comment) {
+      if (comment && comment.trim().length > 0) {
+        const sentiment = await analyzeSentiment(comment);
+        review.sentimentLabel = sentiment.label;
+        review.sentimentScore = sentiment.score;
+      } else {
+        review.sentimentLabel = null;
+        review.sentimentScore = null;
+      }
+    }
+
+    // Update the review
+    review.overallRating = overallRating;
+    review.reviewFields = validatedFields;
+    review.comment = comment || '';
+    review.isAnonymous = isAnonymous || false;
+    review.updatedAt = new Date();
+
+    await review.save();
+    await review.populate('reviewerId', 'fullname email');
+
+    res.json({ message: '✅ Review updated successfully', review });
+  } catch (err) {
+    console.error('Update review error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Soft delete user's review
+router.delete('/events/:eventId/reviews/my', authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const review = await Review.findOne({ eventId, reviewerId: req.user.id });
+    if (!review) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
+    if (review.isDeleted) {
+      return res.json({ message: '✅ Review already deleted' });
+    }
+    review.isDeleted = true;
+    review.deletedAt = new Date();
+    review.updatedAt = new Date();
+    await review.save();
+
+    res.json({ message: '✅ Review deleted (soft)' });
+  } catch (err) {
+    console.error('Soft delete review error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get event review statistics (host only)
+router.get('/events/:eventId/reviews/stats', authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+
+    // Verify the user is the host of this event
+    const event = await Event.findOne({ _id: eventId, hostId: req.user.id });
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found or access denied' });
+    }
+
+    const { Types } = require('mongoose');
+    let stats = [];
+    if (Types.ObjectId.isValid(eventId)) {
+      stats = await Review.aggregate([
+        { $match: { eventId: new Types.ObjectId(eventId) } },
+        {
+          $group: {
+            _id: null,
+            totalReviews: { $sum: 1 },
+            averageRating: { $avg: '$overallRating' },
+            ratingDistribution: { $push: '$overallRating' },
+            sentiments: { $push: '$sentimentLabel' },
+            sentimentScores: { $push: '$sentimentScore' },
+          },
+        },
+      ]);
+    } else {
+      // Fallback for non-ObjectId IDs
+      const list = await Review.find({ eventId }).select(
+        'overallRating sentimentLabel sentimentScore',
+      );
+      stats = [
+        {
+          totalReviews: list.length,
+          averageRating: list.length
+            ? list.reduce((s, r) => s + (r.overallRating || 0), 0) / list.length
+            : 0,
+          ratingDistribution: list.map((r) => r.overallRating || 0),
+          sentiments: list.map((r) => r.sentimentLabel).filter(Boolean),
+          sentimentScores: list
+            .map((r) => r.sentimentScore)
+            .filter((s) => s !== null && s !== undefined),
+        },
+      ];
+    }
+
+    // Calculate rating distribution
+    const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    if (stats[0]?.ratingDistribution) {
+      stats[0].ratingDistribution.forEach((rating) => {
+        ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
+      });
+    }
+
+    // Calculate sentiment breakdown
+    const sentimentBreakdown = { Positive: 0, Neutral: 0, Negative: 0 };
+    if (stats[0]?.sentiments) {
+      stats[0].sentiments.forEach((label) => {
+        if (sentimentBreakdown[label] !== undefined) {
+          sentimentBreakdown[label]++;
+        }
+      });
+    }
+
+    const { sentimentScores } = stats[0] || {};
+    const averageSentimentScore =
+      sentimentScores && sentimentScores.length > 0
+        ? sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length
+        : null;
+
+    res.json({
+      totalReviews: stats[0]?.totalReviews || 0,
+      averageRating: stats[0]?.averageRating || 0,
+      ratingDistribution: ratingCounts,
+      sentimentBreakdown,
+      averageSentimentScore,
+    });
+  } catch (err) {
+    console.error('Get review stats error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get AI insights for a specific event (host only)
+router.get('/events/:eventId/reviews/ai-insights', authenticateToken, async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const event = await Event.findOne({ _id: eventId, hostId: req.user.id });
+    if (!event) return res.status(404).json({ error: 'Event not found or access denied' });
+
+    const { Types } = require('mongoose');
+    const filter = Types.ObjectId.isValid(eventId)
+      ? { eventId: new Types.ObjectId(eventId), isDeleted: { $ne: true } }
+      : { eventId, isDeleted: { $ne: true } };
+
+    const reviews = await Review.find(filter).sort({ createdAt: 1 }).lean();
+
+    if (!reviews) return res.status(204).end();
+
+    // Require at least 2 text reviews
+    const meaningfulReviews = reviews.filter((r) => r.comment && r.comment.trim().length > 0);
+    console.log(
+      `[AI-Insights] Event ${eventId} - Total Reviews: ${reviews.length}, Meaningful: ${meaningfulReviews.length}`,
+    );
+
+    if (meaningfulReviews.length < 2) {
+      console.log(`[AI-Insights] Returning 204 because meaningfulReviews < 2`);
+      return res.status(204).end();
+    }
+
+    const insights = await generateEventAIInsights(reviews);
+    if (!insights) {
+      console.log(`[AI-Insights] Returning 204 because generateEventAIInsights returned null`);
+      return res.status(204).end();
+    }
+
+    // Build rating trend (ratings ordered by createdAt)
+    const ratingTrend = reviews.map((r, idx) => ({
+      index: idx + 1,
+      rating: r.overallRating || 0,
+      date: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '',
+    }));
+
+    res.json({ ...insights, ratingTrend });
+  } catch (err) {
+    console.error('AI insights error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+module.exports = router;

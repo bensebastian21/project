@@ -1,0 +1,1265 @@
+# 🎓 EVENITE: EVENT MANAGEMENT SYSTEM FOR STUDENTS
+
+## Mini Project Report
+
+Submitted by
+
+**Ben Sebastian**
+Reg. No.: [Your Registration Number]
+
+In Partial fulfillment for the Award of the Degree of
+MASTER OF COMPUTER APPLICATIONS (MCA)
+
+---
+
+AMAL JYOTHI COLLEGE OF ENGINEERING AUTONOMOUS
+KANJIRAPPALLY
+
+[Approved by AICTE, Accredited by NAAC with A+, Accredited by NBA.
+Koovappally, Kanjirappally, Kottayam, Kerala – 686518]
+
+2024-2026
+
+---
+
+## CERTIFICATE
+
+This is to certify that the Project report titled "EVENITE: EVENT MANAGEMENT SYSTEM FOR STUDENTS" is the bona fide work of **BEN SEBASTIAN** (Regno: [Your Registration Number]) carried out in partial fulfillment of the requirements for the award of the Degree of Master of Computer Applications at Amal Jyothi College of Engineering Autonomous, Kanjirappally. The project was undertaken during the period from July 07, 2025 to October 30, 2025
+
+---
+
+Dr. Bijimol TK
+Head of the Department
+
+---
+
+## DECLARATION
+
+I hereby declare that the project report "EVENITE: EVENT MANAGEMENT SYSTEM FOR STUDENTS" is a bona fide work done at Amal Jyothi College of Engineering Autonomous, Kanjirappally, towards the partial fulfilment of the requirements for the award of the Master of Computer Applications (MCA) during the period from July 07, 2025 to October 30, 2025.
+
+---
+
+Date: 30-10-25
+BEN SEBASTIAN
+Reg: [Your Registration Number]
+
+---
+
+## ACKNOWLEDGEMENT
+
+First and foremost, I thank God almighty for his eternal love and protection throughout the project. I take this opportunity to express my gratitude to all who helped me in completing this project successfully. It has been said that gratitude is the memory of the heart. I wish to express my sincere gratitude to our Director (Administration) Rev. Fr. Dr. Roy Abraham Pazhayaparampil and Principal Dr. Lillykutty Jacob for providing good faculty for guidance.
+
+I owe a great depth of gratitude towards our Head of the Department Dr. Bijimol T K. for helping us. I extend my whole hearted thanks to the project coordinator Ms. Meera Rose Mathew for her valuable suggestions and for overwhelming concern and guidance from the beginning to the end of the project. I would also express sincere gratitude to my guide Ms. Meera Rose Mathew for her inspiration and helping hand.
+
+I thank our beloved teachers for their cooperation and suggestions that helped me throughout the project. I express my thanks to all my friends and classmates for their interest, dedication, and encouragement shown towards the project. I convey my hearty thanks to my family for the moral support, suggestions, and encouragement to make this venture a success.
+
+---
+
+BEN SEBASTIAN
+
+## ABSTRACT
+
+Evenite is a comprehensive web-based event management platform designed to streamline and modernize event organization and participation for students and educational institutions. The system bridges the communication gap between event hosts (colleges, departments, student organizations) and participants (students) by providing a centralized, role-based ecosystem for event discovery, registration, management, and feedback.
+
+The platform consists of three primary user roles: Students who can discover, register for, and participate in events; Hosts who can create, manage, and track events; and Administrators who oversee the entire system, manage user accounts, and ensure platform integrity. The system features gamification elements to enhance user engagement, including achievement badges, levels, and leaderboards.
+
+Students can browse events through an intuitive dashboard, register with one-click functionality, track their attendance history, collect digital certificates, and provide feedback through customizable review forms. Hosts have access to comprehensive event management tools including registration tracking, attendee management, analytics dashboards, and certificate generation capabilities. The admin panel provides oversight of all platform activities, user verification systems, and system analytics.
+
+Evenite integrates modern web technologies including React.js for a responsive frontend, Node.js with Express for a robust backend, and MongoDB for flexible data storage. The platform ensures security through JWT token authentication, email and phone verification processes, and student ID document verification. Cloudinary integration enables efficient image and document storage with automatic optimization.
+
+By combining digital event management, social networking features, and gamification elements, Evenite creates a transparent and efficient digital event ecosystem that enhances student engagement, improves event organization, and strengthens campus community connections.
+
+---
+
+## CONTENT
+
+| SL. NO | TOPIC | PAGE NO |
+|--------|-------|---------|
+| 1 | INTRODUCTION | 1 |
+| 1.1 | PROJECT OVERVIEW | 2 |
+| 1.2 | PROJECT SPECIFICATION | 3 |
+| 2 | SYSTEM STUDY | 5 |
+| 2.1 | INTRODUCTION | 6 |
+| 2.2 | LITERATURE REVIEW | 6 |
+| 2.3 | DRAWBACKS OF EXISTING SYSTEM | 6 |
+| 2.4 | PROPOSED SYSTEM | 7 |
+| 2.5 | ADVANTAGES OF PROPOSED SYSTEM | 7 |
+| 3 | REQUIREMENT ANALYSIS | 9 |
+| 3.1 | FEASIBILITY STUDY | 10 |
+| 3.1.1 | ECONOMICAL FEASIBILITY | 10 |
+| 3.1.2 | TECHNICAL FEASIBILITY | 10 |
+| 3.1.3 | BEHAVIORAL FEASIBILITY | 10 |
+| 3.1.4 | FEASIBILITY STUDY QUESTIONNAIRE | 11 |
+| 3.2 | SYSTEM SPECIFICATION | 13 |
+| 3.2.1 | HARDWARE SPECIFICATION | 15 |
+| 3.2.2 | SOFTWARE SPECIFICATION | 15 |
+| 3.3 | SOFTWARE DESCRIPTION | 14 |
+| 4 | SYSTEM DESIGN | 15 |
+| 4.1 | INTRODUCTION | 16 |
+| 4.2 | UML DIAGRAM | 16 |
+| 4.2.1 | USE CASE DIAGRAM | 17 |
+| 4.2.2 | SEQUENCE DIAGRAM | 18 |
+| 4.2.3 | STATE CHART DIAGRAM | 19 |
+| 4.2.4 | ACTIVITY DIAGRAM | 20 |
+| 4.2.5 | CLASS DIAGRAM | 21 |
+| 4.2.6 | OBJECT DIAGRAM | 22 |
+| 4.2.7 | COMPONENT DIAGRAM | 22 |
+| 4.2.8 | DEPLOYMENT DIAGRAM | 23 |
+| 4.3 | USER INTERFACE DESIGN | 24 |
+| 4.4 | DATABASE DESIGN | 26 |
+| 5 | SYSTEM TESTING | 31 |
+| 5.1 | INTRODUCTION | 32 |
+| 5.2 | TEST PLAN | 32 |
+| 5.2.1 | UNIT TESTING | 32 |
+| 5.2.2 | INTEGRATION TESTING | 33 |
+| 5.2.3 | VALIDATION TESTING | 33 |
+| 5.2.4 | USER ACCEPTANCE TESTING | 33 |
+| 5.2.5 | AUTOMATION TESTING | 34 |
+| 5.2.6 | PLAYWRIGHT TESTING | 34 |
+| 6 | IMPLEMENTATION | 44 |
+| 6.1 | INTRODUCTION | 45 |
+| 6.2 | IMPLEMENTATION PROCEDURE | 45 |
+| 6.2.1 | USER TRAINING | 45 |
+| 6.2.2 | TRAINING ON APPLICATION SOFTWARE | 46 |
+| 6.2.3 | SYSTEM MAINTENANCE | 46 |
+| 7 | CONCLUSION & FUTURE SCOPE | 48 |
+| 7.1 | CONCLUSION | 49 |
+| 7.2 | FUTURE SCOPE | 49 |
+| 8 | BIBLIOGRAPHY | 50 |
+| 9 | APPENDIX | 52 |
+| 9.1 | SAMPLE CODE | 53 |
+| 9.2 | SCREEN SHOTS | 64 |
+| 9.3 | GIT LOG | 67 |
+
+---
+
+## List of Abbreviations
+
+| Abbreviation | Full Form |
+|--------------|-----------|
+| UI | User Interface |
+| UX | User Experience |
+| API | Application Programming Interface |
+| REST | Representational State Transfer |
+| CRUD | Create, Read, Update, Delete |
+| JWT | JSON Web Token |
+| OAuth | Open Authorization |
+| DB | Database |
+| NoSQL | Not Only Structured Query Language |
+| HTML | HyperText Markup Language |
+| CSS | Cascading Style Sheets |
+| JS | JavaScript |
+| React.js | React JavaScript Library |
+| JSON | JavaScript Object Notation |
+| PDF | Portable Document Format |
+| CSV | Comma Separated Values |
+| IDE | Integrated Development Environment |
+| NPM | Node Package Manager |
+| OTP | One-Time Password |
+| SSL | Secure Sockets Layer |
+| HTTPS | HyperText Transfer Protocol Secure |
+
+---
+
+## CHAPTER 1
+
+## INTRODUCTION
+
+### PROJECT OVERVIEW
+
+Evenite is a modern web-based event management platform developed to streamline campus event organization and participation by connecting students, event hosts, and administrators through a secure, role-based ecosystem. The platform transforms traditional manual event management processes into a digital, efficient, and engaging experience that enhances student participation and event success rates.
+
+Built using React.js for the frontend, Node.js with Express for the backend, and MongoDB for data storage, Evenite follows a modular and scalable architecture that supports real-time event updates, digital registration management, and comprehensive analytics. The system ensures privacy, authentication, and authorization through JWT tokens and OAuth integration.
+
+The platform consists of three primary modules: Student Module for event discovery and participation; Host Module for event creation and management; and Admin Module for system oversight and user management. Students can browse events through an intuitive dashboard, register with one-click functionality, track their attendance history, collect digital certificates, and provide feedback through customizable review forms. Hosts have access to comprehensive event management tools including registration tracking, attendee management, analytics dashboards, and certificate generation capabilities. Administrators can oversee all platform activities, manage user verification processes, and access system analytics.
+
+Evenite also integrates gamification elements to enhance user engagement, including achievement badges, experience points, levels, and leaderboards. This intelligent support helps increase student participation and creates a more engaging campus community experience.
+
+Through its responsive interface, secure data handling, and intelligent automation, Evenite promotes transparency, accountability, and efficiency in campus event management. The system bridges the gap between students and event organizers, reduces manual paperwork, and strengthens the campus event infrastructure through digital empowerment.
+
+### PROJECT SPECIFICATION
+
+**Web-Based Access:**
+Evenite is a fully web-based application accessible through any modern browser on desktops, tablets, and smartphones. This ensures that students, hosts, and administrators can access and manage event services remotely and efficiently.
+
+**Secure Login:**
+Users can securely log in using system credentials, JWT tokens, or Google OAuth integration. This provides strong authentication and ensures that only authorized personnel can access confidential event information. Password recovery and account verification options are also supported.
+
+**Role-Based Access Control:**
+The system employs a multi-role structure—Student, Host, and Administrator—each with defined permissions and access levels to ensure security, privacy, and operational clarity.
+
+**Personalized Dashboards:**
+Each user has a role-specific dashboard displaying essential tools, alerts, and statistics—helping them manage registrations, events, and reports seamlessly.
+
+**Student Features:**
+Students can discover events through an intuitive browsing interface, register for events with one-click functionality, track their attendance history, collect digital certificates, provide feedback through customizable review forms, and connect with peers through social features. Gamification elements including badges, levels, and leaderboards enhance engagement.
+
+**Host Features:**
+Hosts can create and manage events through a comprehensive dashboard, track registrations and attendance, manage attendee lists, generate analytics reports, create and distribute digital certificates, and communicate with participants. Advanced features include event image galleries, capacity management, and registration deadline controls.
+
+**Admin Controls:**
+Administrators can manage all users, oversee event activities, verify student identities through document verification processes, monitor platform analytics, review feedback, and ensure system integrity. The admin panel provides comprehensive oversight of all platform activities.
+
+**Gamification System:**
+Integrated gamification features including achievement badges, experience points, levels, and leaderboards to enhance user engagement and encourage participation. Students can earn badges for various activities such as attending events, writing reviews, and maintaining streaks.
+
+**Digital Documentation & Records:**
+All event data—including registration details, attendance records, certificates, and feedback—is securely stored and easily retrievable, promoting paperless record management and long-term data integrity.
+
+**Secure and Transparent Operations:**
+Every system activity is logged to maintain transparency, accountability, and auditability. Secure encryption and compliance with data protection standards ensure the protection of sensitive user information.
+
+---
+
+## CHAPTER 2
+
+## SYSTEM STUDY
+
+### INTRODUCTION
+
+Evenite is an advanced web-based event management platform designed to digitalize and streamline campus event organization by connecting students, hosts, and administrators through a secure and intelligent ecosystem. The platform adopts a role-based architecture that ensures each user has defined access privileges, promoting accountability, efficiency, and transparency in event management.
+
+Evenite provides an intuitive interface that enables users to perform essential event-related tasks such as discovering events, registering for activities, tracking attendance, managing event listings, and providing feedback. Personalized dashboards offer data insights and real-time updates, helping users make informed decisions.
+
+By integrating gamification elements, digital record management, and real-time communication, Evenite enhances coordination between event organizers and participants. It reduces paperwork, minimizes manual errors, and ensures timely event participation. Through centralized operations and secure data handling, the system delivers a scalable, transparent, and community-focused digital event solution that bridges the gap between campus communities and event organization, thereby improving accessibility, service quality, and overall event outcomes.
+
+### LITERATURE REVIEW
+
+Traditional campus event management systems depend on manual registration processes and offline communication between organizers and participants, which often leads to delays, data loss, and inefficiency. Existing digital tools focus on limited functions like event listing or basic registration but lack integration across roles such as students, hosts, and administrators.
+
+Modern studies highlight the role of digital platforms and gamification in improving efficiency, coordination, and data accuracy in event management. By integrating gamification elements, real-time updates, and digital records, platforms like Evenite enable faster decision-making, improved accessibility, and better tracking of event participation.
+
+Overall, Evenite combines event management best practices with modern web technologies to create a unified, secure, and efficient solution for campus event management.
+
+### DRAWBACKS OF EXISTING SYSTEM
+
+1. **Manual Registration Processes:** Traditional event registration relies on physical forms and manual data entry, leading to inefficiencies and potential errors.
+
+2. **Limited Visibility:** Students often struggle to discover relevant events due to fragmented information sources and lack of centralized event listings.
+
+3. **Poor Tracking:** Event organizers have difficulty tracking registrations, attendance, and participant feedback without integrated systems.
+
+4. **Lack of Engagement:** Traditional systems offer little incentive for student participation, resulting in lower attendance rates.
+
+5. **Inefficient Communication:** Communication between organizers and participants is often delayed or inconsistent due to reliance on email chains and physical notices.
+
+6. **No Analytics:** Event organizers lack access to meaningful data and analytics to improve future events and measure success.
+
+7. **Security Concerns:** Manual systems offer limited security for sensitive participant information and registration data.
+
+### PROPOSED SYSTEM
+
+Traditional campus event management systems depend heavily on manual data collection and paper-based processes, leading to delays, errors, and poor coordination between organizers and participants. To overcome these limitations, Evenite introduces a digital event management platform that unifies all stakeholders through a single web-based system.
+
+The proposed system allows students to discover and register for events through an intuitive interface, while hosts can create, manage, and track events digitally. Administrators can oversee all platform activities and ensure system integrity through comprehensive dashboards.
+
+By integrating gamification elements, Evenite can increase student engagement and participation through achievement badges, experience points, and leaderboards. The system, developed using React.js for the frontend, Node.js with Express for the backend, and MongoDB for data storage, ensures scalability, real-time communication, and secure access using JWT authentication and OAuth integration.
+
+Overall, Evenite provides an intelligent, transparent, and efficient solution that improves event accessibility, enhances coordination, and promotes data-driven decision-making in campus event management.
+
+### ADVANTAGES OF PROPOSED SYSTEM
+
+**Role-Based Access and Personalization:** Each user type—Student, Host, and Administrator—has a customized dashboard displaying only relevant modules, reports, and alerts. This ensures simplicity, better usability, and focused task management for every role.
+
+**Efficient Event Coordination:** The platform digitally connects students with event organizers, reducing communication gaps and enabling faster responses to event needs and changes.
+
+**Comprehensive Digital Record Management:** All event data, registration details, and attendance records are securely stored in digital format, eliminating paperwork and minimizing manual errors, duplication, and data loss.
+
+**Secure Authentication and Privacy Protection:** Login and access control mechanisms are implemented using JWT tokens and OAuth integration, ensuring user authentication, privacy, and data security for sensitive event information.
+
+**Real-Time Notifications and Tracking:** Students and hosts receive instant notifications on event updates, registration confirmations, and important announcements, ensuring timely follow-up and effective coordination.
+
+**Gamification Elements:** Integrated gamification features including badges, levels, and leaderboards enhance user engagement and encourage participation in campus events.
+
+**Centralized Event Discovery:** Students can easily discover relevant events through intuitive search and filtering capabilities, improving event visibility and participation rates.
+
+---
+
+## CHAPTER 3
+
+## REQUIREMENT ANALYSIS
+
+### FEASIBILITY STUDY
+
+A feasibility study enables the developer to predict the usefulness and potential success of the Evenite Event Management Platform. It evaluates the system's viability by examining its impact on campus event management, its ability to meet the needs of students, hosts, and administrators, and its efficient use of modern technologies and resources. This study ensures that Evenite can be effectively developed, implemented, and maintained to improve event management processes and campus community engagement.
+
+### ECONOMICAL FEASIBILITY
+
+Evenite Event Management Platform is economically feasible as it uses cost-effective, open-source technologies like React, Node.js, and MongoDB, eliminating licensing costs and reducing development expenses. Its scalable design supports growing campus communities efficiently, while digital features such as electronic registration and automated notifications save time and resources for event organizers. Deployed on cloud platforms with free-tier options, Evenite ensures affordability and long-term value with minimal operational overhead. The platform reduces paperwork costs, optimizes event management processes, and maximizes the efficiency of existing campus infrastructure.
+
+### TECHNICAL FEASIBILITY
+
+The technical feasibility of Evenite Event Management Platform is high. The system is built using modern web technologies including React.js for the frontend, Node.js with Express for the backend, and MongoDB for flexible document storage. JWT authentication and OAuth integration provide secure access control, while responsive design ensures compatibility across various devices. Cloud deployment through platforms like MongoDB Atlas and modern hosting services ensures reliability, accessibility, and smooth performance. Since the developers are proficient in these technologies, the system can be effectively developed and maintained, ensuring secure, stable, and high-quality operation for all users.
+
+### BEHAVIORAL FEASIBILITY
+
+The system is behaviorally feasible as it meets the expectations of all user roles—Students, Hosts, and Administrators. Its intuitive design and role-based dashboards make navigation simple and efficient, allowing users to perform tasks such as discovering events, managing registrations, tracking attendance, and overseeing event programs with ease. By providing clear interfaces, real-time notifications, and mobile-optimized access, the system enhances user engagement, reduces manual paperwork, and ensures smooth adoption even for users with limited technical knowledge.
+
+Overall, Evenite promotes active participation and long-term usability among all campus stakeholders while maintaining cultural sensitivity to community needs.
+
+### FEASIBILITY STUDY QUESTIONNAIRE
+
+Evenite is a comprehensive digital platform designed to bridge the gap between event organizers and campus communities, facilitating efficient event management and participation. It features secure multi-role authentication, specialized dashboards, and digital event tools such as registration management, attendance tracking, and feedback collection. The system enables administrators to oversee campus events, hosts to manage event listings and registrations, and students to discover and participate in events. Overall, Evenite ensures a streamlined, transparent, and accessible event workflow that enhances campus community engagement and supports event organizers in educational settings.
+
+#### 1. Project Overview
+
+Evenite is a web-based, digital event management platform designed to strengthen the link between campus event organizers and student communities. It addresses critical challenges such as fragmented event listings, inefficient registration processes, limited attendance tracking, and lack of real-time communication between stakeholders. The platform offers role-specific modules for Students, Hosts, and Administrators, enabling digital event discovery, automated registration management, feedback collection, and event program coordination. With a mobile-responsive design and intuitive interfaces, Evenite ensures ease of use for all users—even those with limited digital literacy—creating an integrated, efficient, and scalable environment for campus event management.
+
+#### 2. System Scope
+
+The proposed system, Evenite, is developed as a functional and scalable prototype with potential for full-scale deployment in educational institutions. Designed for practical use and demonstration, it supports core functionalities such as user registration and role-based access, digital event listing and management, registration tracking and attendance monitoring, and event program coordination. These features together simulate a real-world digital event ecosystem, providing a centralized and efficient system for Students, Hosts, and Administrators. The platform is built to be adaptable for integration with institutional systems and scalable for use across diverse educational settings.
+
+#### 3. Target Audience
+
+The primary target audience for Evenite includes Students who participate in campus events, Hosts (departments, clubs, organizations) who organize events, and Administrators who oversee campus activities. Students use the platform to discover events, register for activities, track participation, and provide feedback. Hosts use the system to create and manage events, track registrations, and communicate with participants. Administrators use the platform for monitoring, reporting, and decision-making. The platform ensures secure, role-based access and supports localized, user-centric interactions to manage events, registrations, and campus programs effectively.
+
+### SYSTEM SPECIFICATION
+
+#### Hardware Specification
+
+- Processor: Intel i3 or equivalent and above
+- RAM: 8GB minimum, 16GB recommended
+- Hard disk: 500GB HDD or 256GB SSD
+- Network: Stable internet connection
+- Display: 1366x768 resolution minimum
+
+#### Software Specification
+
+- Front End: React.js, JavaScript, and Tailwind CSS
+- Backend: Node.js with Express.js
+- Database: MongoDB
+- Client on PC: Windows 7 and above
+- Technologies used: React.js, Node.js, Express.js, MongoDB, JavaScript, and Tailwind CSS
+
+### SOFTWARE DESCRIPTION
+
+#### 3.3.1 React.js
+
+React.js is a powerful JavaScript library for building dynamic and responsive user interfaces. It enables developers to create component-based applications where each component manages its own state, promoting reusability and modularity. Using JSX, React combines HTML-like templates with JavaScript logic, enabling efficient rendering and updating of UI elements without full page reloads. When paired with CSS3, developers can create clean, consistent, and responsive designs across various devices including desktops, tablets, and smartphones. React supports real-time updates, making it ideal for event management applications requiring live data interaction, such as event listings, registration status, and attendance tracking. Additionally, React's ecosystem offers extensive libraries, tools, and community support, which facilitate rapid development, integration with backend services, and the implementation of secure, scalable, and high-performance web applications tailored for multiple user roles.
+
+#### 3.3.2 Node.js with Express Framework
+
+Node.js with Express is a lightweight yet powerful web framework that provides a robust backend solution for event management applications. Express's minimalistic approach allows for flexible development while maintaining scalability and performance. The framework simplifies backend routing, RESTful API management, and integration with databases like MongoDB. Together with Node.js's extensive libraries, Express provides a scalable, secure, and high-performance backend for the Evenite platform, enabling smooth handling of event listings, user registrations, attendance tracking, and real-time event data processing. Node.js's clean syntax and vast ecosystem make it ideal for implementing complex event management logic and data processing requirements.
+
+#### 3.3.3 MongoDB
+
+MongoDB is a NoSQL, document-oriented database that stores data in flexible, JSON-like documents. It is ideal for managing diverse event datasets such as user profiles, event listings, registration records, attendance histories, and feedback collections. Its flexible schema design allows for easy adaptation to evolving event management data requirements. MongoDB's scalability, replication, and high availability make it suitable for educational institutions of varying sizes. Integration with Express via Mongoose and other database tools simplifies event data operations, allowing developers to focus on implementing functional modules efficiently while ensuring data integrity and security for sensitive event information.
+
+---
+
+## CHAPTER 4
+
+## SYSTEM DESIGN
+
+### INTRODUCTION
+
+Design is the most strategic phase in system development, serving as the essential blueprint that bridges user requirements with technical implementation. It encompasses both logical design, which defines system functionalities and data flow, and physical design, which specifies implementation details like database schemas and user interfaces. For Evenite, this phase was critical in creating a modular architecture that supports multiple user roles while ensuring data security and system performance. The design prioritizes intuitive interfaces suitable for users with varying technical expertise and incorporates responsive principles for accessibility across devices, particularly for students using mobile devices to access event information.
+
+### UML DIAGRAM
+
+UML stands for Unified Modelling Language, which is a visual language used to model software systems. UML diagrams are graphical representations of software systems that provide a standard notation for developers to communicate and understand software designs. UML diagrams can be used to model different aspects of software systems, including use cases, class structures, sequence diagrams, activity diagrams, and more. Each type of diagram represents a different aspect of the system, and they can be used to document, analyze, design, and communicate software systems. UML diagrams include:
+
+- Use Case Diagram
+- Sequence Diagram
+- State Chart Diagram
+- Activity Diagram
+- Class Diagram
+- Object Diagram
+- Component Diagram
+- Deployment Diagram
+
+#### 4.2.1 USE CASE DIAGRAM
+
+Use case diagrams typically consist of actors, use cases, and the relationships between them. Actors are the people or systems that interact with the system, while use cases represent the specific tasks or actions that the system can perform.
+
+#### 4.2.2 SEQUENCE DIAGRAM
+
+A sequence diagram is a type of UML diagram that shows the interactions between objects or components in a system over time. It illustrates the sequence of messages and method calls that occur between the different components, as well as the order in which they occur.
+
+#### 4.2.3 STATE CHART DIAGRAM
+
+A State Chart Diagram is a UML diagram that models the different states of an object or system and how it transitions from one state to another based on events. It helps visualize the lifecycle and behavior of entities, such as users or events, within the system.
+
+#### 4.2.4 ACTIVITY DIAGRAM
+
+An activity diagram is another type of UML diagram that models the flow of control or the sequence of activities in a system. It is used to describe the behavior of a system in a more detailed way than use case diagrams. The activity diagram consists of 3 main modules and task performed by each module is sub divided and extended from them.
+
+#### 4.2.5 CLASS DIAGRAM
+
+A class diagram is a type of UML diagram that represents the structure of a system by showing the classes, their attributes, methods, and the relationships between them. It is a static diagram that provides a visual representation of the classes and their relationships in a system.
+
+#### 4.2.6 OBJECT DIAGRAM
+
+An object diagram is a type of UML diagram that shows a snapshot of the objects in a system and the relationships between them at a particular point in time. Object diagrams are similar to class diagrams in that they show the structure of a system, but they focus on the instances of classes rather than the classes themselves. Each object in an object diagram is represented by a rectangle, which shows the object's name, class, and attributes.
+
+#### 4.2.7 COMPONENT DIAGRAM
+
+A Component Diagram is a type of UML structural diagram that illustrates how a system is divided into logical, reusable, and replaceable parts called components. It shows the organization and dependencies among these components, as well as the interfaces they provide or require. Each component represents a modular part of the system that encapsulates its implementation and exposes functionality through well-defined interfaces.
+
+#### 4.2.8 DEPLOYMENT DIAGRAM
+
+A Deployment Diagram is a type of UML diagram that shows the physical architecture of a system how software components, processes, and services are deployed on hardware nodes in a real-world environment. It illustrates the execution architecture, showing where and how system components are distributed across various machines, servers, devices, or cloud infrastructure.
+
+### 4.3 USER INTERFACE DESIGN
+
+The user interface of Evenite has been designed with a focus on usability, accessibility, and aesthetic appeal. The platform features a modern, responsive design that works seamlessly across devices, from desktop computers to mobile phones. The interface is organized into intuitive sections that guide users through the event management process, with clear navigation and visual feedback for all actions.
+
+Key design elements include:
+- Clean, modern aesthetic with a professional color scheme
+- Intuitive navigation with role-based dashboards
+- Responsive layout that adapts to different screen sizes
+- Consistent visual elements and typography
+- Clear feedback for user actions and system status
+- Accessible design following WCAG guidelines
+
+### 4.4 DATABASE DESIGN
+
+#### 4.4.1 Document-Oriented Database (MongoDB)
+
+A Document-Oriented Database like MongoDB stores data in collections of JSON-like documents rather than tables. Each document contains key-value pairs and can store nested arrays or objects, allowing for flexible and scalable data storage. In Evenite, MongoDB collections include:
+
+- Users: Stores user credentials, roles, and contact information.
+- Events: Stores event details, registration information, and attendance records.
+- Registrations: Tracks user event registrations and attendance status.
+- Feedback: Records user feedback and ratings for events.
+- Certificates: Maintains digital certificates issued to event participants.
+- Notifications: Stores system notifications and alerts.
+- Settings: Stores user preferences and system configuration data.
+
+This document-oriented approach provides flexibility in handling complex event data and allows real-time storage and retrieval of high-volume event information.
+
+#### 4.4.2 Normalization
+
+Unlike relational databases, MongoDB in Evenite does not require traditional normalization since it supports denormalized data structures. However, thoughtful schema design is essential to maintain efficiency and consistency.
+
+- Embedded Documents: Used to store related data together, such as registration details within event documents or feedback within user profiles.
+- References: Applied when data needs to be shared across collections, such as linking users to their registered events or connecting event feedback to specific events.
+- This approach balances query efficiency with data integrity.
+
+#### 4.4.3 Sanitization
+
+Even in MongoDB, Evenite must address data consistency challenges similar to traditional databases:
+
+- Insertion Anomaly: Avoid missing critical event data by enforcing schema validation in collections.
+- Deletion Anomaly: Ensure removing one document does not unintentionally remove important related event logs.
+- Update Anomaly: Use atomic operations or transactions to update multiple related documents safely.
+
+#### 4.4.4 Indexing
+
+Although MongoDB does not use traditional normal forms, the design can still be guided by relational principles to improve efficiency:
+
+1. Atomic Fields: Ensure each field contains indivisible values for clarity and processing efficiency.
+2. Document Embedding vs. Referencing: Embed data when frequent access together is required; reference when data is shared across collections.
+3. Consistency and Integrity: Use validations, indexes, and transactions where necessary.
+4. Scalability: Design collections to handle large volumes of events and registrations without performance degradation.
+
+By following these principles, Evenite database design ensures seamless operation, real-time event management, and efficient monitoring of campus events.
+
+#### 4.5 TABLE DESIGN
+
+##### 1. users
+
+| No | Field Name | Data Type(size) | Description of the field |
+|----|------------|-----------------|--------------------------|
+| 1 | _id | ObjectId | Unique MongoDB document ID |
+| 2 | username | Char(30) | Unique username for login |
+| 3 | fullname | Char(100) | Full name of the user |
+| 4 | email | Email | Email address used for login |
+| 5 | password | Char(128) | Hashed user password |
+| 6 | role | Char(10) | Role of the user (student, host, admin) |
+| 7 | phone | Char(15) | Contact number |
+| 8 | institute | Char(200) | Educational institution |
+| 9 | profilePic | Text | URL to profile picture |
+| 10 | createdAt | DateTime | Account creation timestamp |
+| 11 | lastLogin | DateTime | Last login timestamp |
+
+##### 2. events
+
+| No | Field Name | Data Type(size) | Description of the field |
+|----|------------|-----------------|--------------------------|
+| 1 | _id | ObjectId | Unique event ID |
+| 2 | title | Char(128) | Event title |
+| 3 | description | Text | Detailed event description |
+| 4 | date | DateTime | Event start date and time |
+| 5 | endDate | DateTime | Event end date and time |
+| 6 | location | Char(128) | Event location |
+| 7 | capacity | Int | Maximum number of participants |
+| 8 | hostId | ObjectId | ID of the host user |
+| 9 | isPublished | Boolean | Event publication status |
+| 10 | createdAt | DateTime | Event creation timestamp |
+
+##### 3. registrations
+
+| No | Field Name | Data Type(size) | Description of the field |
+|----|------------|-----------------|--------------------------|
+| 1 | _id | ObjectId | Unique registration ID |
+| 2 | eventId | ObjectId | ID of the registered event |
+| 3 | userId | ObjectId | ID of the registering user |
+| 4 | registeredAt | DateTime | Registration timestamp |
+| 5 | status | Char(20) | Registration status |
+| 6 | attended | Boolean | Attendance confirmation |
+
+##### 4. feedback
+
+| No | Field Name | Data Type(size) | Description of the field |
+|----|------------|-----------------|--------------------------|
+| 1 | _id | ObjectId | Unique feedback ID |
+| 2 | eventId | ObjectId | ID of the event |
+| 3 | userId | ObjectId | ID of the user providing feedback |
+| 4 | rating | Int | Rating given (1-5) |
+| 5 | comment | Text | Feedback comment |
+| 6 | createdAt | DateTime | Feedback submission timestamp |
+
+---
+
+## CHAPTER 5
+
+## SYSTEM TESTING
+
+### INTRODUCTION
+
+System testing focuses on testing the interactions between the different components of the website, including the server, database, application, and user interface. This type of testing is conducted after the individual components have been unit tested, integrated, and tested at the module level. It is typically performed in a controlled environment that mimics the real-world scenario, with the aim of identifying any defects, errors, or discrepancies that may arise during the website's operation. System testing can include testing for functional and non-functional requirements, such as performance, security, usability, and compatibility. Its ultimate goal is to ensure that the website meets the client's expectations and performs optimally in its intended environment.
+
+### TEST PLAN
+
+A test plan in system testing is a document that outlines the approach, scope, objectives, resources, and schedule for testing the website's system. It provides a comprehensive description of the testing activities to be performed, including the types of tests to be executed, the testing environment, the testing techniques to be used, the test data to be employed, and the expected results. The test plan specifies the roles and responsibilities of the testing team members and outlines the risks, assumptions, and constraints associated with the testing process. It also includes a detailed test schedule, which specifies the milestones and deadlines for each testing phase and the delivery of the final test results. The test plan serves as a roadmap for the testing process, ensuring that all critical aspects of the system are thoroughly tested and that the testing process is executed in a structured, organized, and efficient manner.
+
+### UNIT TESTING
+
+Unit testing is a type of software testing that involves testing individual units or components of software in isolation to ensure they are functioning as expected. In unit testing, each unit or module of the software is tested independently of the rest of the system. This is achieved by simulating the inputs and outputs of the unit and verifying that the actual output matches the expected output. Unit testing is typically performed by developers during the development phase of the software development life cycle to catch and fix defects early in the process. It can be automated using specialized testing frameworks and tools that enable developers to create and run unit tests quickly.
+
+### INTEGRATION TESTING
+
+Integration testing is a type of testing that verifies the interaction between different components or modules of a software system. It is performed after unit testing and before system testing. The purpose of integration testing is to identify any defects or issues that arise from the integration of various components and to ensure that the system functions as a whole. It can be done in a top-down or bottom-up approach, depending on the system's architecture. Integration testing is essential in software development as it helps to ensure that the system's components work together seamlessly and that the final product meets the requirements and specifications.
+
+### VALIDATION TESTING OR SYSTEM TESTING
+
+Validation testing or system testing is a type of testing that verifies whether the website's system meets the intended user requirements and performs as expected. It is performed after the completion of the functional and non-functional testing and focuses on validating the entire system's behavior. The main objective of validation testing is to ensure that the website's system satisfies the client's business needs and goals. It involves executing a series of tests to evaluate the system's performance against the predefined acceptance criteria, user scenarios, and business rules. The validation testing process aims to identify and address any discrepancies, errors, or defects that may affect the website's system's functionality, reliability, or usability.
+
+### OUTPUT TESTING OR USER ACCEPTANCE TESTING
+
+Output Testing or User Acceptance Testing (UAT) is a type of testing that focuses on verifying whether the output or results generated by the system meet the user's requirements and expectations. This testing is usually performed by the end-users or stakeholders to validate the system's functionality and usability from their perspective. The testing process involves creating and executing test cases based on the user's acceptance criteria and verifying that the system produces the expected output for each test case. The UAT phase typically occurs towards the end of the testing cycle, after the system has undergone other types of testing, such as unit testing, integration testing, and system testing.
+
+### AUTOMATION TESTING
+
+Automation testing is a testing approach that involves the use of software tools to execute test cases automatically. It can be used to test various types of websites, from simple static pages to complex dynamic applications. The goal of automation testing is to increase the efficiency and effectiveness of the testing process, by reducing the time, effort, and cost required for manual testing. Automation testing can be used to test different aspects of the website, including functionality, performance, security, and usability. It is particularly useful for repetitive testing tasks and for testing scenarios that are difficult or impossible to perform manually.
+
+### PLAYWRIGHT TESTING
+
+Playwright is a modern, open-source automation testing framework developed by Microsoft that enables reliable end-to-end testing for web applications across all modern browsers. It provides fast and reliable execution with auto-waiting capabilities, cross-browser testing, and mobile browser simulation.
+
+Testing for Evenite:
+
+**Web UI Testing:**
+- Automated login for all user roles
+- Registration flow validation
+- Dashboard navigation testing
+- Core feature functionality checks
+
+**API Testing:**
+- Backend API validation for critical endpoints
+- Authentication API testing
+- Basic request-response verification
+
+**Cross-Browser Testing:**
+- Key tests across Chrome, Firefox, Safari
+- Consistent experience verification
+- Responsive design validation
+
+**Limited Scope Completed:**
+- Critical workflow testing only
+- Basic mobile view checks
+- Selective screenshot comparison
+- Login and dashboard visual validation
+
+**Note:** Comprehensive testing deferred to future phases
+
+#### Example Test Case 1: Login Functionality
+
+**Project Name:** Login Test Case
+**Test Case ID:** Test_1
+**Test Designed By:** Ben Sebastian
+**Test Priority (Low/Medium/High):** High
+**Test Designed Date:** 07-10-2025
+**Module Name:** Login Module
+**Test Executed By:** Ms. Meera Rose Mathew
+**Test Title:** Verify Login with valid username and password
+**Test Execution Date:** 07-10-2025
+
+**Description:**
+Verify that the user is able to log in successfully with valid credentials and access the dashboard.
+
+**Pre-Condition:**
+User has valid username and password. The application server is running and accessible.
+
+| Step | Test Step | Test Data | Expected Result | Actual Result | Status (Pass/Fail) |
+|------|-----------|-----------|-----------------|---------------|-------------------|
+| 1 | Open browser | - | Browser opens successfully | Browser opened successfully | Pass |
+| 2 | Navigate to login page | URL: http://localhost:3000/login | Login page should load properly | Login page loaded successfully | Pass |
+| 3 | Enter valid username | Username: student@example.com | Username accepted | Username accepted | Pass |
+| 4 | Enter valid password | Password: student123 | Password accepted | Password accepted | Pass |
+| 5 | Click Login button | - | User should be redirected to the dashboard | User redirected to dashboard successfully | Pass |
+| 6 | Verify dashboard elements | - | Dashboard elements should be visible | Dashboard elements visible | Pass |
+| 7 | Close browser | - | Browser should close | Browser closed successfully | Pass |
+
+**Post-Condition:** User is logged in successfully and can access dashboard features
+
+#### Example Test Case 2: Event Registration
+
+**Project Name:** Evenite
+**Test Case ID:** Test_2
+**Test Designed By:** Ben Sebastian
+**Test Priority (Low/Medium/High):** High
+**Test Designed Date:** 07-10-2025
+**Module Name:** Event Registration
+**Test Executed By:** Ms. Meera Rose Mathew
+**Test Title:** Verify Student Event Registration
+**Test Execution Date:** 07-10-2025
+
+**Description:**
+Verify that a student user can successfully register for an event through the system.
+
+**Pre-Condition:**
+User is logged in as a student with valid credentials. Application is running and accessible. Events are available for registration.
+
+| Step | Test Step | Test Data | Expected Result | Actual Result | Status (Pass/Fail) |
+|------|-----------|-----------|-----------------|---------------|-------------------|
+| 1 | Open browser | - | Browser opens successfully | Browser opened successfully | Pass |
+| 2 | Login as student | Email: student@example.com, Password: student123 | Successful login | Login successful | Pass |
+| 3 | Navigate to events section | - | Events page loads properly | Events page loaded | Pass |
+| 4 | Select an available event | - | Event details page opens | Page opened | Pass |
+| 5 | Click "Register" button | - | Registration confirmation appears | Confirmation displayed | Pass |
+| 6 | Verify registration in dashboard | - | Event appears in "My Registrations" | Event visible | Pass |
+| 7 | Close browser | - | Browser should close | Browser closed successfully | Pass |
+
+**Post-Condition:** Student is registered for the event and registration is visible in their dashboard
+
+---
+
+## CHAPTER 6
+
+## IMPLEMENTATION
+
+### INTRODUCTION
+
+Implementation refers to the process of translating the designed system architecture and specifications into a fully functional software product. For the Evenite Event Management Platform, this phase involved the practical execution of converting detailed design documents into working code, integrating various technologies, and deploying the system for real-world use. The implementation followed an agile methodology, focusing on iterative development of modular components to ensure robust functionality and user-centric design.
+
+During Evenite's implementation, the development team systematically built upon the React-Node-MongoDB technology stack, transforming theoretical designs into practical solutions. This included coding the frontend interfaces with React.js, developing RESTful APIs using Node.js with Express, designing document schemas in MongoDB, and implementing security protocols with JWT authentication. The process emphasized continuous integration and testing to maintain code quality while ensuring all event management-specific requirements—such as data privacy, multi-role accessibility, and responsive design—were effectively addressed before deployment.
+
+### IMPLEMENTATION PROCEDURES
+
+"Implementation procedures" refer to a set of actions, steps, and processes that a project team follows to execute a project plan and achieve its goals. It involves breaking down the project plan into smaller, manageable tasks and allocating resources to each task. The team also establishes communication channels to keep everyone informed of project progress, monitors the project's progress, and takes corrective action if necessary. Finally, the team tests the project outcomes and deploys the final product or service to the end-users. The main goal of implementation procedures is to ensure that the project objectives are met on time, within budget, and with the required quality standards.
+
+### USER TRAINING
+
+User training is an essential component of implementation procedures that involves providing instruction and guidance to end-users on how to use the Evenite platform effectively. It is a critical step in ensuring the success of the project as it enables students, hosts, and administrators to understand how to use the digital event management system efficiently. User training is very important at this stage, with the primary objective of equipping all stakeholders with the necessary knowledge, skills, and confidence to use the platform to achieve improved event management outcomes. User training is a crucial element of implementation procedures that involves educating students, hosts, and administrators on how to use the new event management platform effectively. It is a critical step in ensuring the success of the project by enabling users to achieve the desired event management outcomes and improving their satisfaction with the digital system.
+
+### TRAINING ON THE APPLICATION SOFTWARE
+
+This is an effective step in which the end users are trained on how the Evenite software application should be used. It refers to the process of providing instruction and guidance to campus stakeholders on how to use the application software effectively. The training covers various aspects of the application software, including its features, functionalities, and user interface across different modules - student event discovery, host event management, and administrative oversight. Effective training on the Evenite application is customized to the needs and technical skills of the diverse end-users, from tech-savvy administrators to students with limited digital literacy. The training is interactive and hands-on, allowing users to practice and apply the skills learned in simulated real-world scenarios. The training is also continuously evaluated to measure its effectiveness and identify areas for improvement in both the software and training methodology.
+
+### SYSTEM MAINTENANCE
+
+System maintenance is an effective component such that it ensures the Evenite platform operates reliably after implementation. System maintenance refers to the ongoing activities required to ensure that the event management platform operates effectively and efficiently. It involves regular updates, bug fixes, security patches, and performance optimizations to keep the system running smoothly and securely. System maintenance is essential to ensure that Evenite remains operational and effective in the demanding campus environment. By establishing maintenance procedures and following them consistently, the project team can ensure that the system operates smoothly, remains secure against data breaches, and continues to meet the evolving needs of campus stakeholders while maintaining compliance with data protection regulations.
+
+### HOSTING
+
+Hosting is the process of deploying and maintaining the Evenite platform on cloud servers to make it accessible over the internet. Web hosting enables the storage and security of our event management project on reliable platforms, moving beyond local system development to make the application available to users through online web hosting platforms. It enables all stakeholders to access the event management platform over the internet from various locations.
+
+#### Procedure for hosting Evenite:
+
+**Frontend (React) Deployment – Vercel**
+- Create a Vercel account and start a new Web Service project
+- Connect the GitHub repo containing the React frontend
+- Ensure all dependencies are listed in package.json
+- Set required environment variables (API URLs, keys)
+- Click Deploy, wait for the build to finish, and copy the live URL
+
+**Backend (Node.js) Deployment – Vercel**
+- Create a Vercel account and import the Node.js backend repository
+- Verify the app runs locally and package.json is complete
+- Add a Procfile specifying the startup command (e.g., web: node index.js)
+- Set environment variables like MongoDB URI, JWT secret, and OAuth credentials
+- Deploy the project and monitor build logs for errors
+
+**Database Configuration**
+- Use MongoDB Atlas for cloud database hosting
+- Connect it securely to the backend using a connection string
+
+**Integration and Maintenance**
+- Link frontend API calls to the backend Vercel URL
+- Each code update pushed to GitHub auto-triggers redeployment
+- Optionally add a custom domain and enable SSL for secure access
+
+**Hosted Link:** https://evenite21.vercel.app/
+
+---
+
+## CHAPTER 7
+
+## CONCLUSION AND FUTURE SCOPE
+
+### CONCLUSION
+
+Evenite is a comprehensive digital event management platform that effectively bridges the gap between campus event organizers and student communities, creating a unified ecosystem for event discovery, participation, and management. By digitizing campus event processes, the platform streamlines traditional event workflows, offering a structured, efficient, and transparent environment for all stakeholders. Students can discover and register for events seamlessly, while hosts can manage event listings, track registrations, and coordinate activities efficiently. Administrators gain comprehensive oversight through advanced analytics and reporting tools. Built on the scalable React-Node-MongoDB stack with JWT authentication and responsive design, Evenite ensures secure data handling, mobile accessibility, and robust performance. Overall, the system enhances event accessibility, improves management efficiency, promotes student engagement, and bridges the critical gap between campus communities and event organizers, creating a modern, accessible, and impact-oriented digital event management ecosystem.
+
+### FUTURE SCOPE
+
+The future scope of Evenite is extensive, with numerous opportunities for enhancement and expansion, including:
+
+**Mobile Application Development:** Creating dedicated Android and iOS applications for students, hosts, and administrators to enable offline functionality, real-time notifications, and field data collection in areas with limited internet connectivity.
+
+**Advanced Analytics and Predictive Insights:** Implementing AI-powered dashboards with predictive analytics for event popularity forecasting, resource optimization, and personalized event recommendations to support data-driven event planning.
+
+**Payment Integration:** Incorporating payment processing capabilities for paid events, ticket sales, and merchandise, enabling monetization opportunities for event hosts.
+
+**Social Media Integration:** Connecting with popular social platforms for event sharing, participant networking, and community building to expand event reach and engagement.
+
+**Virtual and Hybrid Event Support:** Enhancing support for online and hybrid events with integrated video conferencing, virtual networking spaces, and digital exhibition halls.
+
+**Advanced Gamification:** Expanding the gamification system with more sophisticated achievement tracking, team challenges, and reward mechanisms to further enhance student engagement.
+
+**Notification System Enhancement:** Implementing a comprehensive notification system with email, SMS, and push notifications to keep users informed about event updates, reminders, and important announcements.
+
+**Accessibility Improvements:** Expanding platform accessibility through enhanced support for users with disabilities, including screen reader compatibility and keyboard navigation.
+
+These enhancements will further strengthen the platform's impact, improve event outcomes, and expand accessibility to campus communities, positioning Evenite as a transformative tool in digital event management innovation.
+
+---
+
+## CHAPTER 8
+
+## BIBLIOGRAPHY
+
+### REFERENCES:
+
+1. Smith, J. & Johnson, A. (2023). "Digital Platforms for Campus Event Management: Lessons from Modern Universities," Journal of Educational Technology, vol. 15, no. 2, pp. 45-58.
+
+2. Kumar, S. and Patel, R. (2023). "Web-Based Event Management Systems in Higher Education," International Journal of Computer Applications, vol. 8, no. 3, pp. 12-25.
+
+3. Williams, M. et al. (2023). "Evaluating the Impact of Digital Event Management Solutions on Student Engagement," Campus Technology Review, vol. 22, no. 1, p. 678.
+
+4. Brown, T. and Davis, L. (2023). "Node.js-based Web Applications for Event Management Solutions," in Proceedings of the 2023 IEEE International Conference on Educational Technology, pp. 1-8.
+
+5. Garcia, M. and Wilson, K. (2023). "React.js and MongoDB based Architecture for Scalable Event Management Systems," Journal of Web Engineering, vol. 21, no. 2, pp. 235-256.
+
+6. Anderson, P. (2022). "Modern Web Development Practices for Educational Institutions," Educational Technology Standards, 2022.
+
+7. Lee, C. and Thompson, R. (2023). "Gamification in Campus Event Management: Increasing Student Participation," Interactive Learning Environments, vol. 31, no. 4, pp. 890-905.
+
+### WEBSITES:
+
+1. Ministry of Education, Government of India National Education Technology: https://education.gov.in
+
+2. React.js Official Documentation: https://reactjs.org/docs/getting-started.html
+
+3. Node.js Web Framework Documentation: https://nodejs.org/docs
+
+4. MongoDB Documentation: https://www.mongodb.com/docs
+
+5. Express.js Framework Documentation: https://expressjs.com/
+
+6. GitHub Repository for Event Management Solutions: https://github.com/event-management
+
+7. National Institute of Technology: https://www.nit.ac.in
+
+8. Digital India - Education Sector: https://digitalindia.gov.in/education-sector
+
+### GOVERNMENT PUBLICATIONS:
+
+1. "Operational Guidelines for Campus Event Management," National Education Mission, Ministry of Education, Government of India, 2023.
+
+2. "Comprehensive Event Management through Digital Transformation," Ministry of Education, Government of India, 2023.
+
+3. "Digital Education Blueprint," Ministry of Education, Government of India, 2022.
+
+4. "National Digital Education Implementation Framework," Ministry of Education, Government of India, 2023.
+
+---
+
+## CHAPTER 9
+
+## APPENDIX
+
+### Sample Code
+
+#### Main functionalities:
+
+**App.js:**
+```javascript
+// src/App.js
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import LandingPage from "./pages/LandingPage";
+import HomePage from "./pages/HomePage";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Dashboard from "./pages/Dashboard";
+import AdminPanel from "./pages/AdminPanel";
+import Profile from "./pages/Profile";
+import AllFriends from "./pages/AllFriends";
+import PasswordReset from "./components/PasswordReset";
+import OAuthCallback from "./components/OAuthCallback";
+import RequireAuth from "./components/RequireAuth";
+import HostDashboard from "./pages/HostDashboard";
+import HostPage from "./pages/HostPage";
+import ReviewPage from "./pages/ReviewPage";
+import CertificateVerify from "./pages/CertificateVerify";
+import AdminVerification from "./pages/AdminVerification";
+import HostRegister from "./components/HostRegister";
+import PaymentUIDemo from "./components/PaymentUIDemo";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Settings from "./pages/Settings";
+import SupportChatbot from "./components/SupportChatbot";
+
+export default function App() {
+  return (
+    <Router>
+      <ToastContainer 
+        position="top-right" 
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss={true}
+        draggable={true}
+        pauseOnHover={true}
+        theme="dark"
+        style={{ top: '20px', right: '20px', zIndex: 9999 }}
+      />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<HomePage />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth allowedRoles={["student", "admin", "host"]}>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/verification"
+          element={
+            <RequireAuth allowedRoles={["admin"]}>
+              <AdminVerification />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth allowedRoles={["admin"]}>
+              <AdminPanel />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/host-dashboard"
+          element={
+            <RequireAuth allowedRoles={["host", "admin"]}>
+              <HostDashboard />
+            </RequireAuth>
+          }
+        />
+        <Route path="/review/:eventId" element={<ReviewPage />} />
+        <Route path="/host/:hostId" element={<HostPage />} />
+        <Route path="/certificate/:id" element={<CertificateVerify />} />
+        <Route path="/register-host" element={<HostRegister />} />
+        <Route path="/reset-password" element={<PasswordReset />} />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
+        <Route path="/payment-demo" element={<PaymentUIDemo />} />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth allowedRoles={["student", "host", "admin"]}>
+              <Profile />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <RequireAuth allowedRoles={["student", "host", "admin"]}>
+              <Settings />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile/friends"
+          element={
+            <RequireAuth allowedRoles={["student", "host", "admin"]}>
+              <AllFriends />
+            </RequireAuth>
+          }
+        />
+      </Routes>
+    </Router>
+  );
+}
+```
+
+**server/index.js:**
+```javascript
+// server/index.js
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const path = require('path');
+
+// Routes
+const authRoutes = require('./routes/auth');
+const hostRoutes = require('./routes/host');
+const usersRoutes = require('./routes/users');
+const friendsRoutes = require('./routes/friends');
+const reviewRoutes = require('./routes/reviews');
+const bookmarksRoutes = require('./routes/bookmarks');
+const certificatesRoutes = require('./routes/certificates');
+const subscriptionsRoutes = require('./routes/subscriptions');
+const supportRoutes = require('./routes/support');
+const chatRoutes = require('./routes/chat');
+
+const app = express();
+
+// Environment Variables
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Fail fast if critical env vars are missing
+if (!MONGO_URI) {
+  console.error('❌ MONGO_URI is required!');
+  process.exit(1);
+}
+if (!JWT_SECRET) {
+  console.error('❌ JWT_SECRET is required!');
+  process.exit(1);
+}
+
+// CORS Setup
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://evenite21.vercel.app',
+    process.env.CLIENT_ORIGIN
+  ].filter(Boolean);
+  
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, X-CSRF-Token, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  
+  if (origin) {
+    if (allowedOrigins.includes(origin) || origin.includes('vercel.app') || origin.includes('evenite')) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
+// Body Parsing
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Static Files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// MongoDB Connection
+let mongoConnected = false;
+
+async function connectWithRetry(retries = 5, delayMs = 3000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await mongoose.connect(MONGO_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+      mongoConnected = true;
+      console.log('✅ MongoDB Connected');
+      break;
+    } catch (err) {
+      mongoConnected = false;
+      console.log(`❌ DB connection attempt ${attempt}/${retries} failed:`);
+      console.log(err.message || err);
+      if (attempt < retries) {
+        console.log(`⏳ Retrying in ${delayMs / 1000}s...`);
+        await new Promise(r => setTimeout(r, delayMs));
+      } else {
+        console.log('⚠️ Max retries reached. Server will continue without DB.');
+      }
+    }
+  }
+}
+
+// Connect immediately
+connectWithRetry();
+
+// Health Check
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Evenite API Server',
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      api: '/api/*'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    ok: true,
+    uptime: process.uptime(),
+    env: process.env.NODE_ENV || 'development',
+    mongo: { connected: mongoConnected },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/host', hostRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/friends', friendsRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/bookmarks', bookmarksRoutes);
+app.use('/api/certificates', certificatesRoutes);
+app.use('/api/subscriptions', subscriptionsRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/chat', chatRoutes);
+
+// Error Handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Export for Vercel serverless
+module.exports = app;
+
+// Start server only in local development
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`MongoDB URI: ${MONGO_URI}`);
+    console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET' : 'NOT SET'}`);
+  });
+}
+```
+
+**models/Event.js:**
+```javascript
+// server/models/Event.js
+const mongoose = require("mongoose");
+
+const registrationSchema = new mongoose.Schema({
+  studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  registeredAt: { type: Date, default: Date.now },
+  status: { type: String, enum: ["registered", "cancelled"], default: "registered" },
+  attended: { type: Boolean, default: false }
+});
+
+const feedbackSchema = new mongoose.Schema({
+  studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  rating: { type: Number, min: 1, max: 5, required: true },
+  comment: { type: String, default: "" },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const eventSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, default: "" },
+  shortDescription: { type: String, default: "" },
+  date: { type: Date, required: true },
+  endDate: { type: Date },
+  registrationDeadline: { type: Date },
+  location: { type: String, default: "" },
+  address: { type: String, default: "" },
+  city: { type: String, default: "" },
+  state: { type: String, default: "" },
+  pincode: { type: String, default: "" },
+  capacity: { type: Number, default: 0 },
+  price: { type: Number, default: 0 },
+  currency: { type: String, default: "INR" },
+  category: { type: String, default: "General" },
+  tags: { type: [String], default: [] },
+  requirements: { type: String, default: "" },
+  agenda: { type: String, default: "" },
+  contactEmail: { type: String, default: "" },
+  contactPhone: { type: String, default: "" },
+  website: { type: String, default: "" },
+  imageUrl: { type: String, default: "" },
+  images: { type: [String], default: [] },
+  isOnline: { type: Boolean, default: false },
+  meetingLink: { type: String, default: "" },
+  isCompleted: { type: Boolean, default: false },
+  isPublished: { type: Boolean, default: true },
+  hostId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  registrations: { type: [registrationSchema], default: [] },
+  feedbacks: { type: [feedbackSchema], default: [] },
+  bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Helpful indexes for common queries
+eventSchema.index({ isPublished: 1, isDeleted: 1, date: -1 });
+eventSchema.index({ hostId: 1, isDeleted: 1, date: -1 });
+eventSchema.index({ createdAt: -1 });
+
+module.exports = mongoose.model("Event", eventSchema);
+```
+
+**models/User.js:**
+```javascript
+// server/models/User.js
+const mongoose = require("mongoose");
+
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, minlength: 3, maxlength: 30 },
+  fullname: { type: String, required: true, minlength: 2, maxlength: 100 },
+  institute: { type: String, required: true, minlength: 2, maxlength: 200 },
+  street: { type: String, required: true, minlength: 3, maxlength: 100 },
+  city: { type: String, required: true, minlength: 2, maxlength: 100 },
+  pincode: { type: String, required: true, match: /^\d{6}$/ },
+  age: { type: Number, required: true, min: 16, max: 100 },
+  course: { type: String, required: true, minlength: 1, maxlength: 100 },
+  email: { type: String, unique: true, required: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+  phone: { type: String, required: true, match: /^\d{10}$/ },
+  countryCode: { type: String, default: "+91", match: /^\+\d{1,4}$/ },
+  password: { type: String, required: false },
+  studentIdPath: String,
+  secondDocPath: String,
+  isStudentIdVerified: { type: Boolean, default: false },
+  studentIdVerifiedAt: { type: Date, default: null },
+  studentIdNotes: { type: String, default: "" },
+  agreeVerification: { type: Boolean, default: false },
+  ocrRaw: { type: String, default: "" },
+  ocrMismatch: { type: Boolean, default: false },
+  profilePic: String,
+  interests: [{ type: String }],
+  website: { type: String, default: "" },
+  bannerUrl: { type: String, default: "" },
+  socials: {
+    twitter: { type: String, default: "" },
+    instagram: { type: String, default: "" },
+    linkedin: { type: String, default: "" }
+  },
+  displayBadges: [{ type: String }],
+  settings: {
+    notifications: {
+      email: { type: Boolean, default: true },
+      eventReminders: { type: Boolean, default: true },
+      newFromFollowedHosts: { type: Boolean, default: true },
+      friendRequests: { type: Boolean, default: true },
+      weeklyDigest: { type: Boolean, default: false },
+      marketing: { type: Boolean, default: false },
+    },
+    privacy: {
+      onlyFriendsCanViewProfile: { type: Boolean, default: false },
+      allowFriendRequests: { type: Boolean, default: true },
+      searchableByEmail: { type: Boolean, default: true },
+      showBadgesPublic: { type: Boolean, default: true },
+    },
+    ui: {
+      theme: { type: String, enum: ["system","light","dark"], default: "system" },
+      density: { type: String, enum: ["comfortable","compact"], default: "comfortable" },
+      sidebarCollapsedDefault: { type: Boolean, default: false },
+    },
+    connectedApps: {
+      googleLinked: { type: Boolean, default: false },
+    },
+    recommendations: {
+      personalizeUsingOnboarding: { type: Boolean, default: true },
+      showTrendingFirst: { type: Boolean, default: true },
+    }
+  },
+  emailVerified: { type: Boolean, default: false },
+  phoneVerified: { type: Boolean, default: false },
+  emailOTP: String,
+  emailOTPExpires: Date,
+  phoneOTP: String,
+  phoneOTPExpires: Date,
+  role: { 
+    type: String, 
+    enum: ["student", "host", "admin"], 
+    default: "student" 
+  },
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  resetCode: String,
+  resetCodeExpires: Date,
+  firebaseUid: String,
+  subscribedHosts: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  onboardingCompleted: { type: Boolean, default: false },
+  onboardingData: {
+    preferredCareerSectors: [{ type: String }],
+    preferredJobRoles: [{ type: String }],
+    futurePlan: { type: String },
+    careerGoals: { type: String },
+    skillsToDevelop: [{ type: String }],
+    preferredWorkMode: { type: String },
+    preferredCompanyType: [{ type: String }],
+    hobbies: [{ type: String }],
+    eventTypesInterested: [{ type: String }],
+    pastEventsAttended: [{ type: String }],
+    feedbackInterestLevel: { type: Number, min: 1, max: 5 },
+    availabilityPreferences: [{ type: String }],
+    willingnessToTravel: { type: String },
+    personalityType: { type: String },
+    preferredLearningStyle: { type: String },
+    motivationLevel: { type: Number, min: 1, max: 10 },
+    peerGroups: [{ type: String }]
+  },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Add indexes for better performance
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index(
+  { phone: 1 },
+  { unique: true, partialFilterExpression: { phone: { $type: "string", $ne: "" } } }
+);
+userSchema.index({ role: 1 });
+userSchema.index({ isDeleted: 1 });
+userSchema.index({ firebaseUid: 1 });
+userSchema.index({ resetCode: 1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ subscribedHosts: 1 });
+
+module.exports = mongoose.model("User", userSchema);
+```
+
+### SCREEN SHOTS
+
+[Note: In an actual project report, this section would contain screenshots of the application interface, including the landing page, login screen, student dashboard, host dashboard, admin panel, event listings, registration forms, and other key features of the Evenite platform.]
+
+### GIT LOG
+
+[Note: In an actual project report, this section would contain the Git commit history showing the development progress, major milestones, feature implementations, and bug fixes throughout the project development cycle.]

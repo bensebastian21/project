@@ -1,0 +1,54 @@
+@startuml
+' Component Diagram for Evenite System
+title Evenite: Event Management System - Component Diagram
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+package "Frontend" {
+  [React App] as frontend
+  [Authentication Module] as authModule
+  [Event Management Module] as eventModule
+  [User Profile Module] as profileModule
+  [Notification Module] as notifModule
+}
+
+package "Backend" {
+  [API Gateway] as apiGateway
+  [Auth Service] as authService
+  [Event Service] as eventService
+  [User Service] as userService
+  [Notification Service] as notifService
+  [Database Adapter] as dbAdapter
+}
+
+package "Database" {
+  [MongoDB] as database
+}
+
+package "External Services" {
+  [Cloudinary] as cloudinary
+  [Email Service] as emailService
+}
+
+frontend --> apiGateway : HTTP/HTTPS
+authModule --> authService
+eventModule --> eventService
+profileModule --> userService
+notifModule --> notifService
+
+apiGateway --> authService : REST API
+apiGateway --> eventService : REST API
+apiGateway --> userService : REST API
+apiGateway --> notifService : REST API
+
+authService --> dbAdapter
+eventService --> dbAdapter
+userService --> dbAdapter
+notifService --> dbAdapter
+dbAdapter --> database
+
+eventService --> cloudinary : Image Storage
+notifService --> emailService : Send Emails
+@enduml

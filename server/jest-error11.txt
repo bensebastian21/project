@@ -1,0 +1,39 @@
+  console.log
+    LOGIN ERR BODY: {
+      status: 'fail',
+      message: 'Validation failed: password: Invalid input: expected string, received undefined'
+    }
+
+      at Object.log (__tests__/auth.test.js:32:21)
+
+FAIL __tests__/auth.test.js
+  Auth Integration Tests
+    POST /api/auth/login
+      √ should return 400 for missing credentials (Zod validation) (50 ms)
+      × should return 400 for invalid credentials (7 ms)
+      √ should return 200 with token for valid credentials (7 ms)
+    POST /api/auth/register
+      √ should return 400 when required fields are missing (5 ms)
+
+  ● Auth Integration Tests › POST /api/auth/login › should return 400 for invalid credentials
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 401
+
+    [0m [90m 46 |[39m                 [33m.[39msend({ email[33m:[39m [32m'notfound@example.com'[39m[33m,[39m password[33m:[39m [32m'password123'[39m })[33m;[39m
+     [90m 47 |[39m
+    [31m[1m>[22m[39m[90m 48 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m400[39m)[33m;[39m [90m// Controller currently returns 400[39m
+     [90m    |[39m                                    [31m[1m^[22m[39m
+     [90m 49 |[39m             expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m'message'[39m)[33m;[39m
+     [90m 50 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoBe([32m'Invalid credentials'[39m)[33m;[39m
+     [90m 51 |[39m         })[33m;[39m[0m
+
+      at Object.toBe (__tests__/auth.test.js:48:36)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+Snapshots:   0 total
+Time:        1.397 s, estimated 2 s
+Ran all test suites.

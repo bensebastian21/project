@@ -1,0 +1,8 @@
+{
+  "up_to_1500": "Expected corresponding JSX closing tag for <button>. (1501:8)",
+  "up_to_2000": "Expected corresponding JSX closing tag for <label>. (2001:8)",
+  "up_to_2200": "Expected corresponding JSX closing tag for <h2>. (2201:8)",
+  "up_to_2400": "Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>? (2402:6)",
+  "up_to_2500": "Unexpected token (2501:8)",
+  "up_to_2700": "Expected corresponding JSX closing tag for <LineChart>. (2701:8)"
+}

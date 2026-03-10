@@ -1,0 +1,82 @@
+@startuml
+title Evenite System Object Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+object "student1: Student" as s1 {
+  userId = "S001"
+  username = "john_doe"
+  email = "john@example.com"
+  role = "student"
+  institute = "ABC University"
+  phone = "+1234567890"
+  isVerified = true
+}
+
+object "host1: Host" as h1 {
+  userId = "H001"
+  username = "tech_fest_org"
+  email = "contact@techfest.com"
+  role = "host"
+  organization = "Tech Fest Organization"
+  contactInfo = "contact@techfest.com, +1234567890"
+}
+
+object "admin1: Administrator" as a1 {
+  userId = "A001"
+  username = "admin_user"
+  email = "admin@evenite.com"
+  role = "admin"
+  permissions = ["manage_users", "verify_students", "monitor_system"]
+}
+
+object "event1: Event" as e1 {
+  eventId = "E001"
+  title = "Tech Fest 2025"
+  description = "Annual technology festival"
+  date = "2025-12-15"
+  location = "Main Auditorium"
+  capacity = 200
+  status = "published"
+}
+
+object "registration1: Registration" as r1 {
+  registrationId = "R001"
+  status = "confirmed"
+  registeredAt = "2025-11-01"
+  attended = false
+}
+
+object "feedback1: Feedback" as f1 {
+  feedbackId = "F001"
+  rating = 5
+  comment = "Great event!"
+  submittedAt = "2025-12-16"
+}
+
+object "certificate1: Certificate" as c1 {
+  certificateId = "C001"
+  issuedAt = "2025-12-16"
+  expiresAt = "2026-12-16"
+  certificateUrl = "https://certificates.evenite.com/C001"
+}
+
+object "notification1: Notification" as n1 {
+  notificationId = "N001"
+  message = "You have been registered for Tech Fest 2025"
+  timestamp = "2025-11-01"
+  isRead = false
+}
+
+s1 --> r1
+h1 --> e1
+e1 --> r1
+r1 --> f1
+e1 --> c1
+s1 --> n1
+h1 --> n1
+e1 --> n1
+@enduml

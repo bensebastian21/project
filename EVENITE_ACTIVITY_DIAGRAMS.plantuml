@@ -1,0 +1,67 @@
+@startuml
+' Activity Diagrams for Evenite System
+title Evenite: Event Management System - Activity Diagrams
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+' Activity Diagram 1: Event Registration Process
+[*] --> Start
+Start --> BrowseEvents
+BrowseEvents --> SelectEvent : Event chosen
+SelectEvent --> CheckAvailability : Check if event has capacity
+CheckAvailability --> RegistrationForm : Event has capacity
+CheckAvailability --> EventFull : Event is full
+EventFull --> BrowseEvents : Choose another event
+RegistrationForm --> FillDetails : Enter personal info
+FillDetails --> SubmitRegistration : Submit form
+SubmitRegistration --> ValidateInput : Validate data
+ValidateInput --> SaveRegistration : Data valid
+ValidateInput --> ShowErrors : Data invalid
+ShowErrors --> FillDetails : Correct errors
+SaveRegistration --> SendConfirmation : Save to database
+SendConfirmation --> SendNotification : Notify user
+SendNotification --> RegistrationComplete
+RegistrationComplete --> [*]
+
+note right of CheckAvailability
+  System checks if event
+  has available capacity
+end note
+
+note right of ValidateInput
+  System validates all
+  required fields and
+  data formats
+end note
+
+' Activity Diagram 2: Event Creation Process
+[*] --> StartCreate
+StartCreate --> LoginAsHost
+LoginAsHost --> AccessDashboard : Successful login
+AccessDashboard --> CreateEvent : Click create event
+CreateEvent --> EventForm : Display form
+EventForm --> FillEventDetails : Enter event info
+FillEventDetails --> ValidateDetails : Submit form
+ValidateDetails --> SaveEvent : Details valid
+ValidateDetails --> ShowErrorsCreate : Details invalid
+ShowErrorsCreate --> FillEventDetails : Correct errors
+SaveEvent --> UploadMedia : Save to database
+UploadMedia --> ProcessUpload : Upload images
+ProcessUpload --> PublishEvent : Media processed
+PublishEvent --> NotifyFollowers : Send notifications
+NotifyFollowers --> EventPublished : Complete
+EventPublished --> [*]
+
+note right of ValidateDetails
+  System validates all
+  required fields, dates,
+  capacity, and formats
+end note
+
+note right of UploadMedia
+  Host can upload event
+  images and documents
+end note
+@enduml

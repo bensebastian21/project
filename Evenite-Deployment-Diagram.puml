@@ -1,0 +1,48 @@
+@startuml
+title Evenite System Deployment Diagram
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+node "Client Devices" {
+  node "Web Browser" {
+    [Web Application] as webapp
+  }
+  node "Mobile App" {
+    [Mobile Client] as mobile
+  }
+}
+
+node "Vercel Cloud" {
+  node "Frontend Server" {
+    [React Frontend] as frontend
+  }
+  
+  node "Backend Server" {
+    [Node.js API] as backend
+  }
+}
+
+node "Database Server" {
+  [MongoDB Atlas] as database
+}
+
+node "Cloud Storage" {
+  [Cloudinary] as storage
+}
+
+node "External Services" {
+  [Email Service] as email
+  [Payment Gateway] as payment
+}
+
+webapp --> frontend : HTTPS
+mobile --> frontend : HTTPS
+frontend --> backend : HTTPS
+backend --> database : MongoDB Wire Protocol
+backend --> storage : HTTPS
+backend --> email : SMTP
+backend --> payment : HTTPS
+@enduml

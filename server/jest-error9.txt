@@ -1,0 +1,76 @@
+  console.log
+    LOGIN ERR BODY: { error: 'Invalid email' }
+
+      at Object.log (__tests__/auth.test.js:32:21)
+
+FAIL __tests__/auth.test.js
+  Auth Integration Tests
+    POST /api/auth/login
+      × should return 400 for missing credentials (Zod validation) (50 ms)
+      × should return 400 for invalid credentials (6 ms)
+      √ should return 200 with token for valid credentials (6 ms)
+    POST /api/auth/register
+      × should return 400 when required fields are missing (4 ms)
+
+  ● Auth Integration Tests › POST /api/auth/login › should return 400 for missing credentials (Zod validation)
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "message"
+    Received path: []
+
+    Received value: {"error": "Invalid email"}
+
+    [0m [90m 33 |[39m
+     [90m 34 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m400[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 35 |[39m             expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m'message'[39m)[33m;[39m
+     [90m    |[39m                              [31m[1m^[22m[39m
+     [90m 36 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoContain([32m'Validation failed'[39m)[33m;[39m [90m// Zod mapping[39m
+     [90m 37 |[39m         })[33m;[39m
+     [90m 38 |[39m[0m
+
+      at Object.toHaveProperty (__tests__/auth.test.js:35:30)
+
+  ● Auth Integration Tests › POST /api/auth/login › should return 400 for invalid credentials
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "message"
+    Received path: []
+
+    Received value: {"error": "Invalid email"}
+
+    [0m [90m 47 |[39m
+     [90m 48 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m400[39m)[33m;[39m [90m// Controller currently returns 400[39m
+    [31m[1m>[22m[39m[90m 49 |[39m             expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m'message'[39m)[33m;[39m
+     [90m    |[39m                              [31m[1m^[22m[39m
+     [90m 50 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoBe([32m'Invalid credentials'[39m)[33m;[39m
+     [90m 51 |[39m         })[33m;[39m
+     [90m 52 |[39m[0m
+
+      at Object.toHaveProperty (__tests__/auth.test.js:49:30)
+
+  ● Auth Integration Tests › POST /api/auth/register › should return 400 when required fields are missing
+
+    expect(received).toHaveProperty(path)
+
+    Expected path: "message"
+    Received path: []
+
+    Received value: {"error": "Email already in use"}
+
+    [0m [90m 91 |[39m
+     [90m 92 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m400[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 93 |[39m             expect(res[33m.[39mbody)[33m.[39mtoHaveProperty([32m'message'[39m)[33m;[39m
+     [90m    |[39m                              [31m[1m^[22m[39m
+     [90m 94 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoContain([32m'Validation failed'[39m)[33m;[39m
+     [90m 95 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoContain([32m'Invalid email address'[39m)[33m;[39m
+     [90m 96 |[39m         })[33m;[39m[0m
+
+      at Object.toHaveProperty (__tests__/auth.test.js:93:30)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 1 passed, 4 total
+Snapshots:   0 total
+Time:        1.561 s, estimated 2 s
+Ran all test suites.

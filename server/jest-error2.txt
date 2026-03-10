@@ -1,0 +1,97 @@
+  console.error
+    Login error: TypeError: user.save is not a function
+        at save (D:\ben\Project\server\routes\auth.js:1100:20)
+        at processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    [0m [90m 1127 |[39m     })[33m;[39m
+     [90m 1128 |[39m   } [36mcatch[39m (err) {
+    [31m[1m>[22m[39m[90m 1129 |[39m     console[33m.[39merror([32m'Login error:'[39m[33m,[39m err)[33m;[39m
+     [90m      |[39m             [31m[1m^[22m[39m
+     [90m 1130 |[39m     res[33m.[39mstatus([35m500[39m)[33m.[39mjson({ error[33m:[39m [32m'Server error'[39m })[33m;[39m
+     [90m 1131 |[39m   }
+     [90m 1132 |[39m })[33m;[39m[0m
+
+      at error (routes/auth.js:1129:13)
+
+FAIL __tests__/auth.test.js
+  Auth Integration Tests
+    POST /api/auth/login
+      × should return 400 for missing credentials (Zod validation) (51 ms)
+      × should return 401 for invalid credentials (8 ms)
+      × should return 200 with token for valid credentials (66 ms)
+    POST /api/auth/register
+      × should return 400 when required fields are missing (7 ms)
+
+  ● Auth Integration Tests › POST /api/auth/login › should return 400 for missing credentials (Zod validation)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "error"
+    Received: undefined
+
+    [0m [90m 31 |[39m
+     [90m 32 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m400[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 33 |[39m             expect(res[33m.[39mbody[33m.[39mstatus)[33m.[39mtoBe([32m'error'[39m)[33m;[39m
+     [90m    |[39m                                     [31m[1m^[22m[39m
+     [90m 34 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoContain([32m'Validation failed'[39m)[33m;[39m
+     [90m 35 |[39m             [90m// Zod specifically complains about missing password[39m
+     [90m 36 |[39m         })[33m;[39m[0m
+
+      at Object.toBe (__tests__/auth.test.js:33:37)
+
+  ● Auth Integration Tests › POST /api/auth/login › should return 401 for invalid credentials
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 401
+    Received: 400
+
+    [0m [90m 45 |[39m                 [33m.[39msend({ email[33m:[39m [32m'notfound@example.com'[39m[33m,[39m password[33m:[39m [32m'password123'[39m })[33m;[39m
+     [90m 46 |[39m
+    [31m[1m>[22m[39m[90m 47 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m401[39m)[33m;[39m
+     [90m    |[39m                                    [31m[1m^[22m[39m
+     [90m 48 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoBe([32m'Invalid credentials'[39m)[33m;[39m
+     [90m 49 |[39m         })[33m;[39m
+     [90m 50 |[39m[0m
+
+      at Object.toBe (__tests__/auth.test.js:47:36)
+
+  ● Auth Integration Tests › POST /api/auth/login › should return 200 with token for valid credentials
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+    [0m [90m 73 |[39m                 [33m.[39msend({ email[33m:[39m [32m'test@example.com'[39m[33m,[39m password[33m:[39m [32m'password123'[39m })[33m;[39m
+     [90m 74 |[39m
+    [31m[1m>[22m[39m[90m 75 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m    |[39m                                    [31m[1m^[22m[39m
+     [90m 76 |[39m             expect(res[33m.[39mbody[33m.[39mtoken)[33m.[39mtoBe([32m'mocked.jwt.token'[39m)[33m;[39m
+     [90m 77 |[39m             expect(res[33m.[39mbody[33m.[39muser[33m.[39memail)[33m.[39mtoBe([32m'test@example.com'[39m)[33m;[39m
+     [90m 78 |[39m         })[33m;[39m[0m
+
+      at Object.toBe (__tests__/auth.test.js:75:36)
+
+  ● Auth Integration Tests › POST /api/auth/register › should return 400 when required fields are missing
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "error"
+    Received: undefined
+
+    [0m [90m 87 |[39m
+     [90m 88 |[39m             expect(res[33m.[39mstatusCode)[33m.[39mtoBe([35m400[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 89 |[39m             expect(res[33m.[39mbody[33m.[39mstatus)[33m.[39mtoBe([32m'error'[39m)[33m;[39m
+     [90m    |[39m                                     [31m[1m^[22m[39m
+     [90m 90 |[39m             expect(res[33m.[39mbody[33m.[39mmessage)[33m.[39mtoContain([32m'Validation failed'[39m)[33m;[39m
+     [90m 91 |[39m         })[33m;[39m
+     [90m 92 |[39m     })[33m;[39m[0m
+
+      at Object.toBe (__tests__/auth.test.js:89:37)
+
+Test Suites: 1 failed, 1 total
+Tests:       4 failed, 4 total
+Snapshots:   0 total
+Time:        1.791 s, estimated 2 s
+Ran all test suites.

@@ -1,0 +1,2524 @@
+query,keywords,category,location,isFree,dateFilter
+premium cultural in Mumbai happening soon,cultural,Entertainment,Mumbai,false,future
+paid tech talks this week,tech|talks,Technology,,false,this_week
+ticketed education tournaments in rishikesh happening soon,education|tournaments,Education,rishikesh,false,future
+paid finance talks in Chennai next week,finance|talks,Business,Chennai,false,next_week
+paid photography concerts at amal jyothi this month,photography|concerts,Arts,amal jyothi,false,this_month
+comedy bootcamps in Mumbai this week,comedy|bootcamps,Entertainment,Mumbai,,this_week
+paid education in Bangalore next week,education,Education,Bangalore,false,next_week
+paid art workshops happening soon,art|workshops,Arts,,false,future
+free leadership concerts,leadership|concerts,Business,,true,future
+free machine learning concerts in Bangalore this weekend,machine|learning|concerts,Technology,Bangalore,true,weekend
+free wellness meetups at iit madras tomorrow,wellness|meetups,Health,iit madras,true,tomorrow
+premium marathon bootcamps this month,marathon|bootcamps,Sports,,false,this_month
+paid cybersecurity events at iit madras tomorrow,cybersecurity|events,Technology,iit madras,false,tomorrow
+classical at amal jyothi this month,classical,Arts,amal jyothi,,this_month
+ticketed pop culture bootcamps tomorrow,pop|culture|bootcamps,Entertainment,,false,tomorrow
+free food retreats tomorrow,food|retreats,Food,,true,tomorrow
+free reading in Kochi,reading,Education,Kochi,true,future
+premium tasting events in Bangalore this month,tasting|events,Food,Bangalore,false,this_month
+free painting tournaments at nit calicut this month,painting|tournaments,Arts,nit calicut,true,this_month
+premium festival classes in Pune this month,festival|classes,Entertainment,Pune,false,this_month
+reading bootcamps in Pune this weekend,reading|bootcamps,Education,Pune,,weekend
+premium coffee at iit madras this weekend,coffee,Food,iit madras,false,weekend
+free festival seminars in Chennai next week,festival|seminars,Entertainment,Chennai,true,next_week
+premium painting this month,painting,Arts,,false,this_month
+free comedy exhibitions today,comedy|exhibitions,Entertainment,,true,today
+premium classical seminars next week,classical|seminars,Arts,,false,next_week
+comedy workshops in Trivandrum next week,comedy|workshops,Entertainment,Trivandrum,,next_week
+free yoga classes in Trivandrum happening soon,yoga|classes,Health,Trivandrum,true,future
+masterclass hackathons at nit calicut near me,masterclass|hackathons,Education,nit calicut,,future
+premium music classes this week,music|classes,Arts,,false,this_week
+free tasting in Chennai next week,tasting,Food,Chennai,true,next_week
+premium open mic concerts in Bangalore happening soon,open|mic|concerts,Entertainment,Bangalore,false,future
+symposium talks in Goa near me,symposium|talks,Education,Goa,,future
+ticketed entrepreneurship seminars,entrepreneurship|seminars,Business,,false,future
+paid business concerts in Pune this week,business|concerts,Business,Pune,false,this_week
+free gaming workshops in Trivandrum tomorrow,gaming|workshops,Entertainment,Trivandrum,true,tomorrow
+premium tech shows in Delhi near me,tech|shows,Technology,Delhi,false,future
+paid football classes in Trivandrum this month,football|classes,Sports,Trivandrum,false,this_month
+premium tech next week,tech,Technology,,false,next_week
+free networking shows in Bangalore near me,networking|shows,Business,Bangalore,true,future
+paid networking seminars near me,networking|seminars,Business,,false,future
+ticketed tasting retreats next week,tasting|retreats,Food,,false,next_week
+free AI at cochin university this week,AI,Technology,cochin university,true,this_week
+premium art in rishikesh near me,art,Arts,rishikesh,false,future
+premium cultural concerts in Pune this week,cultural|concerts,Entertainment,Pune,false,this_week
+free meditation at cochin university,meditation,Health,cochin university,true,future
+premium baking classes in Trivandrum happening soon,baking|classes,Food,Trivandrum,false,future
+ticketed festival meetups in Mumbai tomorrow,festival|meetups,Entertainment,Mumbai,false,tomorrow
+paid machine learning meetups in Delhi this week,machine|learning|meetups,Technology,Delhi,false,this_week
+drama classes at cochin university this weekend,drama|classes,Arts,cochin university,,weekend
+open mic concerts at nit calicut happening soon,open|mic|concerts,Entertainment,nit calicut,,future
+paid career fair concerts tomorrow,career|fair|concerts,Education,,false,tomorrow
+cooking shows in Chennai this week,cooking|shows,Food,Chennai,,this_week
+ticketed tasting talks in Chennai near me,tasting|talks,Food,Chennai,false,future
+free reading retreats,reading|retreats,Education,,true,future
+paid wellness classes in Trivandrum next week,wellness|classes,Health,Trivandrum,false,next_week
+paid marketing meetups in Bangalore next week,marketing|meetups,Business,Bangalore,false,next_week
+ticketed machine learning seminars this month,machine|learning|seminars,Technology,,false,this_month
+coding meetups next week,coding|meetups,Technology,,,next_week
+premium masterclass seminars at nit calicut this week,masterclass|seminars,Education,nit calicut,false,this_week
+ticketed leadership events today,leadership|events,Business,,false,today
+ticketed study abroad hackathons at iit madras this weekend,study|abroad|hackathons,Education,iit madras,false,weekend
+premium music retreats at iit madras near me,music|retreats,Arts,iit madras,false,future
+paid software events in rishikesh,software|events,Technology,rishikesh,false,future
+paid baking shows in Chennai next week,baking|shows,Food,Chennai,false,next_week
+paid painting talks in Pune near me,painting|talks,Arts,Pune,false,future
+reading events at cochin university tomorrow,reading|events,Education,cochin university,,tomorrow
+free symposium concerts at cochin university near me,symposium|concerts,Education,cochin university,true,future
+ticketed movie shows next week,movie|shows,Entertainment,,false,next_week
+premium tech exhibitions at cochin university this month,tech|exhibitions,Technology,cochin university,false,this_month
+yoga at nit calicut this month,yoga,Health,nit calicut,,this_month
+food classes in Kochi,food|classes,Food,Kochi,,future
+premium tasting workshops in Delhi near me,tasting|workshops,Food,Delhi,false,future
+paid music shows next week,music|shows,Arts,,false,next_week
+free nutrition workshops near me,nutrition|workshops,Health,,true,future
+free career fair classes in Chennai near me,career|fair|classes,Education,Chennai,true,future
+free football concerts in Goa this week,football|concerts,Sports,Goa,true,this_week
+free meditation tournaments happening soon,meditation|tournaments,Health,,true,future
+web development classes,web|development|classes,Technology,,,future
+free tasting seminars today,tasting|seminars,Food,,true,today
+cooking seminars at nit calicut next week,cooking|seminars,Food,nit calicut,,next_week
+tennis next week,tennis,Sports,,,next_week
+premium AI classes today,AI|classes,Technology,,false,today
+free health workshops in Goa next week,health|workshops,Health,Goa,true,next_week
+comedy in Mumbai this weekend,comedy,Entertainment,Mumbai,,weekend
+business seminars happening soon,business|seminars,Business,,,future
+premium business events this month,business|events,Business,,false,this_month
+paid basketball in Goa this month,basketball,Sports,Goa,false,this_month
+retreat workshops near me,retreat|workshops,Health,,,future
+paid investment classes at amal jyothi next week,investment|classes,Business,amal jyothi,false,next_week
+paid basketball meetups happening soon,basketball|meetups,Sports,,false,future
+free investment in Kochi this week,investment,Business,Kochi,true,this_week
+ticketed networking concerts at iit madras this month,networking|concerts,Business,iit madras,false,this_month
+paid leadership events today,leadership|events,Business,,false,today
+free networking events in Pune,networking|events,Business,Pune,true,future
+premium poetry in Delhi this weekend,poetry,Arts,Delhi,false,weekend
+premium comedy tournaments in Chennai this week,comedy|tournaments,Entertainment,Chennai,false,this_week
+masterclass tournaments today,masterclass|tournaments,Education,,,today
+paid baking seminars at cochin university tomorrow,baking|seminars,Food,cochin university,false,tomorrow
+paid networking meetups at amal jyothi happening soon,networking|meetups,Business,amal jyothi,false,future
+ticketed marketing classes in Trivandrum this week,marketing|classes,Business,Trivandrum,false,this_week
+free reading bootcamps happening soon,reading|bootcamps,Education,,true,future
+paid open mic bootcamps this week,open|mic|bootcamps,Entertainment,,false,this_week
+premium marathon hackathons at amal jyothi this week,marathon|hackathons,Sports,amal jyothi,false,this_week
+study abroad in Goa this week,study|abroad,Education,Goa,,this_week
+business workshops this week,business|workshops,Business,,,this_week
+paid networking concerts at iit madras near me,networking|concerts,Business,iit madras,false,future
+tasting hackathons in rishikesh next week,tasting|hackathons,Food,rishikesh,,next_week
+free vegan retreats in Bangalore next week,vegan|retreats,Food,Bangalore,true,next_week
+paid meditation shows at amal jyothi today,meditation|shows,Health,amal jyothi,false,today
+free vegan in Goa this month,vegan,Food,Goa,true,this_month
+free leadership shows in Goa today,leadership|shows,Business,Goa,true,today
+festival seminars in Mumbai next week,festival|seminars,Entertainment,Mumbai,,next_week
+paid classical workshops at cochin university this weekend,classical|workshops,Arts,cochin university,false,weekend
+football events in Chennai this month,football|events,Sports,Chennai,,this_month
+ticketed study abroad classes at cochin university today,study|abroad|classes,Education,cochin university,false,today
+premium study abroad in Delhi this month,study|abroad,Education,Delhi,false,this_month
+ticketed education meetups next week,education|meetups,Education,,false,next_week
+paid nutrition seminars happening soon,nutrition|seminars,Health,,false,future
+premium music in rishikesh happening soon,music,Arts,rishikesh,false,future
+poetry shows,poetry|shows,Arts,,,future
+premium cybersecurity classes in Pune this month,cybersecurity|classes,Technology,Pune,false,this_month
+free masterclass classes today,masterclass|classes,Education,,true,today
+premium education at cochin university,education,Education,cochin university,false,future
+paid coding retreats this week,coding|retreats,Technology,,false,this_week
+ticketed football shows at nit calicut happening soon,football|shows,Sports,nit calicut,false,future
+ticketed blockchain retreats at amal jyothi next week,blockchain|retreats,Technology,amal jyothi,false,next_week
+ticketed blockchain talks at iit madras this month,blockchain|talks,Technology,iit madras,false,this_month
+paid charity run tournaments at nit calicut this weekend,charity|run|tournaments,Sports,nit calicut,false,weekend
+free entrepreneurship retreats in Bangalore this weekend,entrepreneurship|retreats,Business,Bangalore,true,weekend
+paid investment talks in Goa today,investment|talks,Business,Goa,false,today
+marathon events this month,marathon|events,Sports,,,this_month
+paid web development shows in Goa,web|development|shows,Technology,Goa,false,future
+free tech meetups this weekend,tech|meetups,Technology,,true,weekend
+paid investment retreats at cochin university near me,investment|retreats,Business,cochin university,false,future
+paid basketball exhibitions in rishikesh,basketball|exhibitions,Sports,rishikesh,false,future
+paid business tournaments in rishikesh next week,business|tournaments,Business,rishikesh,false,next_week
+gaming concerts in Kochi,gaming|concerts,Entertainment,Kochi,,future
+free pop culture tournaments at cochin university next week,pop|culture|tournaments,Entertainment,cochin university,true,next_week
+free investment in Chennai today,investment,Business,Chennai,true,today
+free career fair exhibitions in Pune this weekend,career|fair|exhibitions,Education,Pune,true,weekend
+free vegan tournaments,vegan|tournaments,Food,,true,future
+premium gaming in Delhi near me,gaming,Entertainment,Delhi,false,future
+networking hackathons this weekend,networking|hackathons,Business,,,weekend
+ticketed spiritual tournaments at amal jyothi,spiritual|tournaments,Health,amal jyothi,false,future
+entrepreneurship tomorrow,entrepreneurship,Business,,,tomorrow
+free symposium in Bangalore tomorrow,symposium,Education,Bangalore,true,tomorrow
+premium software retreats near me,software|retreats,Technology,,false,future
+investment events near me,investment|events,Business,,,future
+ticketed comedy talks,comedy|talks,Entertainment,,false,future
+ticketed AI hackathons next week,AI|hackathons,Technology,,false,next_week
+ticketed sports workshops in Delhi today,sports|workshops,Sports,Delhi,false,today
+study abroad bootcamps at iit madras next week,study|abroad|bootcamps,Education,iit madras,,next_week
+paid dance shows in Bangalore today,dance|shows,Arts,Bangalore,false,today
+nutrition concerts in Trivandrum tomorrow,nutrition|concerts,Health,Trivandrum,,tomorrow
+ticketed masterclass in Chennai next week,masterclass,Education,Chennai,false,next_week
+ticketed tennis tomorrow,tennis,Sports,,false,tomorrow
+reading events in Chennai next week,reading|events,Education,Chennai,,next_week
+ticketed wellness concerts,wellness|concerts,Health,,false,future
+paid art in Goa this weekend,art,Arts,Goa,false,weekend
+premium machine learning exhibitions in Chennai this weekend,machine|learning|exhibitions,Technology,Chennai,false,weekend
+paid poetry shows this weekend,poetry|shows,Arts,,false,weekend
+paid reading bootcamps at nit calicut,reading|bootcamps,Education,nit calicut,false,future
+ticketed basketball hackathons in Pune tomorrow,basketball|hackathons,Sports,Pune,false,tomorrow
+ticketed machine learning retreats happening soon,machine|learning|retreats,Technology,,false,future
+free coffee hackathons today,coffee|hackathons,Food,,true,today
+movie hackathons,movie|hackathons,Entertainment,,,future
+ticketed reading workshops at iit madras this weekend,reading|workshops,Education,iit madras,false,weekend
+free software talks in Chennai today,software|talks,Technology,Chennai,true,today
+ticketed poetry events at amal jyothi this week,poetry|events,Arts,amal jyothi,false,this_week
+ticketed spiritual talks in Delhi tomorrow,spiritual|talks,Health,Delhi,false,tomorrow
+ticketed yoga shows in Trivandrum happening soon,yoga|shows,Health,Trivandrum,false,future
+drama retreats happening soon,drama|retreats,Arts,,,future
+premium cooking at amal jyothi today,cooking,Food,amal jyothi,false,today
+free cybersecurity talks in Mumbai next week,cybersecurity|talks,Technology,Mumbai,true,next_week
+ticketed pop culture classes in Mumbai this month,pop|culture|classes,Entertainment,Mumbai,false,this_month
+premium festival meetups in Trivandrum happening soon,festival|meetups,Entertainment,Trivandrum,false,future
+paid food exhibitions at nit calicut this weekend,food|exhibitions,Food,nit calicut,false,weekend
+premium career fair bootcamps at nit calicut today,career|fair|bootcamps,Education,nit calicut,false,today
+baking near me,baking,Food,,,future
+free comedy in rishikesh today,comedy,Entertainment,rishikesh,true,today
+free basketball,basketball,Sports,,true,future
+free masterclass shows next week,masterclass|shows,Education,,true,next_week
+open mic events in Chennai today,open|mic|events,Entertainment,Chennai,,today
+tournament shows at iit madras,tournament|shows,Sports,iit madras,,future
+free tennis meetups in Mumbai tomorrow,tennis|meetups,Sports,Mumbai,true,tomorrow
+paid pop culture seminars near me,pop|culture|seminars,Entertainment,,false,future
+free coffee tomorrow,coffee,Food,,true,tomorrow
+indie in Mumbai today,indie,Arts,Mumbai,,today
+tasting talks at amal jyothi,tasting|talks,Food,amal jyothi,,future
+ticketed pop culture hackathons tomorrow,pop|culture|hackathons,Entertainment,,false,tomorrow
+ticketed wellness this weekend,wellness,Health,,false,weekend
+ticketed tasting in Chennai near me,tasting,Food,Chennai,false,future
+free cooking events happening soon,cooking|events,Food,,true,future
+ticketed cybersecurity meetups in Mumbai near me,cybersecurity|meetups,Technology,Mumbai,false,future
+ticketed charity run classes in rishikesh tomorrow,charity|run|classes,Sports,rishikesh,false,tomorrow
+ticketed tasting retreats at nit calicut tomorrow,tasting|retreats,Food,nit calicut,false,tomorrow
+ticketed esports this weekend,esports,Entertainment,,false,weekend
+free networking events in Bangalore this month,networking|events,Business,Bangalore,true,this_month
+sports tournaments in Mumbai happening soon,sports|tournaments,Sports,Mumbai,,future
+free career fair hackathons at amal jyothi happening soon,career|fair|hackathons,Education,amal jyothi,true,future
+masterclass in Chennai near me,masterclass,Education,Chennai,,future
+investment tournaments this weekend,investment|tournaments,Business,,,weekend
+premium AI classes at nit calicut happening soon,AI|classes,Technology,nit calicut,false,future
+premium art talks at nit calicut this week,art|talks,Arts,nit calicut,false,this_week
+premium photography hackathons this week,photography|hackathons,Arts,,false,this_week
+free dance exhibitions in rishikesh next week,dance|exhibitions,Arts,rishikesh,true,next_week
+premium basketball concerts in Chennai this week,basketball|concerts,Sports,Chennai,false,this_week
+ticketed vegan bootcamps in Chennai near me,vegan|bootcamps,Food,Chennai,false,future
+yoga retreats in rishikesh this week,yoga|retreats,Health,rishikesh,,this_week
+premium web development events in Pune this weekend,web|development|events,Technology,Pune,false,weekend
+ticketed baking at amal jyothi,baking,Food,amal jyothi,false,future
+networking tournaments at nit calicut next week,networking|tournaments,Business,nit calicut,,next_week
+paid entrepreneurship classes,entrepreneurship|classes,Business,,false,future
+free meditation hackathons in Trivandrum,meditation|hackathons,Health,Trivandrum,true,future
+premium food seminars near me,food|seminars,Food,,false,future
+ticketed blockchain tournaments in Mumbai this weekend,blockchain|tournaments,Technology,Mumbai,false,weekend
+premium wellness meetups tomorrow,wellness|meetups,Health,,false,tomorrow
+ticketed wellness tournaments in Goa this week,wellness|tournaments,Health,Goa,false,this_week
+comedy this month,comedy,Entertainment,,,this_month
+ticketed photography hackathons in Pune this week,photography|hackathons,Arts,Pune,false,this_week
+paid education workshops next week,education|workshops,Education,,false,next_week
+ticketed career fair in Delhi this month,career|fair,Education,Delhi,false,this_month
+ticketed basketball concerts today,basketball|concerts,Sports,,false,today
+free study abroad shows in Trivandrum tomorrow,study|abroad|shows,Education,Trivandrum,true,tomorrow
+paid esports talks in Delhi happening soon,esports|talks,Entertainment,Delhi,false,future
+premium symposium meetups,symposium|meetups,Education,,false,future
+paid startup tournaments in Bangalore tomorrow,startup|tournaments,Business,Bangalore,false,tomorrow
+ticketed photography events in Goa,photography|events,Arts,Goa,false,future
+premium festival events in Bangalore tomorrow,festival|events,Entertainment,Bangalore,false,tomorrow
+premium charity run in Trivandrum this week,charity|run,Sports,Trivandrum,false,this_week
+nutrition at nit calicut tomorrow,nutrition,Health,nit calicut,,tomorrow
+free festival events at iit madras tomorrow,festival|events,Entertainment,iit madras,true,tomorrow
+premium classical shows at iit madras near me,classical|shows,Arts,iit madras,false,future
+paid symposium events this week,symposium|events,Education,,false,this_week
+masterclass bootcamps at iit madras this weekend,masterclass|bootcamps,Education,iit madras,,weekend
+marathon talks at nit calicut next week,marathon|talks,Sports,nit calicut,,next_week
+ticketed career fair shows in rishikesh,career|fair|shows,Education,rishikesh,false,future
+premium study abroad meetups in Kochi tomorrow,study|abroad|meetups,Education,Kochi,false,tomorrow
+ticketed symposium seminars in Delhi tomorrow,symposium|seminars,Education,Delhi,false,tomorrow
+free culinary exhibitions this month,culinary|exhibitions,Food,,true,this_month
+ticketed charity run bootcamps this week,charity|run|bootcamps,Sports,,false,this_week
+tournament this week,tournament,Sports,,,this_week
+free nutrition seminars at cochin university near me,nutrition|seminars,Health,cochin university,true,future
+ticketed cultural near me,cultural,Entertainment,,false,future
+paid nutrition classes in Kochi today,nutrition|classes,Health,Kochi,false,today
+free open mic exhibitions in Bangalore this week,open|mic|exhibitions,Entertainment,Bangalore,true,this_week
+premium comedy shows in Chennai near me,comedy|shows,Entertainment,Chennai,false,future
+festival tournaments in Mumbai near me,festival|tournaments,Entertainment,Mumbai,,future
+paid marketing exhibitions at cochin university this week,marketing|exhibitions,Business,cochin university,false,this_week
+sports concerts in Kochi this weekend,sports|concerts,Sports,Kochi,,weekend
+paid comedy workshops next week,comedy|workshops,Entertainment,,false,next_week
+free education seminars in Mumbai happening soon,education|seminars,Education,Mumbai,true,future
+free business bootcamps this weekend,business|bootcamps,Business,,true,weekend
+free reading hackathons today,reading|hackathons,Education,,true,today
+paid symposium seminars in Pune next week,symposium|seminars,Education,Pune,false,next_week
+paid nutrition hackathons in Trivandrum tomorrow,nutrition|hackathons,Health,Trivandrum,false,tomorrow
+free music shows this month,music|shows,Arts,,true,this_month
+premium coffee exhibitions in Delhi near me,coffee|exhibitions,Food,Delhi,false,future
+paid education at amal jyothi this month,education,Education,amal jyothi,false,this_month
+ticketed indie bootcamps,indie|bootcamps,Arts,,false,future
+free baking in Mumbai this weekend,baking,Food,Mumbai,true,weekend
+premium tasting concerts happening soon,tasting|concerts,Food,,false,future
+premium networking exhibitions in Delhi this month,networking|exhibitions,Business,Delhi,false,this_month
+business today,business,Business,,,today
+ticketed fitness meetups in Delhi this month,fitness|meetups,Health,Delhi,false,this_month
+ticketed nutrition talks in Mumbai next week,nutrition|talks,Health,Mumbai,false,next_week
+premium finance in Chennai today,finance,Business,Chennai,false,today
+ticketed basketball retreats at iit madras,basketball|retreats,Sports,iit madras,false,future
+paid open mic workshops in Mumbai next week,open|mic|workshops,Entertainment,Mumbai,false,next_week
+finance retreats in Pune today,finance|retreats,Business,Pune,,today
+ticketed open mic tomorrow,open|mic,Entertainment,,false,tomorrow
+premium tennis at nit calicut today,tennis,Sports,nit calicut,false,today
+ticketed masterclass tomorrow,masterclass,Education,,false,tomorrow
+free spiritual tournaments in Bangalore near me,spiritual|tournaments,Health,Bangalore,true,future
+paid masterclass events at amal jyothi this week,masterclass|events,Education,amal jyothi,false,this_week
+free charity run workshops in Bangalore next week,charity|run|workshops,Sports,Bangalore,true,next_week
+free software at cochin university this month,software,Technology,cochin university,true,this_month
+gaming shows at amal jyothi tomorrow,gaming|shows,Entertainment,amal jyothi,,tomorrow
+paid tech next week,tech,Technology,,false,next_week
+premium indie at nit calicut tomorrow,indie,Arts,nit calicut,false,tomorrow
+free marketing talks in Trivandrum,marketing|talks,Business,Trivandrum,true,future
+ticketed tennis shows in Pune this month,tennis|shows,Sports,Pune,false,this_month
+paid cooking tournaments in Mumbai this weekend,cooking|tournaments,Food,Mumbai,false,weekend
+ticketed tasting shows in Chennai this week,tasting|shows,Food,Chennai,false,this_week
+premium esports seminars tomorrow,esports|seminars,Entertainment,,false,tomorrow
+ticketed baking retreats in Trivandrum,baking|retreats,Food,Trivandrum,false,future
+free tech classes at iit madras this weekend,tech|classes,Technology,iit madras,true,weekend
+entrepreneurship seminars in Pune next week,entrepreneurship|seminars,Business,Pune,,next_week
+machine learning classes in Chennai today,machine|learning|classes,Technology,Chennai,,today
+ticketed photography tournaments at iit madras this week,photography|tournaments,Arts,iit madras,false,this_week
+ticketed tournament events,tournament|events,Sports,,false,future
+finance at nit calicut tomorrow,finance,Business,nit calicut,,tomorrow
+premium photography hackathons at nit calicut next week,photography|hackathons,Arts,nit calicut,false,next_week
+paid cybersecurity tournaments this month,cybersecurity|tournaments,Technology,,false,this_month
+premium sports classes,sports|classes,Sports,,false,future
+free career fair tournaments in Trivandrum next week,career|fair|tournaments,Education,Trivandrum,true,next_week
+free education events at cochin university,education|events,Education,cochin university,true,future
+ticketed career fair seminars at cochin university near me,career|fair|seminars,Education,cochin university,false,future
+ticketed health bootcamps at cochin university,health|bootcamps,Health,cochin university,false,future
+premium finance exhibitions at iit madras near me,finance|exhibitions,Business,iit madras,false,future
+gaming hackathons in Chennai,gaming|hackathons,Entertainment,Chennai,,future
+premium meditation talks at iit madras,meditation|talks,Health,iit madras,false,future
+tournament events at amal jyothi this week,tournament|events,Sports,amal jyothi,,this_week
+paid reading meetups tomorrow,reading|meetups,Education,,false,tomorrow
+free cybersecurity meetups in rishikesh this month,cybersecurity|meetups,Technology,rishikesh,true,this_month
+paid health events at amal jyothi next week,health|events,Health,amal jyothi,false,next_week
+premium wellness shows in Chennai this month,wellness|shows,Health,Chennai,false,this_month
+finance exhibitions today,finance|exhibitions,Business,,,today
+indie classes near me,indie|classes,Arts,,,future
+premium blockchain in Delhi near me,blockchain,Technology,Delhi,false,future
+basketball concerts at nit calicut this month,basketball|concerts,Sports,nit calicut,,this_month
+premium open mic today,open|mic,Entertainment,,false,today
+coffee exhibitions this week,coffee|exhibitions,Food,,,this_week
+paid symposium meetups at amal jyothi next week,symposium|meetups,Education,amal jyothi,false,next_week
+premium vegan tournaments,vegan|tournaments,Food,,false,future
+ticketed tournament talks at iit madras near me,tournament|talks,Sports,iit madras,false,future
+premium vegan classes tomorrow,vegan|classes,Food,,false,tomorrow
+premium tournament seminars in Pune this weekend,tournament|seminars,Sports,Pune,false,weekend
+paid basketball tournaments this week,basketball|tournaments,Sports,,false,this_week
+paid cybersecurity events at cochin university next week,cybersecurity|events,Technology,cochin university,false,next_week
+paid reading tomorrow,reading,Education,,false,tomorrow
+photography hackathons at amal jyothi today,photography|hackathons,Arts,amal jyothi,,today
+premium comedy classes at iit madras today,comedy|classes,Entertainment,iit madras,false,today
+free comedy retreats this month,comedy|retreats,Entertainment,,true,this_month
+esports classes at amal jyothi happening soon,esports|classes,Entertainment,amal jyothi,,future
+paid tech at iit madras this week,tech,Technology,iit madras,false,this_week
+premium tech shows in Bangalore this weekend,tech|shows,Technology,Bangalore,false,weekend
+premium classical events in Trivandrum today,classical|events,Arts,Trivandrum,false,today
+networking concerts in Pune tomorrow,networking|concerts,Business,Pune,,tomorrow
+premium pop culture seminars at iit madras this weekend,pop|culture|seminars,Entertainment,iit madras,false,weekend
+free marathon retreats in Pune next week,marathon|retreats,Sports,Pune,true,next_week
+premium web development today,web|development,Technology,,false,today
+premium sports at cochin university this week,sports,Sports,cochin university,false,this_week
+nutrition retreats in Pune today,nutrition|retreats,Health,Pune,,today
+ticketed blockchain this month,blockchain,Technology,,false,this_month
+symposium events this weekend,symposium|events,Education,,,weekend
+tasting workshops this month,tasting|workshops,Food,,,this_month
+premium yoga hackathons in Delhi tomorrow,yoga|hackathons,Health,Delhi,false,tomorrow
+premium meditation classes next week,meditation|classes,Health,,false,next_week
+premium meditation next week,meditation,Health,,false,next_week
+free masterclass hackathons in Bangalore today,masterclass|hackathons,Education,Bangalore,true,today
+free coffee classes,coffee|classes,Food,,true,future
+ticketed retreat workshops,retreat|workshops,Health,,false,future
+paid retreat hackathons at nit calicut,retreat|hackathons,Health,nit calicut,false,future
+premium meditation hackathons at iit madras this week,meditation|hackathons,Health,iit madras,false,this_week
+paid sports this month,sports,Sports,,false,this_month
+paid web development retreats at amal jyothi near me,web|development|retreats,Technology,amal jyothi,false,future
+paid tennis tournaments today,tennis|tournaments,Sports,,false,today
+culinary meetups at cochin university this weekend,culinary|meetups,Food,cochin university,,weekend
+cultural classes at iit madras this weekend,cultural|classes,Entertainment,iit madras,,weekend
+symposium retreats at cochin university tomorrow,symposium|retreats,Education,cochin university,,tomorrow
+free spiritual talks at iit madras this weekend,spiritual|talks,Health,iit madras,true,weekend
+free music exhibitions next week,music|exhibitions,Arts,,true,next_week
+paid career fair in Goa this week,career|fair,Education,Goa,false,this_week
+free investment seminars in Pune this week,investment|seminars,Business,Pune,true,this_week
+premium fitness concerts near me,fitness|concerts,Health,,false,future
+retreat workshops at cochin university next week,retreat|workshops,Health,cochin university,,next_week
+nutrition shows in Chennai today,nutrition|shows,Health,Chennai,,today
+free cultural at cochin university,cultural,Entertainment,cochin university,true,future
+paid software seminars at iit madras,software|seminars,Technology,iit madras,false,future
+free yoga exhibitions in Pune this month,yoga|exhibitions,Health,Pune,true,this_month
+ticketed wellness seminars at cochin university this week,wellness|seminars,Health,cochin university,false,this_week
+premium vegan bootcamps,vegan|bootcamps,Food,,false,future
+free reading in Trivandrum next week,reading,Education,Trivandrum,true,next_week
+masterclass workshops this weekend,masterclass|workshops,Education,,,weekend
+free yoga seminars this month,yoga|seminars,Health,,true,this_month
+free comedy retreats at iit madras near me,comedy|retreats,Entertainment,iit madras,true,future
+ticketed art tournaments this weekend,art|tournaments,Arts,,false,weekend
+festival at amal jyothi this weekend,festival,Entertainment,amal jyothi,,weekend
+sports talks,sports|talks,Sports,,,future
+paid music in Pune this month,music,Arts,Pune,false,this_month
+paid movie in Trivandrum this month,movie,Entertainment,Trivandrum,false,this_month
+premium culinary concerts happening soon,culinary|concerts,Food,,false,future
+ticketed blockchain workshops in Delhi tomorrow,blockchain|workshops,Technology,Delhi,false,tomorrow
+ticketed finance talks this month,finance|talks,Business,,false,this_month
+ticketed dance tomorrow,dance,Arts,,false,tomorrow
+ticketed symposium bootcamps at iit madras this weekend,symposium|bootcamps,Education,iit madras,false,weekend
+ticketed baking meetups tomorrow,baking|meetups,Food,,false,tomorrow
+basketball workshops in Mumbai this weekend,basketball|workshops,Sports,Mumbai,,weekend
+premium wellness tournaments in Chennai,wellness|tournaments,Health,Chennai,false,future
+paid meditation in Mumbai this week,meditation,Health,Mumbai,false,this_week
+ticketed career fair happening soon,career|fair,Education,,false,future
+paid dance talks in Bangalore tomorrow,dance|talks,Arts,Bangalore,false,tomorrow
+paid study abroad in Delhi,study|abroad,Education,Delhi,false,future
+premium networking concerts at cochin university next week,networking|concerts,Business,cochin university,false,next_week
+free investment this week,investment,Business,,true,this_week
+ticketed cybersecurity retreats tomorrow,cybersecurity|retreats,Technology,,false,tomorrow
+premium food retreats tomorrow,food|retreats,Food,,false,tomorrow
+retreat shows this weekend,retreat|shows,Health,,,weekend
+cooking tournaments in Kochi this month,cooking|tournaments,Food,Kochi,,this_month
+free spiritual classes today,spiritual|classes,Health,,true,today
+coffee hackathons,coffee|hackathons,Food,,,future
+ticketed tournament meetups this week,tournament|meetups,Sports,,false,this_week
+wellness hackathons tomorrow,wellness|hackathons,Health,,,tomorrow
+free pop culture in Pune,pop|culture,Entertainment,Pune,true,future
+free machine learning events,machine|learning|events,Technology,,true,future
+ticketed health workshops in Kochi today,health|workshops,Health,Kochi,false,today
+paid comedy talks at nit calicut next week,comedy|talks,Entertainment,nit calicut,false,next_week
+premium yoga in Delhi happening soon,yoga,Health,Delhi,false,future
+ticketed entrepreneurship classes in Delhi this weekend,entrepreneurship|classes,Business,Delhi,false,weekend
+free education bootcamps near me,education|bootcamps,Education,,true,future
+paid masterclass exhibitions in Goa tomorrow,masterclass|exhibitions,Education,Goa,false,tomorrow
+ticketed career fair seminars in rishikesh happening soon,career|fair|seminars,Education,rishikesh,false,future
+free symposium at iit madras this weekend,symposium,Education,iit madras,true,weekend
+ticketed art events in Trivandrum happening soon,art|events,Arts,Trivandrum,false,future
+free AI hackathons in Kochi happening soon,AI|hackathons,Technology,Kochi,true,future
+premium finance in Kochi this month,finance,Business,Kochi,false,this_month
+premium esports retreats at cochin university this weekend,esports|retreats,Entertainment,cochin university,false,weekend
+paid food workshops in Delhi this month,food|workshops,Food,Delhi,false,this_month
+coffee happening soon,coffee,Food,,,future
+paid tasting in rishikesh this weekend,tasting,Food,rishikesh,false,weekend
+paid finance seminars in Trivandrum,finance|seminars,Business,Trivandrum,false,future
+education exhibitions in Mumbai tomorrow,education|exhibitions,Education,Mumbai,,tomorrow
+coding seminars next week,coding|seminars,Technology,,,next_week
+free music in Mumbai next week,music,Arts,Mumbai,true,next_week
+ticketed spiritual workshops at cochin university today,spiritual|workshops,Health,cochin university,false,today
+premium baking talks in Goa near me,baking|talks,Food,Goa,false,future
+ticketed sports talks in Bangalore this month,sports|talks,Sports,Bangalore,false,this_month
+premium finance concerts in rishikesh next week,finance|concerts,Business,rishikesh,false,next_week
+premium career fair classes today,career|fair|classes,Education,,false,today
+ticketed food retreats at nit calicut today,food|retreats,Food,nit calicut,false,today
+free open mic next week,open|mic,Entertainment,,true,next_week
+sports workshops in Goa this month,sports|workshops,Sports,Goa,,this_month
+ticketed education tournaments in Delhi near me,education|tournaments,Education,Delhi,false,future
+premium football tournaments at cochin university tomorrow,football|tournaments,Sports,cochin university,false,tomorrow
+baking retreats at amal jyothi next week,baking|retreats,Food,amal jyothi,,next_week
+dance seminars at iit madras tomorrow,dance|seminars,Arts,iit madras,,tomorrow
+paid web development in Delhi near me,web|development,Technology,Delhi,false,future
+ticketed photography bootcamps in rishikesh today,photography|bootcamps,Arts,rishikesh,false,today
+premium comedy shows in Chennai next week,comedy|shows,Entertainment,Chennai,false,next_week
+paid football concerts at amal jyothi next week,football|concerts,Sports,amal jyothi,false,next_week
+gaming near me,gaming,Entertainment,,,future
+premium music retreats in Delhi happening soon,music|retreats,Arts,Delhi,false,future
+free yoga talks at nit calicut near me,yoga|talks,Health,nit calicut,true,future
+football retreats in Kochi today,football|retreats,Sports,Kochi,,today
+ticketed AI seminars this weekend,AI|seminars,Technology,,false,weekend
+ticketed music bootcamps in Mumbai today,music|bootcamps,Arts,Mumbai,false,today
+free reading tournaments in Delhi today,reading|tournaments,Education,Delhi,true,today
+comedy hackathons in Mumbai happening soon,comedy|hackathons,Entertainment,Mumbai,,future
+finance exhibitions at nit calicut happening soon,finance|exhibitions,Business,nit calicut,,future
+premium marketing,marketing,Business,,false,future
+paid basketball retreats in Trivandrum happening soon,basketball|retreats,Sports,Trivandrum,false,future
+premium software happening soon,software,Technology,,false,future
+symposium concerts in Goa today,symposium|concerts,Education,Goa,,today
+paid charity run in Delhi,charity|run,Sports,Delhi,false,future
+free coding exhibitions in Chennai tomorrow,coding|exhibitions,Technology,Chennai,true,tomorrow
+ticketed drama exhibitions in Delhi near me,drama|exhibitions,Arts,Delhi,false,future
+pop culture seminars in Kochi this month,pop|culture|seminars,Entertainment,Kochi,,this_month
+tech exhibitions in Bangalore happening soon,tech|exhibitions,Technology,Bangalore,,future
+paid culinary hackathons in Mumbai this week,culinary|hackathons,Food,Mumbai,false,this_week
+ticketed football hackathons in Pune next week,football|hackathons,Sports,Pune,false,next_week
+premium retreat at iit madras happening soon,retreat,Health,iit madras,false,future
+football next week,football,Sports,,,next_week
+ticketed nutrition concerts at nit calicut this weekend,nutrition|concerts,Health,nit calicut,false,weekend
+premium baking seminars in Mumbai next week,baking|seminars,Food,Mumbai,false,next_week
+paid football meetups in Kochi next week,football|meetups,Sports,Kochi,false,next_week
+premium vegan in Delhi happening soon,vegan,Food,Delhi,false,future
+free symposium shows at iit madras tomorrow,symposium|shows,Education,iit madras,true,tomorrow
+meditation seminars in Chennai this month,meditation|seminars,Health,Chennai,,this_month
+ticketed food concerts in Mumbai tomorrow,food|concerts,Food,Mumbai,false,tomorrow
+ticketed finance seminars in rishikesh this weekend,finance|seminars,Business,rishikesh,false,weekend
+football in Goa this week,football,Sports,Goa,,this_week
+free blockchain exhibitions in Bangalore near me,blockchain|exhibitions,Technology,Bangalore,true,future
+free sports exhibitions this month,sports|exhibitions,Sports,,true,this_month
+open mic at amal jyothi this month,open|mic,Entertainment,amal jyothi,,this_month
+paid coffee seminars today,coffee|seminars,Food,,false,today
+tech exhibitions at nit calicut tomorrow,tech|exhibitions,Technology,nit calicut,,tomorrow
+free coffee classes at cochin university today,coffee|classes,Food,cochin university,true,today
+paid web development concerts today,web|development|concerts,Technology,,false,today
+paid AI events at amal jyothi happening soon,AI|events,Technology,amal jyothi,false,future
+paid cybersecurity bootcamps at iit madras this week,cybersecurity|bootcamps,Technology,iit madras,false,this_week
+spiritual in Pune near me,spiritual,Health,Pune,,future
+masterclass today,masterclass,Education,,,today
+nutrition retreats at nit calicut,nutrition|retreats,Health,nit calicut,,future
+gaming classes in Trivandrum,gaming|classes,Entertainment,Trivandrum,,future
+movie this week,movie,Entertainment,,,this_week
+premium symposium talks in Trivandrum today,symposium|talks,Education,Trivandrum,false,today
+free spiritual shows at iit madras,spiritual|shows,Health,iit madras,true,future
+premium culinary retreats at cochin university this month,culinary|retreats,Food,cochin university,false,this_month
+ticketed tasting classes in rishikesh today,tasting|classes,Food,rishikesh,false,today
+free symposium shows at cochin university near me,symposium|shows,Education,cochin university,true,future
+free entrepreneurship tournaments in Chennai this weekend,entrepreneurship|tournaments,Business,Chennai,true,weekend
+paid festival hackathons this weekend,festival|hackathons,Entertainment,,false,weekend
+movie bootcamps in Bangalore tomorrow,movie|bootcamps,Entertainment,Bangalore,,tomorrow
+free entrepreneurship retreats in Kochi this month,entrepreneurship|retreats,Business,Kochi,true,this_month
+networking at cochin university next week,networking,Business,cochin university,,next_week
+ticketed symposium bootcamps today,symposium|bootcamps,Education,,false,today
+ticketed machine learning meetups next week,machine|learning|meetups,Technology,,false,next_week
+paid cybersecurity in Bangalore this month,cybersecurity,Technology,Bangalore,false,this_month
+premium football concerts at amal jyothi happening soon,football|concerts,Sports,amal jyothi,false,future
+cooking meetups in Mumbai,cooking|meetups,Food,Mumbai,,future
+free gaming workshops in Trivandrum this weekend,gaming|workshops,Entertainment,Trivandrum,true,weekend
+gaming events next week,gaming|events,Entertainment,,,next_week
+premium blockchain,blockchain,Technology,,false,future
+ticketed cooking in rishikesh this month,cooking,Food,rishikesh,false,this_month
+paid classical near me,classical,Arts,,false,future
+paid cybersecurity at cochin university next week,cybersecurity,Technology,cochin university,false,next_week
+premium study abroad meetups at amal jyothi next week,study|abroad|meetups,Education,amal jyothi,false,next_week
+free coding seminars at amal jyothi tomorrow,coding|seminars,Technology,amal jyothi,true,tomorrow
+new events,,,,,future
+anything happening today,,,,,today
+events near me,,,,,future
+s h o w   m e   s o m e   c o o l   h a c k a t h o n s   i n   m u m b a i   t h i s   w e e k e n d , h a c k a t h o n s , T e c h n o l o g y , m u m b a i , f a l s e , w e e k e n d 
+ i   w a n t   t o   a t t e n d   f r e e   y o g a   s e m i n a r s   t o m o r r o w   e a r l y   m o r n i n g , y o g a | s e m i n a r s , H e a l t h , , t r u e , t o m o r r o w 
+ a r e   t h e r e   a n y   m u s i c   f e s t i v a l s   i n   b a n g a l o r e   n e x t   w e e k   t h a t   a r e   p a i d , m u s i c | f e s t i v a l s , A r t s , b a n g a l o r e , f a l s e , n e x t _ w e e k 
+ l o o k i n g   f o r   p r e m i u m   c u l i n a r y   w o r k s h o p s   i n   d e l h i   t h i s   m o n t h , c u l i n a r y | w o r k s h o p s , F o o d , d e l h i , f a l s e , t h i s _ m o n t h 
+ f i n d   m e   s o m e   t e c h   m e e t u p s   h a p p e n i n g   s o o n   t h a t   d o n ' t   c o s t   a n y t h i n g , t e c h | m e e t u p s , T e c h n o l o g y , , t r u e , f u t u r e 
+ i   n e e d   t i c k e t e d   b u s i n e s s   t a l k s   i n   p u n e   t o d a y , b u s i n e s s | t a l k s , B u s i n e s s , p u n e , f a l s e , t o d a y 
+ w h a t   a r e   t h e   b e s t   f r e e   e d u c a t i o n   b o o t c a m p s   a r o u n d   m e , e d u c a t i o n | b o o t c a m p s , E d u c a t i o n , , t r u e , f u t u r e 
+ p a i d   e s p o r t s   t o u r n a m e n t s   i n   c h e n n a i   n e x t   w e e k e n d , e s p o r t s | t o u r n a m e n t s , E n t e r t a i n m e n t , c h e n n a i , f a l s e , w e e k e n d 
+ l o o k i n g   t o   j o i n   a   f r e e   m a r a t h o n   i n   k o c h i   t h i s   w e e k , m a r a t h o n , S p o r t s , k o c h i , t r u e , t h i s _ w e e k 
+ s h o w   p a i d   c l a s s i c a l   d a n c e   e v e n t s   i n   t r i v a n d r u m   t o m o r r o w , c l a s s i c a l | d a n c e , A r t s , t r i v a n d r u m , f a l s e , t o m o r r o w 
+ i s   t h e r e   a n y   f r e e   b a k i n g   w o r k s h o p   i n   r i s h i k e s h   t h i s   m o n t h , b a k i n g | w o r k s h o p , F o o d , r i s h i k e s h , t r u e , t h i s _ m o n t h 
+ p r e m i u m   p a i n t i n g   e x h i b i t i o n s   i n   g o a   t o d a y , p a i n t i n g | e x h i b i t i o n s , A r t s , g o a , f a l s e , t o d a y 
+ i   w a n t   t o   g o   t o   a   n e t w o r k i n g   s e m i n a r   i n   m u m b a i   n e x t   w e e k   f o r   f r e e , n e t w o r k i n g | s e m i n a r , B u s i n e s s , m u m b a i , t r u e , n e x t _ w e e k 
+ f i n d   m e   s o m e   t i c k e t e d   b a s k e t b a l l   g a m e s   t h i s   w e e k e n d , b a s k e t b a l l , S p o r t s , , f a l s e , w e e k e n d 
+ l o o k i n g   f o r   f r e e   p o e t r y   r e a d i n g   e v e n t s   h a p p e n i n g   s o o n , p o e t r y | r e a d i n g , E d u c a t i o n , , t r u e , f u t u r e 
+ a r e   t h e r e   a n y   p a i d   b l o c k c h a i n   c l a s s e s   i n   h y d e r a b a d   t h i s   m o n t h , b l o c k c h a i n | c l a s s e s , T e c h n o l o g y , h y d e r a b a d , f a l s e , t h i s _ m o n t h 
+ s h o w   m e   p r e m i u m   c o m e d y   o p e n   m i c s   n e a r   m e   t o d a y , c o m e d y | o p e n | m i c s , E n t e r t a i n m e n t , , f a l s e , t o d a y 
+ i   w a n t   t o   a t t e n d   f r e e   s p i r i t u a l   r e t r e a t s   i n   r i s h i k e s h   n e x t   w e e k , s p i r i t u a l | r e t r e a t s , H e a l t h , r i s h i k e s h , t r u e , n e x t _ w e e k 
+ f i n d   t i c k e t e d   p h o t o g r a p h y   t o u r s   i n   j a i p u r   t o m o r r o w , p h o t o g r a p h y | t o u r s , A r t s , j a i p u r , f a l s e , t o m o r r o w 
+ l o o k i n g   f o r   f r e e   m a c h i n e   l e a r n i n g   h a c k a t h o n s   i n   d e l h i   t h i s   w e e k e n d , m a c h i n e | l e a r n i n g | h a c k a t h o n s , T e c h n o l o g y , d e l h i , t r u e , w e e k e n d  
+ science meetup at trivandrum today,science|meetup,Technology,trivandrum,,today
+fitness summit happening soon in delhi,fitness|summit,Health,delhi,,future
+premium bootcamp on art this month,art|bootcamp,Arts,,false,this_month
+tech concert happening soon in mumbai,tech|concert,Technology,mumbai,,future
+premium hackathon this week,hackathon,,,false,this_week
+hackathon at remote this week,hackathon,,remote,false,this_week
+premium music hackathon at online weekend,music|hackathon,Arts,online,false,weekend
+premium talks tomorrow,talks,,,false,tomorrow
+cheap business summit at kochi upcoming,business|summit,Business,kochi,,future
+concert at hyderabad upcoming,concert,,hyderabad,false,future
+ticketed festival happening soon,festival,,,false,future
+free conference on wellness tomorrow,wellness|conference,Health,,true,tomorrow
+panel at mumbai next week,panel,,mumbai,,next_week
+premium yoga webinar at delhi happening soon,yoga|webinar,Health,delhi,false,future
+premium science networking at amal jyothi weekend,science|networking,Technology,amal jyothi,false,weekend
+wellness summit weekend in bangalore,wellness|summit,Health,bangalore,true,weekend
+workshop at online tomorrow,workshop,,online,true,tomorrow
+panel at bangalore tomorrow,panel,,bangalore,,tomorrow
+paid meetup on coding tomorrow,coding|meetup,Technology,,false,tomorrow
+paid business meetup at remote next week,business|meetup,Business,remote,false,next_week
+cheap webinar on finance next week,finance|webinar,Business,,,next_week
+cheap concert on startup weekend,startup|concert,Business,,,weekend
+leadership classes today in pune,leadership|classes,Business,pune,true,today
+networking at mumbai tomorrow,networking,,mumbai,true,tomorrow
+marketing festival this month in online,marketing|festival,Business,online,false,this_month
+paid festival on business tomorrow,business|festival,Business,,false,tomorrow
+talks at remote this month,talks,,remote,false,this_month
+art talks tomorrow in pune,art|talks,Arts,pune,false,tomorrow
+premium seminar happening soon,seminar,,,false,future
+cheap art panel at online weekend,art|panel,Arts,online,,weekend
+premium music classes at mumbai this week,music|classes,Arts,mumbai,false,this_week
+exhibition at pune today,exhibition,,pune,,today
+conference at delhi next week,conference,,delhi,false,next_week
+premium startup festival at kochi upcoming,startup|festival,Business,kochi,false,future
+cheap conference this week,conference,,,,this_week
+classes at hyderabad weekend,classes,,hyderabad,false,weekend
+marketing webinar next week in chennai,marketing|webinar,Business,chennai,,next_week
+premium conference on wellness today,wellness|conference,Health,,false,today
+cheap panel upcoming,panel,,,,future
+business panel tomorrow in amal jyothi,business|panel,Business,amal jyothi,,tomorrow
+premium seminar today,seminar,,,false,today
+meetup at online weekend,meetup,,online,,weekend
+premium session on tech this week,tech|session,Technology,,false,this_week
+conference at remote this month,conference,,remote,,this_month
+paid startup classes at kochi next week,startup|classes,Business,kochi,false,next_week
+concert at kochi today,concert,,kochi,,today
+workshop this month,workshop,,,,this_month
+yoga festival upcoming in pune,yoga|festival,Health,pune,,future
+art meetup this month in hyderabad,art|meetup,Arts,hyderabad,false,this_month
+premium workshop on fitness this week,fitness|workshop,Health,,false,this_week
+ticketed finance concert at bangalore next week,finance|concert,Business,bangalore,false,next_week
+free concert tomorrow,concert,,,true,tomorrow
+fitness festival next week in trivandrum,fitness|festival,Health,trivandrum,,next_week
+session at chennai next week,session,,chennai,,next_week
+startup webinar happening soon in remote,startup|webinar,Business,remote,true,future
+fitness expo at online today,fitness|expo,Health,online,,today
+classes on finance weekend,finance|classes,Business,,,weekend
+startup festival weekend in chennai,startup|festival,Business,chennai,,weekend
+free summit on business happening soon,business|summit,Business,,true,future
+ticketed conference upcoming,conference,,,false,future
+ticketed exhibition tomorrow,exhibition,,,false,tomorrow
+paid design networking at amal jyothi this month,design|networking,Arts,amal jyothi,false,this_month
+marketing webinar this week in pune,marketing|webinar,Business,pune,,this_week
+cheap panel happening soon,panel,,,,future
+paid bootcamp next week,bootcamp,,,false,next_week
+ticketed startup festival at kochi today,startup|festival,Business,kochi,false,today
+paid tech talks at online this month,tech|talks,Technology,online,false,this_month
+fitness webinar today in online,fitness|webinar,Health,online,true,today
+science hackathon next week in chennai,science|hackathon,Technology,chennai,false,next_week
+bootcamp at chennai this month,bootcamp,,chennai,false,this_month
+paid classes tomorrow,classes,,,false,tomorrow
+free conference on startup next week,startup|conference,Business,,true,next_week
+webinar at delhi this month,webinar,,delhi,,this_month
+cheap webinar on health this week,health|webinar,Health,,,this_week
+tech session happening soon in mumbai,tech|session,Technology,mumbai,false,future
+bootcamp at hyderabad happening soon,bootcamp,,hyderabad,,future
+free webinar on fitness today,fitness|webinar,Health,,true,today
+premium expo on leadership this month,leadership|expo,Business,,false,this_month
+panel at hyderabad this month,panel,,hyderabad,false,this_month
+ticketed wellness workshop at amal jyothi weekend,wellness|workshop,Health,amal jyothi,false,weekend
+networking at bangalore this month,networking,,bangalore,,this_month
+cheap expo on coding today,coding|expo,Technology,,,today
+hackathon today,hackathon,,,,today
+leadership workshop next week in hyderabad,leadership|workshop,Business,hyderabad,,next_week
+cheap expo on tech next week,tech|expo,Technology,,,next_week
+fitness session next week in delhi,fitness|session,Health,delhi,false,next_week
+ticketed panel next week,panel,,,false,next_week
+leadership bootcamp at online happening soon,leadership|bootcamp,Business,online,,future
+panel at remote upcoming,panel,,remote,true,future
+festival at kochi upcoming,festival,,kochi,,future
+free classes on coding tomorrow,coding|classes,Technology,,true,tomorrow
+premium bootcamp weekend,bootcamp,,,false,weekend
+summit at remote tomorrow,summit,,remote,false,tomorrow
+free wellness networking at chennai happening soon,wellness|networking,Health,chennai,true,future
+design concert at kochi this week,design|concert,Arts,kochi,,this_week
+session at chennai happening soon,session,,chennai,false,future
+tech networking tomorrow in pune,tech|networking,Technology,pune,,tomorrow
+paid conference on science tomorrow,science|conference,Technology,,false,tomorrow
+paid festival on science tomorrow,science|festival,Technology,,false,tomorrow
+premium festival on yoga tomorrow,yoga|festival,Health,,false,tomorrow
+premium festival on music upcoming,music|festival,Arts,,false,future
+ticketed talks on health today,health|talks,Health,,false,today
+art seminar this week in online,art|seminar,Arts,online,false,this_week
+conference at online next week,conference,,online,true,next_week
+hackathon at remote this month,hackathon,,remote,true,this_month
+talks at pune this week,talks,,pune,false,this_week
+ticketed hackathon upcoming,hackathon,,,false,future
+tech workshop weekend in chennai,tech|workshop,Technology,chennai,false,weekend
+panel at mumbai weekend,panel,,mumbai,false,weekend
+art panel tomorrow in chennai,art|panel,Arts,chennai,false,tomorrow
+wellness conference this month in bangalore,wellness|conference,Health,bangalore,true,this_month
+startup seminar at bangalore today,startup|seminar,Business,bangalore,,today
+hackathon at trivandrum next week,hackathon,,trivandrum,false,next_week
+ticketed hackathon happening soon,hackathon,,,false,future
+cheap startup festival at delhi tomorrow,startup|festival,Business,delhi,,tomorrow
+conference at pune tomorrow,conference,,pune,true,tomorrow
+yoga summit upcoming in remote,yoga|summit,Health,remote,false,future
+hackathon at pune this month,hackathon,,pune,,this_month
+ticketed expo on tech this month,tech|expo,Technology,,false,this_month
+free health meetup at kochi today,health|meetup,Health,kochi,true,today
+cheap workshop on art next week,art|workshop,Arts,,,next_week
+paid art panel at pune happening soon,art|panel,Arts,pune,false,future
+concert on art tomorrow,art|concert,Arts,,,tomorrow
+cheap tech panel at kochi today,tech|panel,Technology,kochi,,today
+premium fitness classes at delhi tomorrow,fitness|classes,Health,delhi,false,tomorrow
+free health exhibition at online happening soon,health|exhibition,Health,online,true,future
+free art workshop at hyderabad upcoming,art|workshop,Arts,hyderabad,true,future
+paid webinar on wellness happening soon,wellness|webinar,Health,,false,future
+talks today,talks,,,,today
+premium wellness panel at amal jyothi today,wellness|panel,Health,amal jyothi,false,today
+premium finance seminar at trivandrum happening soon,finance|seminar,Business,trivandrum,false,future
+ticketed exhibition upcoming,exhibition,,,false,future
+free classes on design weekend,design|classes,Arts,,true,weekend
+conference at remote weekend,conference,,remote,true,weekend
+startup meetup weekend in kochi,startup|meetup,Business,kochi,,weekend
+free wellness hackathon at pune this month,wellness|hackathon,Health,pune,true,this_month
+meetup at mumbai this week,meetup,,mumbai,false,this_week
+bootcamp on health today,health|bootcamp,Health,,,today
+webinar at hyderabad weekend,webinar,,hyderabad,,weekend
+free fitness talks at bangalore happening soon,fitness|talks,Health,bangalore,true,future
+cheap bootcamp this month,bootcamp,,,,this_month
+free meetup on health this week,health|meetup,Health,,true,this_week
+business bootcamp next week in mumbai,business|bootcamp,Business,mumbai,,next_week
+yoga conference today in amal jyothi,yoga|conference,Health,amal jyothi,false,today
+paid concert on music happening soon,music|concert,Arts,,false,future
+ticketed networking upcoming,networking,,,false,future
+business meetup today in bangalore,business|meetup,Business,bangalore,true,today
+paid bootcamp tomorrow,bootcamp,,,false,tomorrow
+finance webinar at chennai this month,finance|webinar,Business,chennai,,this_month
+ticketed art networking at remote happening soon,art|networking,Arts,remote,false,future
+startup conference today in mumbai,startup|conference,Business,mumbai,false,today
+ticketed art expo at online this month,art|expo,Arts,online,false,this_month
+classes weekend,classes,,,,weekend
+session on fitness happening soon,fitness|session,Health,,,future
+finance expo today in trivandrum,finance|expo,Business,trivandrum,false,today
+conference at online weekend,conference,,online,,weekend
+cheap talks on business upcoming,business|talks,Business,,,future
+meetup at trivandrum today,meetup,,trivandrum,,today
+panel at online next week,panel,,online,false,next_week
+cheap tech conference at online today,tech|conference,Technology,online,,today
+hackathon at hyderabad this month,hackathon,,hyderabad,false,this_month
+health talks this week in delhi,health|talks,Health,delhi,,this_week
+paid webinar this week,webinar,,,false,this_week
+paid wellness talks at chennai this month,wellness|talks,Health,chennai,false,this_month
+free panel on leadership next week,leadership|panel,Business,,true,next_week
+free seminar on art today,art|seminar,Arts,,true,today
+ticketed tech session at online next week,tech|session,Technology,online,false,next_week
+festival at kochi weekend,festival,,kochi,false,weekend
+wellness hackathon this month in mumbai,wellness|hackathon,Health,mumbai,false,this_month
+startup networking upcoming in hyderabad,startup|networking,Business,hyderabad,,future
+paid festival on yoga this month,yoga|festival,Health,,false,this_month
+cheap summit next week,summit,,,,next_week
+hackathon tomorrow,hackathon,,,,tomorrow
+music talks happening soon in kochi,music|talks,Arts,kochi,,future
+wellness expo this week in amal jyothi,wellness|expo,Health,amal jyothi,false,this_week
+free classes on finance upcoming,finance|classes,Business,,true,future
+premium festival on health this week,health|festival,Health,,false,this_week
+marketing classes tomorrow in amal jyothi,marketing|classes,Business,amal jyothi,false,tomorrow
+premium health panel at amal jyothi this week,health|panel,Health,amal jyothi,false,this_week
+session on science weekend,science|session,Technology,,,weekend
+premium wellness webinar at bangalore next week,wellness|webinar,Health,bangalore,false,next_week
+science exhibition at amal jyothi weekend,science|exhibition,Technology,amal jyothi,,weekend
+fitness session happening soon in hyderabad,fitness|session,Health,hyderabad,false,future
+free classes next week,classes,,,true,next_week
+paid workshop this week,workshop,,,false,this_week
+cheap talks upcoming,talks,,,,future
+paid webinar on health next week,health|webinar,Health,,false,next_week
+paid music seminar at online tomorrow,music|seminar,Arts,online,false,tomorrow
+summit at kochi this month,summit,,kochi,false,this_month
+free seminar next week,seminar,,,true,next_week
+cheap conference on tech next week,tech|conference,Technology,,,next_week
+science webinar tomorrow in kochi,science|webinar,Technology,kochi,,tomorrow
+ticketed coding summit at chennai tomorrow,coding|summit,Technology,chennai,false,tomorrow
+free concert this month,concert,,,true,this_month
+cheap hackathon on design this month,design|hackathon,Arts,,,this_month
+premium bootcamp this month,bootcamp,,,false,this_month
+yoga networking at online upcoming,yoga|networking,Health,online,,future
+paid hackathon on business this week,business|hackathon,Business,,false,this_week
+premium festival weekend,festival,,,false,weekend
+seminar at amal jyothi today,seminar,,amal jyothi,,today
+paid health talks at bangalore this week,health|talks,Health,bangalore,false,this_week
+free workshop on art this week,art|workshop,Arts,,true,this_week
+paid webinar on tech today,tech|webinar,Technology,,false,today
+leadership exhibition this week in bangalore,leadership|exhibition,Business,bangalore,false,this_week
+ticketed design meetup at delhi this month,design|meetup,Arts,delhi,false,this_month
+marketing summit this week in online,marketing|summit,Business,online,,this_week
+marketing expo tomorrow in online,marketing|expo,Business,online,,tomorrow
+cheap workshop today,workshop,,,,today
+talks at kochi next week,talks,,kochi,,next_week
+marketing exhibition next week in trivandrum,marketing|exhibition,Business,trivandrum,false,next_week
+leadership seminar tomorrow in kochi,leadership|seminar,Business,kochi,false,tomorrow
+paid classes weekend,classes,,,false,weekend
+premium design talks at hyderabad weekend,design|talks,Arts,hyderabad,false,weekend
+ticketed hackathon on startup happening soon,startup|hackathon,Business,,false,future
+art festival this month in hyderabad,art|festival,Arts,hyderabad,,this_month
+free expo on finance this week,finance|expo,Business,,true,this_week
+paid webinar on coding next week,coding|webinar,Technology,,false,next_week
+ticketed session on business today,business|session,Business,,false,today
+fitness seminar next week in online,fitness|seminar,Health,online,true,next_week
+free health seminar at amal jyothi this month,health|seminar,Health,amal jyothi,true,this_month
+exhibition at bangalore this month,exhibition,,bangalore,true,this_month
+paid concert on leadership this month,leadership|concert,Business,,false,this_month
+ticketed festival weekend,festival,,,false,weekend
+cheap talks this week,talks,,,,this_week
+premium conference on finance tomorrow,finance|conference,Business,,false,tomorrow
+paid concert this month,concert,,,false,this_month
+cheap music workshop at chennai weekend,music|workshop,Arts,chennai,,weekend
+webinar on business next week,business|webinar,Business,,,next_week
+cheap session this month,session,,,,this_month
+leadership hackathon this week in hyderabad,leadership|hackathon,Business,hyderabad,false,this_week
+summit at pune tomorrow,summit,,pune,true,tomorrow
+cheap meetup on coding this month,coding|meetup,Technology,,,this_month
+premium leadership bootcamp at online next week,leadership|bootcamp,Business,online,false,next_week
+free workshop on music upcoming,music|workshop,Arts,,true,future
+cheap session today,session,,,,today
+webinar at bangalore today,webinar,,bangalore,,today
+science exhibition at hyderabad this week,science|exhibition,Technology,hyderabad,,this_week
+music summit happening soon in chennai,music|summit,Arts,chennai,true,future
+premium hackathon on marketing happening soon,marketing|hackathon,Business,,false,future
+classes upcoming,classes,,,,future
+cheap seminar upcoming,seminar,,,,future
+summit upcoming,summit,,,,future
+marketing classes this week in kochi,marketing|classes,Business,kochi,,this_week
+startup workshop upcoming in chennai,startup|workshop,Business,chennai,,future
+design panel weekend in pune,design|panel,Arts,pune,false,weekend
+premium talks on design this week,design|talks,Arts,,false,this_week
+cheap expo next week,expo,,,,next_week
+paid science session at kochi today,science|session,Technology,kochi,false,today
+coding bootcamp this month in hyderabad,coding|bootcamp,Technology,hyderabad,,this_month
+classes at delhi tomorrow,classes,,delhi,false,tomorrow
+marketing summit weekend in pune,marketing|summit,Business,pune,true,weekend
+session at bangalore this week,session,,bangalore,true,this_week
+cheap art exhibition at pune happening soon,art|exhibition,Arts,pune,,future
+festival at trivandrum today,festival,,trivandrum,,today
+talks this month,talks,,,,this_month
+free hackathon happening soon,hackathon,,,true,future
+fitness webinar today in bangalore,fitness|webinar,Health,bangalore,false,today
+startup conference upcoming in chennai,startup|conference,Business,chennai,false,future
+free webinar next week,webinar,,,true,next_week
+free classes today,classes,,,true,today
+free yoga concert at remote weekend,yoga|concert,Health,remote,true,weekend
+paid workshop this week,workshop,,,false,this_week
+networking on science weekend,science|networking,Technology,,,weekend
+seminar at chennai next week,seminar,,chennai,false,next_week
+finance workshop upcoming in bangalore,finance|workshop,Business,bangalore,,future
+meetup at mumbai tomorrow,meetup,,mumbai,false,tomorrow
+premium science meetup at mumbai this month,science|meetup,Technology,mumbai,false,this_month
+free festival this week,festival,,,true,this_week
+business conference at amal jyothi today,business|conference,Business,amal jyothi,,today
+marketing concert today in trivandrum,marketing|concert,Business,trivandrum,false,today
+classes at delhi tomorrow,classes,,delhi,false,tomorrow
+premium hackathon on yoga next week,yoga|hackathon,Health,,false,next_week
+paid science exhibition at delhi happening soon,science|exhibition,Technology,delhi,false,future
+seminar at chennai tomorrow,seminar,,chennai,true,tomorrow
+ticketed networking on leadership today,leadership|networking,Business,,false,today
+design hackathon this month in bangalore,design|hackathon,Arts,bangalore,false,this_month
+festival on leadership next week,leadership|festival,Business,,,next_week
+cheap startup exhibition at amal jyothi tomorrow,startup|exhibition,Business,amal jyothi,,tomorrow
+webinar at kochi this week,webinar,,kochi,false,this_week
+hackathon at remote weekend,hackathon,,remote,true,weekend
+yoga bootcamp this month in amal jyothi,yoga|bootcamp,Health,amal jyothi,,this_month
+conference at delhi tomorrow,conference,,delhi,false,tomorrow
+cheap seminar next week,seminar,,,,next_week
+seminar at hyderabad happening soon,seminar,,hyderabad,false,future
+session at bangalore upcoming,session,,bangalore,,future
+premium bootcamp on business this week,business|bootcamp,Business,,false,this_week
+paid panel happening soon,panel,,,false,future
+cheap meetup on health tomorrow,health|meetup,Health,,,tomorrow
+yoga exhibition at online next week,yoga|exhibition,Health,online,,next_week
+free webinar weekend,webinar,,,true,weekend
+cheap summit next week,summit,,,,next_week
+ticketed seminar happening soon,seminar,,,false,future
+ticketed summit on yoga happening soon,yoga|summit,Health,,false,future
+ticketed session on design today,design|session,Arts,,false,today
+art bootcamp tomorrow in chennai,art|bootcamp,Arts,chennai,false,tomorrow
+conference at hyderabad tomorrow,conference,,hyderabad,,tomorrow
+ticketed conference on science today,science|conference,Technology,,false,today
+ticketed workshop on business weekend,business|workshop,Business,,false,weekend
+networking at pune upcoming,networking,,pune,,future
+design summit weekend in online,design|summit,Arts,online,true,weekend
+bootcamp at online next week,bootcamp,,online,,next_week
+music festival tomorrow in remote,music|festival,Arts,remote,,tomorrow
+concert at bangalore next week,concert,,bangalore,true,next_week
+premium hackathon next week,hackathon,,,false,next_week
+premium session this week,session,,,false,this_week
+paid seminar weekend,seminar,,,false,weekend
+free networking on fitness weekend,fitness|networking,Health,,true,weekend
+premium meetup on business this week,business|meetup,Business,,false,this_week
+ticketed exhibition next week,exhibition,,,false,next_week
+seminar at pune this week,seminar,,pune,,this_week
+cheap conference this week,conference,,,,this_week
+premium music webinar at hyderabad next week,music|webinar,Arts,hyderabad,false,next_week
+science panel next week in hyderabad,science|panel,Technology,hyderabad,false,next_week
+workshop at chennai today,workshop,,chennai,true,today
+paid concert next week,concert,,,false,next_week
+ticketed panel on business today,business|panel,Business,,false,today
+startup classes next week in hyderabad,startup|classes,Business,hyderabad,false,next_week
+science webinar weekend in kochi,science|webinar,Technology,kochi,false,weekend
+hackathon on fitness next week,fitness|hackathon,Health,,,next_week
+premium health festival at hyderabad tomorrow,health|festival,Health,hyderabad,false,tomorrow
+free marketing festival at delhi this week,marketing|festival,Business,delhi,true,this_week
+coding seminar at amal jyothi upcoming,coding|seminar,Technology,amal jyothi,,future
+fitness webinar at remote tomorrow,fitness|webinar,Health,remote,,tomorrow
+tech webinar next week in delhi,tech|webinar,Technology,delhi,false,next_week
+talks at trivandrum this week,talks,,trivandrum,false,this_week
+fitness concert upcoming in delhi,fitness|concert,Health,delhi,true,future
+coding workshop this month in online,coding|workshop,Technology,online,true,this_month
+free concert weekend,concert,,,true,weekend
+meetup at remote today,meetup,,remote,false,today
+health panel at online tomorrow,health|panel,Health,online,,tomorrow
+free expo on design this week,design|expo,Arts,,true,this_week
+premium festival on finance upcoming,finance|festival,Business,,false,future
+startup summit upcoming in remote,startup|summit,Business,remote,false,future
+yoga concert this month in online,yoga|concert,Health,online,false,this_month
+yoga festival this month in amal jyothi,yoga|festival,Health,amal jyothi,false,this_month
+webinar at pune this month,webinar,,pune,false,this_month
+cheap health festival at mumbai happening soon,health|festival,Health,mumbai,,future
+concert at trivandrum this month,concert,,trivandrum,true,this_month
+design conference tomorrow in chennai,design|conference,Arts,chennai,,tomorrow
+premium business festival at kochi this week,business|festival,Business,kochi,false,this_week
+paid tech webinar at trivandrum this week,tech|webinar,Technology,trivandrum,false,this_week
+workshop at kochi today,workshop,,kochi,,today
+free exhibition on wellness next week,wellness|exhibition,Health,,true,next_week
+music bootcamp next week in bangalore,music|bootcamp,Arts,bangalore,,next_week
+ticketed finance talks at pune tomorrow,finance|talks,Business,pune,false,tomorrow
+cheap music panel at mumbai this week,music|panel,Arts,mumbai,,this_week
+festival on startup upcoming,startup|festival,Business,,,future
+paid networking this month,networking,,,false,this_month
+cheap meetup today,meetup,,,,today
+ticketed meetup on startup weekend,startup|meetup,Business,,false,weekend
+premium meetup this month,meetup,,,false,this_month
+premium finance concert at online happening soon,finance|concert,Business,online,false,future
+ticketed exhibition today,exhibition,,,false,today
+wellness festival tomorrow in mumbai,wellness|festival,Health,mumbai,,tomorrow
+session on marketing tomorrow,marketing|session,Business,,,tomorrow
+bootcamp on music upcoming,music|bootcamp,Arts,,,future
+paid concert this month,concert,,,false,this_month
+ticketed yoga meetup at online today,yoga|meetup,Health,online,false,today
+paid coding talks at mumbai this month,coding|talks,Technology,mumbai,false,this_month
+science workshop happening soon in mumbai,science|workshop,Technology,mumbai,,future
+bootcamp at remote upcoming,bootcamp,,remote,false,future
+paid tech seminar at online upcoming,tech|seminar,Technology,online,false,future
+design meetup upcoming in hyderabad,design|meetup,Arts,hyderabad,false,future
+ticketed session on finance upcoming,finance|session,Business,,false,future
+ticketed marketing concert at amal jyothi this week,marketing|concert,Business,amal jyothi,false,this_week
+paid tech webinar at hyderabad happening soon,tech|webinar,Technology,hyderabad,false,future
+cheap summit next week,summit,,,,next_week
+networking on startup happening soon,startup|networking,Business,,,future
+ticketed exhibition on design next week,design|exhibition,Arts,,false,next_week
+free workshop upcoming,workshop,,,true,future
+music networking this month in bangalore,music|networking,Arts,bangalore,false,this_month
+wellness workshop this month in pune,wellness|workshop,Health,pune,,this_month
+leadership expo today in mumbai,leadership|expo,Business,mumbai,,today
+premium classes this month,classes,,,false,this_month
+ticketed conference on design today,design|conference,Arts,,false,today
+webinar on finance this month,finance|webinar,Business,,,this_month
+cheap wellness meetup at delhi today,wellness|meetup,Health,delhi,,today
+free wellness concert at kochi today,wellness|concert,Health,kochi,true,today
+finance workshop today in bangalore,finance|workshop,Business,bangalore,true,today
+workshop at chennai today,workshop,,chennai,false,today
+premium finance classes at bangalore this month,finance|classes,Business,bangalore,false,this_month
+marketing bootcamp happening soon in mumbai,marketing|bootcamp,Business,mumbai,,future
+classes on art next week,art|classes,Arts,,,next_week
+marketing summit upcoming in hyderabad,marketing|summit,Business,hyderabad,true,future
+wellness concert happening soon in trivandrum,wellness|concert,Health,trivandrum,,future
+paid leadership classes at hyderabad this week,leadership|classes,Business,hyderabad,false,this_week
+concert at pune upcoming,concert,,pune,,future
+meetup at pune upcoming,meetup,,pune,false,future
+free exhibition on art happening soon,art|exhibition,Arts,,true,future
+free wellness seminar at pune next week,wellness|seminar,Health,pune,true,next_week
+ticketed yoga meetup at delhi weekend,yoga|meetup,Health,delhi,false,weekend
+cheap session on fitness next week,fitness|session,Health,,,next_week
+panel on fitness happening soon,fitness|panel,Health,,,future
+coding festival at delhi happening soon,coding|festival,Technology,delhi,,future
+ticketed meetup on music upcoming,music|meetup,Arts,,false,future
+health classes this month in chennai,health|classes,Health,chennai,false,this_month
+premium talks on science tomorrow,science|talks,Technology,,false,tomorrow
+bootcamp at delhi this month,bootcamp,,delhi,,this_month
+ticketed music seminar at trivandrum happening soon,music|seminar,Arts,trivandrum,false,future
+paid fitness festival at delhi today,fitness|festival,Health,delhi,false,today
+hackathon at kochi this week,hackathon,,kochi,,this_week
+cheap webinar on music upcoming,music|webinar,Arts,,,future
+free summit weekend,summit,,,true,weekend
+paid hackathon on music weekend,music|hackathon,Arts,,false,weekend
+ticketed wellness exhibition at delhi weekend,wellness|exhibition,Health,delhi,false,weekend
+summit at bangalore this week,summit,,bangalore,true,this_week
+classes at delhi happening soon,classes,,delhi,,future
+cheap classes this week,classes,,,,this_week
+session at pune weekend,session,,pune,,weekend
+conference tomorrow,conference,,,,tomorrow
+workshop at online happening soon,workshop,,online,,future
+music seminar happening soon in mumbai,music|seminar,Arts,mumbai,,future
+free workshop on design next week,design|workshop,Arts,,true,next_week
+leadership classes this week in mumbai,leadership|classes,Business,mumbai,false,this_week
+ticketed concert weekend,concert,,,false,weekend
+free exhibition weekend,exhibition,,,true,weekend
+summit happening soon,summit,,,,future
+free concert on wellness this week,wellness|concert,Health,,true,this_week
+session at mumbai next week,session,,mumbai,true,next_week
+paid exhibition tomorrow,exhibition,,,false,tomorrow
+workshop at bangalore today,workshop,,bangalore,,today
+paid finance meetup at chennai tomorrow,finance|meetup,Business,chennai,false,tomorrow
+cheap expo on art next week,art|expo,Arts,,,next_week
+classes tomorrow,classes,,,,tomorrow
+panel at trivandrum happening soon,panel,,trivandrum,true,future
+health bootcamp this month in remote,health|bootcamp,Health,remote,,this_month
+classes at bangalore this week,classes,,bangalore,,this_week
+webinar weekend,webinar,,,,weekend
+ticketed conference on leadership this month,leadership|conference,Business,,false,this_month
+bootcamp at pune happening soon,bootcamp,,pune,true,future
+design expo this week in online,design|expo,Arts,online,true,this_week
+ticketed expo on leadership weekend,leadership|expo,Business,,false,weekend
+paid seminar on leadership tomorrow,leadership|seminar,Business,,false,tomorrow
+premium talks on tech weekend,tech|talks,Technology,,false,weekend
+free wellness conference at trivandrum today,wellness|conference,Health,trivandrum,true,today
+hackathon at pune upcoming,hackathon,,pune,,future
+coding meetup next week in mumbai,coding|meetup,Technology,mumbai,false,next_week
+summit at pune today,summit,,pune,false,today
+premium panel on coding today,coding|panel,Technology,,false,today
+premium business summit at mumbai next week,business|summit,Business,mumbai,false,next_week
+cheap seminar on yoga this month,yoga|seminar,Health,,,this_month
+science talks at chennai this month,science|talks,Technology,chennai,,this_month
+ticketed leadership hackathon at chennai next week,leadership|hackathon,Business,chennai,false,next_week
+premium summit on coding weekend,coding|summit,Technology,,false,weekend
+premium coding summit at online happening soon,coding|summit,Technology,online,false,future
+exhibition at online upcoming,exhibition,,online,,future
+ticketed festival on fitness this week,fitness|festival,Health,,false,this_week
+seminar on science this month,science|seminar,Technology,,,this_month
+concert at mumbai this week,concert,,mumbai,,this_week
+free art exhibition at delhi tomorrow,art|exhibition,Arts,delhi,true,tomorrow
+cheap summit on yoga weekend,yoga|summit,Health,,,weekend
+art talks weekend in bangalore,art|talks,Arts,bangalore,false,weekend
+talks at pune this month,talks,,pune,true,this_month
+cheap classes next week,classes,,,,next_week
+paid expo on business upcoming,business|expo,Business,,false,future
+paid design session at pune tomorrow,design|session,Arts,pune,false,tomorrow
+panel at online happening soon,panel,,online,,future
+cheap hackathon today,hackathon,,,,today
+ticketed hackathon on yoga next week,yoga|hackathon,Health,,false,next_week
+session at mumbai today,session,,mumbai,false,today
+art panel tomorrow in pune,art|panel,Arts,pune,false,tomorrow
+webinar at chennai next week,webinar,,chennai,false,next_week
+webinar at amal jyothi tomorrow,webinar,,amal jyothi,false,tomorrow
+session at kochi happening soon,session,,kochi,false,future
+startup conference happening soon in mumbai,startup|conference,Business,mumbai,true,future
+networking this month,networking,,,,this_month
+cheap hackathon weekend,hackathon,,,,weekend
+ticketed conference on marketing today,marketing|conference,Business,,false,today
+exhibition on health next week,health|exhibition,Health,,,next_week
+premium startup festival at amal jyothi upcoming,startup|festival,Business,amal jyothi,false,future
+health festival weekend in delhi,health|festival,Health,delhi,false,weekend
+seminar at hyderabad next week,seminar,,hyderabad,false,next_week
+ticketed business session at chennai next week,business|session,Business,chennai,false,next_week
+startup workshop happening soon in mumbai,startup|workshop,Business,mumbai,false,future
+expo at bangalore this week,expo,,bangalore,,this_week
+session at mumbai today,session,,mumbai,,today
+premium workshop on art upcoming,art|workshop,Arts,,false,future
+cheap classes on music weekend,music|classes,Arts,,,weekend
+premium panel happening soon,panel,,,false,future
+fitness classes at pune tomorrow,fitness|classes,Health,pune,,tomorrow
+panel at hyderabad happening soon,panel,,hyderabad,true,future
+premium marketing panel at online today,marketing|panel,Business,online,false,today
+webinar on finance this month,finance|webinar,Business,,,this_month
+paid startup expo at hyderabad this month,startup|expo,Business,hyderabad,false,this_month
+cheap marketing seminar at hyderabad this month,marketing|seminar,Business,hyderabad,,this_month
+design concert tomorrow in delhi,design|concert,Arts,delhi,false,tomorrow
+premium workshop on art weekend,art|workshop,Arts,,false,weekend
+cheap concert on leadership weekend,leadership|concert,Business,,,weekend
+paid leadership talks at online happening soon,leadership|talks,Business,online,false,future
+premium summit next week,summit,,,false,next_week
+ticketed talks on fitness today,fitness|talks,Health,,false,today
+paid summit on tech this month,tech|summit,Technology,,false,this_month
+ticketed hackathon on wellness weekend,wellness|hackathon,Health,,false,weekend
+concert at pune tomorrow,concert,,pune,false,tomorrow
+free webinar weekend,webinar,,,true,weekend
+classes at delhi upcoming,classes,,delhi,false,future
+hackathon at delhi tomorrow,hackathon,,delhi,false,tomorrow
+free bootcamp on wellness happening soon,wellness|bootcamp,Health,,true,future
+concert at delhi tomorrow,concert,,delhi,,tomorrow
+cheap bootcamp next week,bootcamp,,,,next_week
+fitness exhibition weekend in pune,fitness|exhibition,Health,pune,,weekend
+ticketed art networking at online today,art|networking,Arts,online,false,today
+marketing session weekend in remote,marketing|session,Business,remote,,weekend
+session upcoming,session,,,,future
+ticketed marketing session at kochi tomorrow,marketing|session,Business,kochi,false,tomorrow
+free coding festival at bangalore this week,coding|festival,Technology,bangalore,true,this_week
+paid panel tomorrow,panel,,,false,tomorrow
+free summit on business next week,business|summit,Business,,true,next_week
+tech talks weekend in hyderabad,tech|talks,Technology,hyderabad,false,weekend
+bootcamp weekend,bootcamp,,,,weekend
+premium networking on startup upcoming,startup|networking,Business,,false,future
+paid panel happening soon,panel,,,false,future
+cheap expo next week,expo,,,,next_week
+seminar on finance this week,finance|seminar,Business,,,this_week
+ticketed talks on health this week,health|talks,Health,,false,this_week
+networking at bangalore weekend,networking,,bangalore,false,weekend
+session at bangalore happening soon,session,,bangalore,false,future
+health expo tomorrow in kochi,health|expo,Health,kochi,false,tomorrow
+startup networking tomorrow in amal jyothi,startup|networking,Business,amal jyothi,,tomorrow
+marketing classes tomorrow in amal jyothi,marketing|classes,Business,amal jyothi,true,tomorrow
+festival tomorrow,festival,,,,tomorrow
+ticketed science summit at bangalore next week,science|summit,Technology,bangalore,false,next_week
+finance concert this month in trivandrum,finance|concert,Business,trivandrum,,this_month
+cheap bootcamp tomorrow,bootcamp,,,,tomorrow
+paid coding hackathon at chennai this week,coding|hackathon,Technology,chennai,false,this_week
+premium hackathon on leadership tomorrow,leadership|hackathon,Business,,false,tomorrow
+premium festival tomorrow,festival,,,false,tomorrow
+paid session on marketing upcoming,marketing|session,Business,,false,future
+free summit on leadership this week,leadership|summit,Business,,true,this_week
+design conference today in amal jyothi,design|conference,Arts,amal jyothi,,today
+cheap tech conference at kochi happening soon,tech|conference,Technology,kochi,,future
+paid exhibition on yoga today,yoga|exhibition,Health,,false,today
+business expo happening soon in amal jyothi,business|expo,Business,amal jyothi,,future
+wellness webinar weekend in bangalore,wellness|webinar,Health,bangalore,,weekend
+conference at amal jyothi tomorrow,conference,,amal jyothi,,tomorrow
+session at delhi this month,session,,delhi,false,this_month
+summit on yoga upcoming,yoga|summit,Health,,,future
+premium yoga conference at trivandrum this week,yoga|conference,Health,trivandrum,false,this_week
+classes on business tomorrow,business|classes,Business,,,tomorrow
+cheap conference upcoming,conference,,,,future
+health conference this week in hyderabad,health|conference,Health,hyderabad,false,this_week
+festival today,festival,,,,today
+cheap festival on tech today,tech|festival,Technology,,,today
+webinar at trivandrum upcoming,webinar,,trivandrum,,future
+art hackathon tomorrow in hyderabad,art|hackathon,Arts,hyderabad,false,tomorrow
+music hackathon today in hyderabad,music|hackathon,Arts,hyderabad,,today
+cheap networking on tech this week,tech|networking,Technology,,,this_week
+bootcamp at trivandrum next week,bootcamp,,trivandrum,true,next_week
+marketing summit next week in remote,marketing|summit,Business,remote,true,next_week
+meetup at trivandrum next week,meetup,,trivandrum,false,next_week
+free seminar this week,seminar,,,true,this_week
+paid session on health upcoming,health|session,Health,,false,future
+festival at pune this month,festival,,pune,,this_month
+paid webinar on tech next week,tech|webinar,Technology,,false,next_week
+networking at remote tomorrow,networking,,remote,false,tomorrow
+summit on wellness this week,wellness|summit,Health,,,this_week
+cheap networking next week,networking,,,,next_week
+ticketed summit on fitness weekend,fitness|summit,Health,,false,weekend
+session at mumbai today,session,,mumbai,false,today
+free festival on fitness this week,fitness|festival,Health,,true,this_week
+coding classes upcoming in online,coding|classes,Technology,online,,future
+business expo this week in delhi,business|expo,Business,delhi,false,this_week
+ticketed workshop this week,workshop,,,false,this_week
+cheap tech hackathon at kochi this week,tech|hackathon,Technology,kochi,,this_week
+health meetup this week in kochi,health|meetup,Health,kochi,true,this_week
+finance session this month in hyderabad,finance|session,Business,hyderabad,false,this_month
+conference at kochi weekend,conference,,kochi,false,weekend
+cheap session happening soon,session,,,,future
+networking at amal jyothi tomorrow,networking,,amal jyothi,false,tomorrow
+business expo this month in kochi,business|expo,Business,kochi,false,this_month
+talks at amal jyothi next week,talks,,amal jyothi,,next_week
+coding panel next week in remote,coding|panel,Technology,remote,,next_week
+expo at pune tomorrow,expo,,pune,true,tomorrow
+paid classes on yoga this month,yoga|classes,Health,,false,this_month
+ticketed design meetup at bangalore next week,design|meetup,Arts,bangalore,false,next_week
+exhibition at amal jyothi this month,exhibition,,amal jyothi,true,this_month
+ticketed leadership session at hyderabad next week,leadership|session,Business,hyderabad,false,next_week
+cheap fitness webinar at amal jyothi next week,fitness|webinar,Health,amal jyothi,,next_week
+expo this week,expo,,,,this_week
+marketing expo happening soon in amal jyothi,marketing|expo,Business,amal jyothi,,future
+workshop at kochi weekend,workshop,,kochi,,weekend
+hackathon on leadership this week,leadership|hackathon,Business,,,this_week
+health concert next week in chennai,health|concert,Health,chennai,,next_week
+startup conference this month in online,startup|conference,Business,online,,this_month
+cheap design workshop at bangalore upcoming,design|workshop,Arts,bangalore,,future
+free summit on art today,art|summit,Arts,,true,today
+networking on startup next week,startup|networking,Business,,,next_week
+free festival happening soon,festival,,,true,future
+paid tech session at hyderabad upcoming,tech|session,Technology,hyderabad,false,future
+cheap business networking at trivandrum next week,business|networking,Business,trivandrum,,next_week
+premium summit tomorrow,summit,,,false,tomorrow
+talks at mumbai upcoming,talks,,mumbai,true,future
+ticketed health summit at trivandrum happening soon,health|summit,Health,trivandrum,false,future
+cheap science seminar at bangalore today,science|seminar,Technology,bangalore,,today
+exhibition on art next week,art|exhibition,Arts,,,next_week
+cheap music hackathon at remote this month,music|hackathon,Arts,remote,,this_month
+meetup happening soon,meetup,,,,future
+paid health classes at kochi weekend,health|classes,Health,kochi,false,weekend
+free hackathon on music this week,music|hackathon,Arts,,true,this_week
+hackathon at trivandrum this month,hackathon,,trivandrum,false,this_month
+meetup at pune today,meetup,,pune,false,today
+health webinar this month in amal jyothi,health|webinar,Health,amal jyothi,,this_month
+free bootcamp on yoga this week,yoga|bootcamp,Health,,true,this_week
+ticketed wellness hackathon at pune happening soon,wellness|hackathon,Health,pune,false,future
+paid classes next week,classes,,,false,next_week
+premium fitness talks at amal jyothi weekend,fitness|talks,Health,amal jyothi,false,weekend
+session at bangalore tomorrow,session,,bangalore,true,tomorrow
+hackathon at amal jyothi this week,hackathon,,amal jyothi,false,this_week
+coding summit upcoming in delhi,coding|summit,Technology,delhi,,future
+premium hackathon on tech tomorrow,tech|hackathon,Technology,,false,tomorrow
+webinar at remote next week,webinar,,remote,false,next_week
+cheap networking on finance upcoming,finance|networking,Business,,,future
+marketing meetup next week in kochi,marketing|meetup,Business,kochi,false,next_week
+concert this month,concert,,,,this_month
+ticketed startup exhibition at remote weekend,startup|exhibition,Business,remote,false,weekend
+talks today,talks,,,,today
+business expo this week in remote,business|expo,Business,remote,,this_week
+panel at hyderabad today,panel,,hyderabad,true,today
+design session upcoming in trivandrum,design|session,Arts,trivandrum,false,future
+ticketed conference this month,conference,,,false,this_month
+art meetup upcoming in chennai,art|meetup,Arts,chennai,,future
+cheap bootcamp weekend,bootcamp,,,,weekend
+ticketed classes upcoming,classes,,,false,future
+conference happening soon,conference,,,,future
+cheap bootcamp happening soon,bootcamp,,,,future
+cheap meetup today,meetup,,,,today
+health conference next week in hyderabad,health|conference,Health,hyderabad,,next_week
+networking at remote weekend,networking,,remote,true,weekend
+music summit this month in chennai,music|summit,Arts,chennai,false,this_month
+cheap summit happening soon,summit,,,,future
+ticketed startup summit at kochi tomorrow,startup|summit,Business,kochi,false,tomorrow
+wellness expo happening soon in delhi,wellness|expo,Health,delhi,,future
+ticketed exhibition happening soon,exhibition,,,false,future
+music panel tomorrow in kochi,music|panel,Arts,kochi,false,tomorrow
+classes at chennai this week,classes,,chennai,false,this_week
+panel at mumbai this month,panel,,mumbai,,this_month
+free conference on design happening soon,design|conference,Arts,,true,future
+art talks happening soon in pune,art|talks,Arts,pune,,future
+concert at trivandrum this week,concert,,trivandrum,false,this_week
+free marketing concert at online this week,marketing|concert,Business,online,true,this_week
+free hackathon on design happening soon,design|hackathon,Arts,,true,future
+panel at online weekend,panel,,online,true,weekend
+wellness exhibition at amal jyothi this week,wellness|exhibition,Health,amal jyothi,,this_week
+exhibition at mumbai next week,exhibition,,mumbai,false,next_week
+panel at bangalore tomorrow,panel,,bangalore,false,tomorrow
+yoga bootcamp tomorrow in kochi,yoga|bootcamp,Health,kochi,false,tomorrow
+expo at delhi next week,expo,,delhi,false,next_week
+fitness session happening soon in online,fitness|session,Health,online,false,future
+exhibition this week,exhibition,,,,this_week
+expo at amal jyothi today,expo,,amal jyothi,false,today
+coding webinar this month in remote,coding|webinar,Technology,remote,false,this_month
+wellness hackathon today in delhi,wellness|hackathon,Health,delhi,,today
+design bootcamp upcoming in online,design|bootcamp,Arts,online,false,future
+ticketed hackathon on tech upcoming,tech|hackathon,Technology,,false,future
+networking on wellness next week,wellness|networking,Health,,,next_week
+paid classes on marketing this month,marketing|classes,Business,,false,this_month
+ticketed hackathon this week,hackathon,,,false,this_week
+cheap bootcamp this month,bootcamp,,,,this_month
+marketing meetup weekend in chennai,marketing|meetup,Business,chennai,,weekend
+free summit on leadership today,leadership|summit,Business,,true,today
+hackathon at remote weekend,hackathon,,remote,false,weekend
+music workshop this week in bangalore,music|workshop,Arts,bangalore,false,this_week
+health exhibition weekend in hyderabad,health|exhibition,Health,hyderabad,true,weekend
+talks at amal jyothi today,talks,,amal jyothi,false,today
+concert on art this week,art|concert,Arts,,,this_week
+festival at amal jyothi upcoming,festival,,amal jyothi,,future
+free webinar on coding today,coding|webinar,Technology,,true,today
+business workshop happening soon in kochi,business|workshop,Business,kochi,false,future
+business panel happening soon in mumbai,business|panel,Business,mumbai,false,future
+free marketing workshop at hyderabad tomorrow,marketing|workshop,Business,hyderabad,true,tomorrow
+classes at kochi today,classes,,kochi,false,today
+cheap webinar on yoga next week,yoga|webinar,Health,,,next_week
+cheap classes this week,classes,,,,this_week
+science classes this month in bangalore,science|classes,Technology,bangalore,false,this_month
+paid conference happening soon,conference,,,false,future
+workshop at trivandrum upcoming,workshop,,trivandrum,,future
+paid marketing classes at chennai upcoming,marketing|classes,Business,chennai,false,future
+paid art summit at kochi this month,art|summit,Arts,kochi,false,this_month
+free marketing meetup at online tomorrow,marketing|meetup,Business,online,true,tomorrow
+panel at kochi upcoming,panel,,kochi,false,future
+ticketed exhibition on science tomorrow,science|exhibition,Technology,,false,tomorrow
+cheap art concert at remote next week,art|concert,Arts,remote,,next_week
+panel at amal jyothi this month,panel,,amal jyothi,false,this_month
+health summit weekend in remote,health|summit,Health,remote,false,weekend
+marketing expo at chennai tomorrow,marketing|expo,Business,chennai,,tomorrow
+ticketed summit upcoming,summit,,,false,future
+cheap talks on leadership next week,leadership|talks,Business,,,next_week
+yoga summit next week in trivandrum,yoga|summit,Health,trivandrum,false,next_week
+marketing expo next week in chennai,marketing|expo,Business,chennai,false,next_week
+cheap science webinar at mumbai happening soon,science|webinar,Technology,mumbai,,future
+tech networking weekend in hyderabad,tech|networking,Technology,hyderabad,,weekend
+business conference weekend in pune,business|conference,Business,pune,,weekend
+ticketed hackathon on music this month,music|hackathon,Arts,,false,this_month
+science bootcamp this week in hyderabad,science|bootcamp,Technology,hyderabad,true,this_week
+cheap panel weekend,panel,,,,weekend
+seminar at hyderabad happening soon,seminar,,hyderabad,false,future
+ticketed webinar weekend,webinar,,,false,weekend
+festival at delhi today,festival,,delhi,false,today
+webinar at hyderabad next week,webinar,,hyderabad,,next_week
+health bootcamp this month in kochi,health|bootcamp,Health,kochi,,this_month
+free marketing bootcamp at kochi weekend,marketing|bootcamp,Business,kochi,true,weekend
+conference happening soon,conference,,,,future
+paid networking on startup this week,startup|networking,Business,,false,this_week
+paid marketing bootcamp at kochi this week,marketing|bootcamp,Business,kochi,false,this_week
+premium design panel at amal jyothi next week,design|panel,Arts,amal jyothi,false,next_week
+cheap webinar on leadership tomorrow,leadership|webinar,Business,,,tomorrow
+premium meetup tomorrow,meetup,,,false,tomorrow
+art webinar at trivandrum next week,art|webinar,Arts,trivandrum,,next_week
+health festival this week in amal jyothi,health|festival,Health,amal jyothi,,this_week
+summit at delhi weekend,summit,,delhi,true,weekend
+festival on wellness this month,wellness|festival,Health,,,this_month
+premium yoga panel at delhi this month,yoga|panel,Health,delhi,false,this_month
+marketing festival tomorrow in amal jyothi,marketing|festival,Business,amal jyothi,,tomorrow
+finance panel next week in trivandrum,finance|panel,Business,trivandrum,false,next_week
+cheap marketing exhibition at amal jyothi this month,marketing|exhibition,Business,amal jyothi,,this_month
+conference at remote this week,conference,,remote,,this_week
+premium festival tomorrow,festival,,,false,tomorrow
+premium design bootcamp at hyderabad today,design|bootcamp,Arts,hyderabad,false,today
+ticketed expo on art upcoming,art|expo,Arts,,false,future
+summit at kochi happening soon,summit,,kochi,false,future
+ticketed networking on business upcoming,business|networking,Business,,false,future
+cheap workshop today,workshop,,,,today
+coding classes happening soon in trivandrum,coding|classes,Technology,trivandrum,false,future
+ticketed yoga networking at mumbai this month,yoga|networking,Health,mumbai,false,this_month
+free festival on coding upcoming,coding|festival,Technology,,true,future
+premium classes on tech upcoming,tech|classes,Technology,,false,future
+premium festival tomorrow,festival,,,false,tomorrow
+art seminar this month in hyderabad,art|seminar,Arts,hyderabad,false,this_month
+cheap seminar this month,seminar,,,,this_month
+paid networking happening soon,networking,,,false,future
+finance talks this week in remote,finance|talks,Business,remote,false,this_week
+cheap conference tomorrow,conference,,,,tomorrow
+exhibition at amal jyothi happening soon,exhibition,,amal jyothi,false,future
+paid classes this month,classes,,,false,this_month
+expo at delhi tomorrow,expo,,delhi,,tomorrow
+bootcamp at trivandrum tomorrow,bootcamp,,trivandrum,false,tomorrow
+bootcamp at online tomorrow,bootcamp,,online,,tomorrow
+bootcamp at hyderabad upcoming,bootcamp,,hyderabad,false,future
+premium art summit at bangalore this month,art|summit,Arts,bangalore,false,this_month
+art talks next week in kochi,art|talks,Arts,kochi,false,next_week
+startup meetup weekend in trivandrum,startup|meetup,Business,trivandrum,false,weekend
+tech seminar upcoming in pune,tech|seminar,Technology,pune,false,future
+summit at amal jyothi happening soon,summit,,amal jyothi,false,future
+ticketed finance networking at online this week,finance|networking,Business,online,false,this_week
+tech bootcamp this week in hyderabad,tech|bootcamp,Technology,hyderabad,false,this_week
+music conference today in hyderabad,music|conference,Arts,hyderabad,,today
+design exhibition weekend in hyderabad,design|exhibition,Arts,hyderabad,false,weekend
+workshop at bangalore happening soon,workshop,,bangalore,,future
+premium networking on tech happening soon,tech|networking,Technology,,false,future
+free yoga expo at remote tomorrow,yoga|expo,Health,remote,true,tomorrow
+free design panel at amal jyothi this month,design|panel,Arts,amal jyothi,true,this_month
+yoga bootcamp at amal jyothi this week,yoga|bootcamp,Health,amal jyothi,,this_week
+summit at mumbai upcoming,summit,,mumbai,true,future
+premium concert upcoming,concert,,,false,future
+tech bootcamp this week in remote,tech|bootcamp,Technology,remote,,this_week
+premium tech meetup at chennai today,tech|meetup,Technology,chennai,false,today
+workshop at hyderabad upcoming,workshop,,hyderabad,false,future
+ticketed festival today,festival,,,false,today
+ticketed session this week,session,,,false,this_week
+premium seminar on business upcoming,business|seminar,Business,,false,future
+paid finance workshop at amal jyothi happening soon,finance|workshop,Business,amal jyothi,false,future
+networking on wellness upcoming,wellness|networking,Health,,,future
+wellness summit this week in amal jyothi,wellness|summit,Health,amal jyothi,true,this_week
+bootcamp weekend,bootcamp,,,,weekend
+free webinar on marketing tomorrow,marketing|webinar,Business,,true,tomorrow
+ticketed hackathon happening soon,hackathon,,,false,future
+session at pune today,session,,pune,,today
+free concert on music today,music|concert,Arts,,true,today
+cheap expo this week,expo,,,,this_week
+concert at chennai tomorrow,concert,,chennai,,tomorrow
+cheap meetup on tech weekend,tech|meetup,Technology,,,weekend
+paid talks on science tomorrow,science|talks,Technology,,false,tomorrow
+paid expo this week,expo,,,false,this_week
+cheap talks on health next week,health|talks,Health,,,next_week
+seminar at trivandrum happening soon,seminar,,trivandrum,false,future
+startup exhibition at pune this week,startup|exhibition,Business,pune,,this_week
+yoga classes this week in kochi,yoga|classes,Health,kochi,,this_week
+free health networking at amal jyothi this week,health|networking,Health,amal jyothi,true,this_week
+design concert weekend in delhi,design|concert,Arts,delhi,,weekend
+free expo on art weekend,art|expo,Arts,,true,weekend
+cheap leadership conference at delhi this week,leadership|conference,Business,delhi,,this_week
+bootcamp on startup weekend,startup|bootcamp,Business,,,weekend
+workshop at chennai today,workshop,,chennai,,today
+fitness meetup at delhi happening soon,fitness|meetup,Health,delhi,,future
+wellness session this week in bangalore,wellness|session,Health,bangalore,true,this_week
+marketing bootcamp happening soon in chennai,marketing|bootcamp,Business,chennai,false,future
+cheap panel on coding today,coding|panel,Technology,,,today
+premium session on music this month,music|session,Arts,,false,this_month
+seminar this month,seminar,,,,this_month
+panel at amal jyothi upcoming,panel,,amal jyothi,false,future
+paid session on startup this month,startup|session,Business,,false,this_month
+ticketed seminar on art this month,art|seminar,Arts,,false,this_month
+meetup at chennai upcoming,meetup,,chennai,,future
+free music summit at hyderabad weekend,music|summit,Arts,hyderabad,true,weekend
+expo next week,expo,,,,next_week
+music conference this month in hyderabad,music|conference,Arts,hyderabad,false,this_month
+free panel on music upcoming,music|panel,Arts,,true,future
+workshop at online today,workshop,,online,,today
+workshop at bangalore upcoming,workshop,,bangalore,false,future
+coding hackathon this week in online,coding|hackathon,Technology,online,,this_week
+expo at online happening soon,expo,,online,false,future
+free talks this month,talks,,,true,this_month
+art bootcamp this month in delhi,art|bootcamp,Arts,delhi,,this_month
+free fitness classes at kochi today,fitness|classes,Health,kochi,true,today
+talks at online this month,talks,,online,false,this_month
+free session weekend,session,,,true,weekend
+finance webinar this week in mumbai,finance|webinar,Business,mumbai,,this_week
+premium leadership session at bangalore upcoming,leadership|session,Business,bangalore,false,future
+paid science hackathon at amal jyothi today,science|hackathon,Technology,amal jyothi,false,today
+health bootcamp this week in amal jyothi,health|bootcamp,Health,amal jyothi,false,this_week
+startup exhibition upcoming in mumbai,startup|exhibition,Business,mumbai,,future
+paid business networking at delhi upcoming,business|networking,Business,delhi,false,future
+finance classes upcoming in online,finance|classes,Business,online,,future
+premium coding summit at pune happening soon,coding|summit,Technology,pune,false,future
+expo happening soon,expo,,,,future
+free design bootcamp at trivandrum this week,design|bootcamp,Arts,trivandrum,true,this_week
+paid session next week,session,,,false,next_week
+free finance networking at bangalore weekend,finance|networking,Business,bangalore,true,weekend
+workshop on music happening soon,music|workshop,Arts,,,future
+premium art concert at mumbai this week,art|concert,Arts,mumbai,false,this_week
+free webinar this week,webinar,,,true,this_week
+fitness meetup happening soon in kochi,fitness|meetup,Health,kochi,false,future
+cheap concert on yoga this week,yoga|concert,Health,,,this_week
+premium concert on business this month,business|concert,Business,,false,this_month
+paid design festival at online today,design|festival,Arts,online,false,today
+paid festival this week,festival,,,false,this_week
+tech bootcamp weekend in pune,tech|bootcamp,Technology,pune,false,weekend
+expo at remote weekend,expo,,remote,,weekend
+festival at bangalore this month,festival,,bangalore,,this_month
+cheap expo on business this month,business|expo,Business,,,this_month
+premium fitness festival at bangalore this week,fitness|festival,Health,bangalore,false,this_week
+ticketed music workshop at remote tomorrow,music|workshop,Arts,remote,false,tomorrow
+yoga summit today in kochi,yoga|summit,Health,kochi,false,today
+business conference tomorrow in bangalore,business|conference,Business,bangalore,,tomorrow
+startup hackathon next week in chennai,startup|hackathon,Business,chennai,,next_week
+tech session today in chennai,tech|session,Technology,chennai,true,today
+ticketed bootcamp on leadership this week,leadership|bootcamp,Business,,false,this_week
+premium marketing meetup at online happening soon,marketing|meetup,Business,online,false,future
+classes at trivandrum weekend,classes,,trivandrum,true,weekend
+bootcamp at pune upcoming,bootcamp,,pune,true,future
+paid networking on marketing upcoming,marketing|networking,Business,,false,future
+seminar tomorrow,seminar,,,,tomorrow
+free hackathon tomorrow,hackathon,,,true,tomorrow
+paid bootcamp on art next week,art|bootcamp,Arts,,false,next_week
+paid summit on fitness this month,fitness|summit,Health,,false,this_month
+free exhibition on health next week,health|exhibition,Health,,true,next_week
+meetup at chennai upcoming,meetup,,chennai,true,future
+cheap exhibition today,exhibition,,,,today
+ticketed seminar on design happening soon,design|seminar,Arts,,false,future
+free leadership classes at delhi upcoming,leadership|classes,Business,delhi,true,future
+cheap summit tomorrow,summit,,,,tomorrow
+paid tech hackathon at bangalore upcoming,tech|hackathon,Technology,bangalore,false,future
+ticketed talks this week,talks,,,false,this_week
+cheap hackathon on coding upcoming,coding|hackathon,Technology,,,future
+premium coding festival at trivandrum tomorrow,coding|festival,Technology,trivandrum,false,tomorrow
+free panel on yoga this month,yoga|panel,Health,,true,this_month
+free bootcamp on marketing upcoming,marketing|bootcamp,Business,,true,future
+paid networking on music upcoming,music|networking,Arts,,false,future
+summit at mumbai weekend,summit,,mumbai,false,weekend
+networking at chennai upcoming,networking,,chennai,false,future
+cheap art panel at mumbai upcoming,art|panel,Arts,mumbai,,future
+ticketed hackathon on wellness weekend,wellness|hackathon,Health,,false,weekend
+free music summit at trivandrum this month,music|summit,Arts,trivandrum,true,this_month
+seminar at bangalore next week,seminar,,bangalore,false,next_week
+paid workshop on science happening soon,science|workshop,Technology,,false,future
+seminar at kochi this month,seminar,,kochi,false,this_month
+premium seminar weekend,seminar,,,false,weekend
+paid expo upcoming,expo,,,false,future
+ticketed conference on wellness this month,wellness|conference,Health,,false,this_month
+fitness meetup happening soon in trivandrum,fitness|meetup,Health,trivandrum,,future
+free festival upcoming,festival,,,true,future
+cheap networking this month,networking,,,,this_month
+cheap webinar on fitness upcoming,fitness|webinar,Health,,,future
+marketing conference this month in hyderabad,marketing|conference,Business,hyderabad,,this_month
+ticketed networking weekend,networking,,,false,weekend
+session on marketing upcoming,marketing|session,Business,,,future
+classes on coding next week,coding|classes,Technology,,,next_week
+cheap conference this month,conference,,,,this_month
+startup seminar next week in hyderabad,startup|seminar,Business,hyderabad,,next_week
+ticketed tech conference at trivandrum happening soon,tech|conference,Technology,trivandrum,false,future
+tech classes this week in amal jyothi,tech|classes,Technology,amal jyothi,true,this_week
+cheap talks on startup this week,startup|talks,Business,,,this_week
+premium meetup on coding weekend,coding|meetup,Technology,,false,weekend
+design festival happening soon in remote,design|festival,Arts,remote,false,future
+premium fitness concert at bangalore this week,fitness|concert,Health,bangalore,false,this_week
+meetup next week,meetup,,,,next_week
+premium hackathon tomorrow,hackathon,,,false,tomorrow
+seminar this month,seminar,,,,this_month
+exhibition weekend,exhibition,,,,weekend
+marketing festival this week in online,marketing|festival,Business,online,true,this_week
+cheap conference on wellness weekend,wellness|conference,Health,,,weekend
+startup hackathon tomorrow in online,startup|hackathon,Business,online,false,tomorrow
+networking at delhi upcoming,networking,,delhi,false,future
+paid webinar on music happening soon,music|webinar,Arts,,false,future
+concert this week,concert,,,,this_week
+design exhibition at bangalore weekend,design|exhibition,Arts,bangalore,,weekend
+premium startup concert at amal jyothi this month,startup|concert,Business,amal jyothi,false,this_month
+talks at remote upcoming,talks,,remote,,future
+science webinar tomorrow in remote,science|webinar,Technology,remote,,tomorrow
+premium classes next week,classes,,,false,next_week
+panel at mumbai this week,panel,,mumbai,,this_week
+free conference on health weekend,health|conference,Health,,true,weekend
+cheap art seminar at bangalore upcoming,art|seminar,Arts,bangalore,,future
+conference at chennai this month,conference,,chennai,false,this_month
+hackathon on marketing tomorrow,marketing|hackathon,Business,,,tomorrow
+cheap startup meetup at hyderabad this week,startup|meetup,Business,hyderabad,,this_week
+paid leadership concert at amal jyothi today,leadership|concert,Business,amal jyothi,false,today
+workshop at pune this week,workshop,,pune,,this_week
+premium summit on coding tomorrow,coding|summit,Technology,,false,tomorrow
+tech concert at trivandrum this month,tech|concert,Technology,trivandrum,,this_month
+summit at bangalore happening soon,summit,,bangalore,,future
+festival at remote tomorrow,festival,,remote,false,tomorrow
+summit next week,summit,,,,next_week
+networking at online this week,networking,,online,false,this_week
+paid bootcamp this month,bootcamp,,,false,this_month
+classes at trivandrum tomorrow,classes,,trivandrum,false,tomorrow
+cheap leadership hackathon at amal jyothi this week,leadership|hackathon,Business,amal jyothi,,this_week
+paid bootcamp weekend,bootcamp,,,false,weekend
+ticketed festival on wellness upcoming,wellness|festival,Health,,false,future
+leadership workshop at pune happening soon,leadership|workshop,Business,pune,,future
+free design bootcamp at kochi this week,design|bootcamp,Arts,kochi,true,this_week
+tech summit today in kochi,tech|summit,Technology,kochi,false,today
+ticketed bootcamp next week,bootcamp,,,false,next_week
+talks at mumbai this month,talks,,mumbai,,this_month
+ticketed festival this week,festival,,,false,this_week
+startup talks at hyderabad happening soon,startup|talks,Business,hyderabad,,future
+ticketed concert on leadership next week,leadership|concert,Business,,false,next_week
+free tech hackathon at amal jyothi upcoming,tech|hackathon,Technology,amal jyothi,true,future
+free panel tomorrow,panel,,,true,tomorrow
+classes at delhi weekend,classes,,delhi,true,weekend
+cheap webinar on health tomorrow,health|webinar,Health,,,tomorrow
+ticketed session this week,session,,,false,this_week
+free panel on tech tomorrow,tech|panel,Technology,,true,tomorrow
+paid exhibition this week,exhibition,,,false,this_week
+yoga networking tomorrow in pune,yoga|networking,Health,pune,false,tomorrow
+leadership expo weekend in chennai,leadership|expo,Business,chennai,true,weekend
+festival at delhi upcoming,festival,,delhi,false,future
+cheap seminar on coding today,coding|seminar,Technology,,,today
+ticketed exhibition this week,exhibition,,,false,this_week
+finance meetup upcoming in kochi,finance|meetup,Business,kochi,,future
+cheap marketing exhibition at hyderabad this week,marketing|exhibition,Business,hyderabad,,this_week
+paid design workshop at remote upcoming,design|workshop,Arts,remote,false,future
+free workshop on business next week,business|workshop,Business,,true,next_week
+paid seminar on marketing this month,marketing|seminar,Business,,false,this_month
+paid conference this week,conference,,,false,this_week
+ticketed leadership seminar at bangalore happening soon,leadership|seminar,Business,bangalore,false,future
+meetup at bangalore this month,meetup,,bangalore,true,this_month
+premium meetup on business happening soon,business|meetup,Business,,false,future
+premium health summit at kochi this week,health|summit,Health,kochi,false,this_week
+panel at delhi next week,panel,,delhi,false,next_week
+exhibition on coding this month,coding|exhibition,Technology,,,this_month
+design panel at hyderabad tomorrow,design|panel,Arts,hyderabad,,tomorrow
+business workshop tomorrow in delhi,business|workshop,Business,delhi,,tomorrow
+premium networking next week,networking,,,false,next_week
+coding festival weekend in chennai,coding|festival,Technology,chennai,,weekend
+ticketed conference this week,conference,,,false,this_week
+free conference weekend,conference,,,true,weekend
+paid workshop next week,workshop,,,false,next_week
+cheap exhibition on art weekend,art|exhibition,Arts,,,weekend
+ticketed talks on science next week,science|talks,Technology,,false,next_week
+ticketed fitness session at mumbai tomorrow,fitness|session,Health,mumbai,false,tomorrow
+meetup at trivandrum next week,meetup,,trivandrum,,next_week
+ticketed hackathon upcoming,hackathon,,,false,future
+paid wellness meetup at remote this month,wellness|meetup,Health,remote,false,this_month
+fitness classes this month in trivandrum,fitness|classes,Health,trivandrum,,this_month
+cheap networking on music upcoming,music|networking,Arts,,,future
+session at online this week,session,,online,false,this_week
+session at hyderabad this month,session,,hyderabad,false,this_month
+leadership workshop next week in bangalore,leadership|workshop,Business,bangalore,false,next_week
+ticketed coding talks at kochi next week,coding|talks,Technology,kochi,false,next_week
+paid webinar on art this week,art|webinar,Arts,,false,this_week
+yoga session this month in mumbai,yoga|session,Health,mumbai,,this_month
+exhibition at amal jyothi weekend,exhibition,,amal jyothi,,weekend
+paid conference today,conference,,,false,today
+ticketed seminar today,seminar,,,false,today
+conference at bangalore happening soon,conference,,bangalore,,future
+bootcamp at hyderabad happening soon,bootcamp,,hyderabad,false,future
+marketing classes at delhi weekend,marketing|classes,Business,delhi,,weekend
+ticketed leadership networking at bangalore next week,leadership|networking,Business,bangalore,false,next_week
+free seminar upcoming,seminar,,,true,future
+paid coding workshop at hyderabad this month,coding|workshop,Technology,hyderabad,false,this_month
+ticketed talks tomorrow,talks,,,false,tomorrow
+yoga networking this week in mumbai,yoga|networking,Health,mumbai,,this_week
+health festival today in amal jyothi,health|festival,Health,amal jyothi,,today
+ticketed exhibition on music this week,music|exhibition,Arts,,false,this_week
+bootcamp at kochi this month,bootcamp,,kochi,false,this_month
+free seminar on yoga happening soon,yoga|seminar,Health,,true,future
+yoga conference this week in online,yoga|conference,Health,online,true,this_week
+free coding exhibition at pune next week,coding|exhibition,Technology,pune,true,next_week
+leadership networking tomorrow in bangalore,leadership|networking,Business,bangalore,,tomorrow
+summit upcoming,summit,,,,future
+free summit this week,summit,,,true,this_week
+concert at hyderabad this week,concert,,hyderabad,false,this_week
+coding session this month in chennai,coding|session,Technology,chennai,false,this_month
+design panel this week in pune,design|panel,Arts,pune,false,this_week
+free finance expo at delhi today,finance|expo,Business,delhi,true,today
+free summit on finance happening soon,finance|summit,Business,,true,future
+expo at trivandrum this week,expo,,trivandrum,,this_week
+leadership webinar this month in mumbai,leadership|webinar,Business,mumbai,false,this_month
+business webinar at online happening soon,business|webinar,Business,online,,future
+expo on yoga next week,yoga|expo,Health,,,next_week
+bootcamp at delhi happening soon,bootcamp,,delhi,,future
+free meetup on finance weekend,finance|meetup,Business,,true,weekend
+premium seminar on wellness upcoming,wellness|seminar,Health,,false,future
+premium science exhibition at trivandrum today,science|exhibition,Technology,trivandrum,false,today
+premium session today,session,,,false,today
+free startup seminar at remote tomorrow,startup|seminar,Business,remote,true,tomorrow
+networking at chennai tomorrow,networking,,chennai,false,tomorrow
+free seminar on finance this month,finance|seminar,Business,,true,this_month
+health concert this month in online,health|concert,Health,online,false,this_month
+free science panel at hyderabad today,science|panel,Technology,hyderabad,true,today
+panel at pune happening soon,panel,,pune,,future
+hackathon at trivandrum happening soon,hackathon,,trivandrum,false,future
+cheap science concert at remote weekend,science|concert,Technology,remote,,weekend
+premium webinar on marketing happening soon,marketing|webinar,Business,,false,future
+meetup on finance tomorrow,finance|meetup,Business,,,tomorrow
+fitness bootcamp at kochi tomorrow,fitness|bootcamp,Health,kochi,,tomorrow
+paid health seminar at mumbai this week,health|seminar,Health,mumbai,false,this_week
+tech concert at trivandrum upcoming,tech|concert,Technology,trivandrum,,future
+paid bootcamp happening soon,bootcamp,,,false,future
+cheap health exhibition at chennai weekend,health|exhibition,Health,chennai,,weekend
+free marketing meetup at online today,marketing|meetup,Business,online,true,today
+hackathon at amal jyothi next week,hackathon,,amal jyothi,false,next_week
+premium seminar this week,seminar,,,false,this_week
+business panel upcoming in chennai,business|panel,Business,chennai,,future
+paid workshop this month,workshop,,,false,this_month
+classes at mumbai next week,classes,,mumbai,false,next_week
+business exhibition weekend in amal jyothi,business|exhibition,Business,amal jyothi,,weekend
+bootcamp at kochi tomorrow,bootcamp,,kochi,false,tomorrow
+cheap summit weekend,summit,,,,weekend
+bootcamp at trivandrum happening soon,bootcamp,,trivandrum,false,future
+free workshop on marketing this month,marketing|workshop,Business,,true,this_month
+ticketed webinar on fitness this month,fitness|webinar,Health,,false,this_month
+fitness meetup weekend in trivandrum,fitness|meetup,Health,trivandrum,true,weekend
+paid expo on leadership tomorrow,leadership|expo,Business,,false,tomorrow
+tech networking weekend in online,tech|networking,Technology,online,,weekend
+talks on art this week,art|talks,Arts,,,this_week
+bootcamp at mumbai tomorrow,bootcamp,,mumbai,,tomorrow
+networking at online this week,networking,,online,false,this_week
+session at hyderabad weekend,session,,hyderabad,,weekend
+webinar this month,webinar,,,,this_month
+summit weekend,summit,,,,weekend
+talks at mumbai this month,talks,,mumbai,,this_month
+conference at chennai this week,conference,,chennai,false,this_week
+finance session tomorrow in bangalore,finance|session,Business,bangalore,,tomorrow
+panel today,panel,,,,today
+cheap summit today,summit,,,,today
+design conference this week in delhi,design|conference,Arts,delhi,,this_week
+free yoga bootcamp at kochi tomorrow,yoga|bootcamp,Health,kochi,true,tomorrow
+session at kochi this week,session,,kochi,false,this_week
+design session at trivandrum this week,design|session,Arts,trivandrum,,this_week
+seminar at remote this month,seminar,,remote,false,this_month
+paid tech meetup at hyderabad happening soon,tech|meetup,Technology,hyderabad,false,future
+premium webinar this month,webinar,,,false,this_month
+expo at bangalore happening soon,expo,,bangalore,true,future
+ticketed concert weekend,concert,,,false,weekend
+free conference on science weekend,science|conference,Technology,,true,weekend
+exhibition at amal jyothi next week,exhibition,,amal jyothi,false,next_week
+seminar at amal jyothi upcoming,seminar,,amal jyothi,false,future
+free fitness meetup at delhi weekend,fitness|meetup,Health,delhi,true,weekend
+wellness concert this month in chennai,wellness|concert,Health,chennai,false,this_month
+workshop at remote happening soon,workshop,,remote,false,future
+premium seminar happening soon,seminar,,,false,future
+paid wellness session at mumbai happening soon,wellness|session,Health,mumbai,false,future
+cheap finance panel at amal jyothi upcoming,finance|panel,Business,amal jyothi,,future
+finance expo at chennai next week,finance|expo,Business,chennai,,next_week
+cheap exhibition on business upcoming,business|exhibition,Business,,,future
+premium yoga workshop at mumbai this month,yoga|workshop,Health,mumbai,false,this_month
+talks at trivandrum this week,talks,,trivandrum,true,this_week
+cheap hackathon tomorrow,hackathon,,,,tomorrow
+free talks weekend,talks,,,true,weekend
+premium talks tomorrow,talks,,,false,tomorrow
+free leadership panel at hyderabad today,leadership|panel,Business,hyderabad,true,today
+paid meetup on wellness tomorrow,wellness|meetup,Health,,false,tomorrow
+workshop at chennai upcoming,workshop,,chennai,,future
+seminar at pune this month,seminar,,pune,,this_month
+cheap seminar tomorrow,seminar,,,,tomorrow
+premium conference this week,conference,,,false,this_week
+networking this week,networking,,,,this_week
+free talks this month,talks,,,true,this_month
+premium festival on startup happening soon,startup|festival,Business,,false,future
+premium expo on finance upcoming,finance|expo,Business,,false,future
+cheap bootcamp on business today,business|bootcamp,Business,,,today
+talks at trivandrum today,talks,,trivandrum,,today
+premium summit today,summit,,,false,today
+coding bootcamp upcoming in pune,coding|bootcamp,Technology,pune,true,future
+ticketed talks next week,talks,,,false,next_week
+festival at pune upcoming,festival,,pune,,future
+ticketed seminar this month,seminar,,,false,this_month
+free science session at trivandrum weekend,science|session,Technology,trivandrum,true,weekend
+ticketed networking tomorrow,networking,,,false,tomorrow
+startup workshop at bangalore this month,startup|workshop,Business,bangalore,,this_month
+expo at pune today,expo,,pune,false,today
+conference at pune this week,conference,,pune,,this_week
+expo at hyderabad upcoming,expo,,hyderabad,false,future
+concert at remote happening soon,concert,,remote,false,future
+ticketed bootcamp upcoming,bootcamp,,,false,future
+premium networking on health this month,health|networking,Health,,false,this_month
+cheap bootcamp this month,bootcamp,,,,this_month
+paid meetup this month,meetup,,,false,this_month
+paid bootcamp happening soon,bootcamp,,,false,future
+session at delhi happening soon,session,,delhi,false,future
+paid festival this week,festival,,,false,this_week
+finance talks happening soon in kochi,finance|talks,Business,kochi,false,future
+ticketed concert tomorrow,concert,,,false,tomorrow
+paid talks next week,talks,,,false,next_week
+marketing summit tomorrow in bangalore,marketing|summit,Business,bangalore,false,tomorrow
+premium seminar next week,seminar,,,false,next_week
+paid festival weekend,festival,,,false,weekend
+free expo on science tomorrow,science|expo,Technology,,true,tomorrow
+paid festival weekend,festival,,,false,weekend
+free expo on science today,science|expo,Technology,,true,today
+paid seminar this week,seminar,,,false,this_week
+premium workshop weekend,workshop,,,false,weekend
+science hackathon this week in online,science|hackathon,Technology,online,,this_week
+networking at hyderabad next week,networking,,hyderabad,,next_week
+session at online today,session,,online,false,today
+premium marketing webinar at pune upcoming,marketing|webinar,Business,pune,false,future
+free workshop on marketing weekend,marketing|workshop,Business,,true,weekend
+classes at remote this month,classes,,remote,false,this_month
+leadership festival upcoming in kochi,leadership|festival,Business,kochi,,future
+expo on wellness this week,wellness|expo,Health,,,this_week
+yoga exhibition happening soon in kochi,yoga|exhibition,Health,kochi,false,future
+session at chennai this week,session,,chennai,,this_week
+cheap science conference at delhi this week,science|conference,Technology,delhi,,this_week
+cheap exhibition on art tomorrow,art|exhibition,Arts,,,tomorrow
+coding meetup this month in mumbai,coding|meetup,Technology,mumbai,true,this_month
+premium exhibition tomorrow,exhibition,,,false,tomorrow
+cheap marketing festival at chennai happening soon,marketing|festival,Business,chennai,,future
+ticketed networking on music this week,music|networking,Arts,,false,this_week
+free bootcamp on startup happening soon,startup|bootcamp,Business,,true,future
+hackathon at trivandrum tomorrow,hackathon,,trivandrum,false,tomorrow
+free startup exhibition at mumbai this week,startup|exhibition,Business,mumbai,true,this_week
+business expo this week in amal jyothi,business|expo,Business,amal jyothi,,this_week
+cheap music exhibition at delhi this week,music|exhibition,Arts,delhi,,this_week
+premium music session at bangalore tomorrow,music|session,Arts,bangalore,false,tomorrow
+ticketed festival on design happening soon,design|festival,Arts,,false,future
+webinar at online upcoming,webinar,,online,false,future
+seminar on coding this week,coding|seminar,Technology,,,this_week
+science session tomorrow in kochi,science|session,Technology,kochi,,tomorrow
+festival at hyderabad happening soon,festival,,hyderabad,true,future
+exhibition at kochi weekend,exhibition,,kochi,false,weekend
+premium bootcamp tomorrow,bootcamp,,,false,tomorrow
+business festival this week in kochi,business|festival,Business,kochi,false,this_week
+paid session tomorrow,session,,,false,tomorrow
+wellness concert weekend in delhi,wellness|concert,Health,delhi,false,weekend
+concert at bangalore upcoming,concert,,bangalore,true,future
+paid coding workshop at bangalore tomorrow,coding|workshop,Technology,bangalore,false,tomorrow
+startup meetup today in pune,startup|meetup,Business,pune,false,today
+premium classes tomorrow,classes,,,false,tomorrow
+summit at online happening soon,summit,,online,,future
+cheap expo weekend,expo,,,,weekend
+ticketed workshop today,workshop,,,false,today
+free webinar on finance weekend,finance|webinar,Business,,true,weekend
+seminar at delhi this week,seminar,,delhi,false,this_week
+premium classes on business this month,business|classes,Business,,false,this_month
+expo at bangalore tomorrow,expo,,bangalore,false,tomorrow
+festival at remote next week,festival,,remote,false,next_week
+premium festival weekend,festival,,,false,weekend
+free expo on design this week,design|expo,Arts,,true,this_week
+premium workshop this month,workshop,,,false,this_month
+panel this week,panel,,,,this_week
+paid festival tomorrow,festival,,,false,tomorrow
+ticketed talks on business tomorrow,business|talks,Business,,false,tomorrow
+ticketed meetup tomorrow,meetup,,,false,tomorrow
+coding conference happening soon in trivandrum,coding|conference,Technology,trivandrum,false,future
+premium coding panel at delhi this month,coding|panel,Technology,delhi,false,this_month
+concert at kochi happening soon,concert,,kochi,,future
+marketing seminar this week in trivandrum,marketing|seminar,Business,trivandrum,,this_week
+conference at delhi weekend,conference,,delhi,,weekend
+paid seminar happening soon,seminar,,,false,future
+science exhibition this month in bangalore,science|exhibition,Technology,bangalore,false,this_month
+premium bootcamp on fitness this week,fitness|bootcamp,Health,,false,this_week
+festival on marketing today,marketing|festival,Business,,,today
+paid panel tomorrow,panel,,,false,tomorrow
+cheap panel on leadership happening soon,leadership|panel,Business,,,future
+concert at mumbai tomorrow,concert,,mumbai,true,tomorrow
+ticketed session on startup weekend,startup|session,Business,,false,weekend
+paid exhibition on coding next week,coding|exhibition,Technology,,false,next_week
+premium design hackathon at amal jyothi upcoming,design|hackathon,Arts,amal jyothi,false,future
+business panel happening soon in amal jyothi,business|panel,Business,amal jyothi,true,future
+health talks at hyderabad happening soon,health|talks,Health,hyderabad,,future
+classes at hyderabad this week,classes,,hyderabad,,this_week
+fitness networking next week in amal jyothi,fitness|networking,Health,amal jyothi,false,next_week
+concert next week,concert,,,,next_week
+bootcamp on music upcoming,music|bootcamp,Arts,,,future
+free tech summit at pune this month,tech|summit,Technology,pune,true,this_month
+fitness talks today in chennai,fitness|talks,Health,chennai,false,today
+fitness hackathon weekend in remote,fitness|hackathon,Health,remote,false,weekend
+premium marketing talks at pune next week,marketing|talks,Business,pune,false,next_week
+ticketed talks happening soon,talks,,,false,future
+workshop on health upcoming,health|workshop,Health,,,future
+science session tomorrow in trivandrum,science|session,Technology,trivandrum,,tomorrow
+free talks on finance next week,finance|talks,Business,,true,next_week
+paid marketing networking at amal jyothi next week,marketing|networking,Business,amal jyothi,false,next_week
+science panel next week in amal jyothi,science|panel,Technology,amal jyothi,true,next_week
+conference at kochi next week,conference,,kochi,false,next_week
+health summit tomorrow in remote,health|summit,Health,remote,false,tomorrow
+design webinar weekend in kochi,design|webinar,Arts,kochi,false,weekend
+free networking this month,networking,,,true,this_month
+talks at trivandrum happening soon,talks,,trivandrum,false,future
+cheap finance concert at amal jyothi next week,finance|concert,Business,amal jyothi,,next_week
+free art bootcamp at pune weekend,art|bootcamp,Arts,pune,true,weekend
+paid music seminar at hyderabad today,music|seminar,Arts,hyderabad,false,today
+conference at online happening soon,conference,,online,,future
+panel at bangalore upcoming,panel,,bangalore,false,future
+classes on finance happening soon,finance|classes,Business,,,future
+design exhibition tomorrow in remote,design|exhibition,Arts,remote,true,tomorrow
+art conference at trivandrum tomorrow,art|conference,Arts,trivandrum,,tomorrow
+marketing talks at kochi this week,marketing|talks,Business,kochi,,this_week
+paid classes on yoga weekend,yoga|classes,Health,,false,weekend
+art panel today in amal jyothi,art|panel,Arts,amal jyothi,false,today
+premium concert upcoming,concert,,,false,future
+panel at kochi upcoming,panel,,kochi,false,future
+free coding bootcamp at pune upcoming,coding|bootcamp,Technology,pune,true,future
+ticketed music concert at online upcoming,music|concert,Arts,online,false,future
+webinar on tech weekend,tech|webinar,Technology,,,weekend
+yoga exhibition at chennai today,yoga|exhibition,Health,chennai,,today
+bootcamp at trivandrum today,bootcamp,,trivandrum,false,today
+bootcamp at kochi today,bootcamp,,kochi,false,today
+paid expo on science this week,science|expo,Technology,,false,this_week
+premium panel on yoga weekend,yoga|panel,Health,,false,weekend
+cheap concert tomorrow,concert,,,,tomorrow
+marketing concert this month in remote,marketing|concert,Business,remote,false,this_month
+free festival weekend,festival,,,true,weekend
+health conference at kochi happening soon,health|conference,Health,kochi,,future
+conference at bangalore upcoming,conference,,bangalore,,future
+startup expo upcoming in amal jyothi,startup|expo,Business,amal jyothi,false,future
+ticketed networking on yoga this week,yoga|networking,Health,,false,this_week
+free art festival at bangalore today,art|festival,Arts,bangalore,true,today
+summit today,summit,,,,today
+premium panel on art this month,art|panel,Arts,,false,this_month
+coding meetup weekend in chennai,coding|meetup,Technology,chennai,,weekend
+summit at bangalore next week,summit,,bangalore,,next_week
+yoga networking this week in kochi,yoga|networking,Health,kochi,false,this_week
+concert on finance today,finance|concert,Business,,,today
+business panel happening soon in chennai,business|panel,Business,chennai,,future
+tech festival next week in online,tech|festival,Technology,online,true,next_week
+classes at pune next week,classes,,pune,,next_week
+talks today,talks,,,,today
+cheap workshop upcoming,workshop,,,,future
+free tech classes at kochi weekend,tech|classes,Technology,kochi,true,weekend
+paid finance seminar at hyderabad this week,finance|seminar,Business,hyderabad,false,this_week
+panel happening soon,panel,,,,future
+yoga seminar this week in online,yoga|seminar,Health,online,false,this_week
+free business webinar at trivandrum weekend,business|webinar,Business,trivandrum,true,weekend
+premium exhibition on wellness upcoming,wellness|exhibition,Health,,false,future
+free finance talks at remote upcoming,finance|talks,Business,remote,true,future
+leadership workshop today in hyderabad,leadership|workshop,Business,hyderabad,true,today
+cheap summit on leadership this week,leadership|summit,Business,,,this_week
+concert at online next week,concert,,online,false,next_week
+free bootcamp this month,bootcamp,,,true,this_month
+expo at delhi this month,expo,,delhi,false,this_month
+bootcamp at delhi this month,bootcamp,,delhi,false,this_month
+cheap exhibition on leadership next week,leadership|exhibition,Business,,,next_week
+yoga webinar next week in delhi,yoga|webinar,Health,delhi,false,next_week
+art summit weekend in bangalore,art|summit,Arts,bangalore,true,weekend
+cheap expo on science today,science|expo,Technology,,,today
+expo at pune weekend,expo,,pune,true,weekend
+cheap networking on wellness tomorrow,wellness|networking,Health,,,tomorrow
+ticketed panel happening soon,panel,,,false,future
+paid summit today,summit,,,false,today
+festival at mumbai next week,festival,,mumbai,false,next_week
+festival at pune happening soon,festival,,pune,false,future
+yoga festival tomorrow in trivandrum,yoga|festival,Health,trivandrum,false,tomorrow
+free health workshop at hyderabad tomorrow,health|workshop,Health,hyderabad,true,tomorrow
+premium seminar on business today,business|seminar,Business,,false,today
+summit at hyderabad next week,summit,,hyderabad,false,next_week
+yoga session upcoming in delhi,yoga|session,Health,delhi,true,future
+ticketed startup bootcamp at pune today,startup|bootcamp,Business,pune,false,today
+session on leadership tomorrow,leadership|session,Business,,,tomorrow
+paid marketing bootcamp at bangalore this week,marketing|bootcamp,Business,bangalore,false,this_week
+hackathon at chennai this month,hackathon,,chennai,,this_month
+free expo on finance this month,finance|expo,Business,,true,this_month
+workshop at bangalore today,workshop,,bangalore,,today
+cheap business webinar at hyderabad today,business|webinar,Business,hyderabad,,today
+exhibition at bangalore this month,exhibition,,bangalore,,this_month
+ticketed wellness talks at remote weekend,wellness|talks,Health,remote,false,weekend
+ticketed meetup on startup weekend,startup|meetup,Business,,false,weekend
+premium expo next week,expo,,,false,next_week
+session at trivandrum upcoming,session,,trivandrum,false,future
+ticketed meetup today,meetup,,,false,today
+premium panel upcoming,panel,,,false,future
+free exhibition next week,exhibition,,,true,next_week
+cheap talks on fitness this month,fitness|talks,Health,,,this_month
+music seminar upcoming in pune,music|seminar,Arts,pune,false,future
+ticketed exhibition on startup this week,startup|exhibition,Business,,false,this_week
+premium panel on business upcoming,business|panel,Business,,false,future
+tech hackathon next week in online,tech|hackathon,Technology,online,true,next_week
+paid networking happening soon,networking,,,false,future
+premium expo this week,expo,,,false,this_week
+art meetup this week in bangalore,art|meetup,Arts,bangalore,false,this_week
+free fitness webinar at hyderabad weekend,fitness|webinar,Health,hyderabad,true,weekend
+summit at amal jyothi this month,summit,,amal jyothi,false,this_month
+premium expo weekend,expo,,,false,weekend
+workshop at online upcoming,workshop,,online,true,future
+paid marketing meetup at trivandrum happening soon,marketing|meetup,Business,trivandrum,false,future
+classes at amal jyothi next week,classes,,amal jyothi,false,next_week
+free coding hackathon at kochi today,coding|hackathon,Technology,kochi,true,today
+art panel upcoming in remote,art|panel,Arts,remote,,future
+free health exhibition at mumbai tomorrow,health|exhibition,Health,mumbai,true,tomorrow
+cheap webinar on tech next week,tech|webinar,Technology,,,next_week
+hackathon weekend,hackathon,,,,weekend
+premium leadership expo at trivandrum weekend,leadership|expo,Business,trivandrum,false,weekend
+free session on health this week,health|session,Health,,true,this_week
+conference at remote tomorrow,conference,,remote,false,tomorrow
+paid panel on startup today,startup|panel,Business,,false,today
+workshop next week,workshop,,,,next_week
+marketing concert next week in kochi,marketing|concert,Business,kochi,,next_week
+workshop at mumbai this week,workshop,,mumbai,true,this_week
+leadership workshop today in kochi,leadership|workshop,Business,kochi,false,today
+seminar at hyderabad tomorrow,seminar,,hyderabad,,tomorrow
+session on art happening soon,art|session,Arts,,,future
+free wellness networking at chennai happening soon,wellness|networking,Health,chennai,true,future
+cheap festival on tech happening soon,tech|festival,Technology,,,future
+music hackathon today in delhi,music|hackathon,Arts,delhi,,today
+premium workshop on music upcoming,music|workshop,Arts,,false,future
+premium webinar on art weekend,art|webinar,Arts,,false,weekend
+finance hackathon weekend in hyderabad,finance|hackathon,Business,hyderabad,,weekend
+wellness exhibition happening soon in amal jyothi,wellness|exhibition,Health,amal jyothi,,future
+paid summit on coding upcoming,coding|summit,Technology,,false,future
+cheap seminar on music weekend,music|seminar,Arts,,,weekend
+premium concert today,concert,,,false,today
+talks at online upcoming,talks,,online,true,future
+premium conference upcoming,conference,,,false,future
+seminar at mumbai today,seminar,,mumbai,false,today
+panel next week,panel,,,,next_week
+free classes on art this month,art|classes,Arts,,true,this_month
+paid conference this week,conference,,,false,this_week
+free startup talks at amal jyothi tomorrow,startup|talks,Business,amal jyothi,true,tomorrow
+paid classes happening soon,classes,,,false,future
+session at chennai next week,session,,chennai,false,next_week
+free session tomorrow,session,,,true,tomorrow
+expo at kochi this month,expo,,kochi,,this_month
+meetup at amal jyothi tomorrow,meetup,,amal jyothi,,tomorrow
+ticketed exhibition on tech happening soon,tech|exhibition,Technology,,false,future
+seminar at pune weekend,seminar,,pune,false,weekend
+finance conference tomorrow in online,finance|conference,Business,online,false,tomorrow
+cheap classes on tech tomorrow,tech|classes,Technology,,,tomorrow
+marketing meetup tomorrow in online,marketing|meetup,Business,online,false,tomorrow
+ticketed panel weekend,panel,,,false,weekend
+cheap bootcamp on art next week,art|bootcamp,Arts,,,next_week
+ticketed festival on leadership today,leadership|festival,Business,,false,today
+free classes on leadership tomorrow,leadership|classes,Business,,true,tomorrow
+cheap panel on music next week,music|panel,Arts,,,next_week
+science networking happening soon in delhi,science|networking,Technology,delhi,false,future
+concert at kochi tomorrow,concert,,kochi,true,tomorrow
+music webinar today in kochi,music|webinar,Arts,kochi,true,today
+webinar at mumbai happening soon,webinar,,mumbai,false,future
+networking at amal jyothi upcoming,networking,,amal jyothi,,future
+ticketed conference on startup next week,startup|conference,Business,,false,next_week
+premium music meetup at mumbai weekend,music|meetup,Arts,mumbai,false,weekend
+panel at delhi upcoming,panel,,delhi,true,future
+paid festival this month,festival,,,false,this_month
+summit on coding this month,coding|summit,Technology,,,this_month
+seminar at online this week,seminar,,online,false,this_week
+leadership webinar this week in mumbai,leadership|webinar,Business,mumbai,false,this_week
+premium workshop upcoming,workshop,,,false,future
+exhibition at amal jyothi upcoming,exhibition,,amal jyothi,false,future
+art hackathon at remote upcoming,art|hackathon,Arts,remote,,future
+ticketed networking on art upcoming,art|networking,Arts,,false,future
+bootcamp at mumbai today,bootcamp,,mumbai,false,today
+marketing classes upcoming in kochi,marketing|classes,Business,kochi,,future
+finance summit next week in online,finance|summit,Business,online,false,next_week
+cheap tech summit at hyderabad this month,tech|summit,Technology,hyderabad,,this_month
+meetup at delhi this month,meetup,,delhi,,this_month
+premium webinar weekend,webinar,,,false,weekend
+premium exhibition on science happening soon,science|exhibition,Technology,,false,future
+free summit today,summit,,,true,today
+cheap talks on yoga this week,yoga|talks,Health,,,this_week
+meetup at bangalore happening soon,meetup,,bangalore,true,future
+meetup at mumbai weekend,meetup,,mumbai,false,weekend
+bootcamp at amal jyothi this week,bootcamp,,amal jyothi,false,this_week
+talks at pune this week,talks,,pune,,this_week
+premium wellness talks at hyderabad upcoming,wellness|talks,Health,hyderabad,false,future
+seminar this month,seminar,,,,this_month
+finance networking upcoming in kochi,finance|networking,Business,kochi,false,future
+networking at bangalore this week,networking,,bangalore,false,this_week
+ticketed workshop upcoming,workshop,,,false,future
+paid panel on coding happening soon,coding|panel,Technology,,false,future
+festival at remote this week,festival,,remote,false,this_week
+premium concert on startup this month,startup|concert,Business,,false,this_month
+summit at kochi weekend,summit,,kochi,,weekend
+free exhibition on startup this month,startup|exhibition,Business,,true,this_month
+classes weekend,classes,,,,weekend
+expo at hyderabad this month,expo,,hyderabad,false,this_month
+premium classes on science next week,science|classes,Technology,,false,next_week
+paid webinar on design today,design|webinar,Arts,,false,today
+fitness panel today in hyderabad,fitness|panel,Health,hyderabad,false,today
+paid webinar next week,webinar,,,false,next_week
+free design festival at kochi this month,design|festival,Arts,kochi,true,this_month
+webinar at kochi this week,webinar,,kochi,false,this_week
+free science meetup at online today,science|meetup,Technology,online,true,today
+premium bootcamp on science happening soon,science|bootcamp,Technology,,false,future
+wellness summit tomorrow in amal jyothi,wellness|summit,Health,amal jyothi,,tomorrow
+hackathon at chennai weekend,hackathon,,chennai,false,weekend
+wellness exhibition next week in online,wellness|exhibition,Health,online,,next_week
+premium webinar happening soon,webinar,,,false,future
+concert at chennai today,concert,,chennai,false,today
+music networking tomorrow in amal jyothi,music|networking,Arts,amal jyothi,,tomorrow
+ticketed marketing panel at trivandrum happening soon,marketing|panel,Business,trivandrum,false,future
+summit at online this month,summit,,online,false,this_month
+paid yoga workshop at amal jyothi this week,yoga|workshop,Health,amal jyothi,false,this_week
+free coding concert at kochi upcoming,coding|concert,Technology,kochi,true,future
+summit on health next week,health|summit,Health,,,next_week
+leadership expo this month in trivandrum,leadership|expo,Business,trivandrum,,this_month
+paid hackathon this month,hackathon,,,false,this_month
+cheap art concert at amal jyothi next week,art|concert,Arts,amal jyothi,,next_week
+premium expo upcoming,expo,,,false,future
+paid bootcamp on health today,health|bootcamp,Health,,false,today
+business summit tomorrow in online,business|summit,Business,online,,tomorrow
+business seminar at bangalore upcoming,business|seminar,Business,bangalore,,future
+premium seminar tomorrow,seminar,,,false,tomorrow
+workshop at online today,workshop,,online,false,today
+webinar at delhi this week,webinar,,delhi,false,this_week
+paid yoga networking at chennai happening soon,yoga|networking,Health,chennai,false,future
+hackathon at chennai happening soon,hackathon,,chennai,,future
+conference at hyderabad weekend,conference,,hyderabad,,weekend
+cheap conference weekend,conference,,,,weekend
+webinar tomorrow,webinar,,,,tomorrow
+summit on marketing upcoming,marketing|summit,Business,,,future
+session at chennai today,session,,chennai,false,today
+exhibition tomorrow,exhibition,,,,tomorrow
+paid art expo at mumbai happening soon,art|expo,Arts,mumbai,false,future
+cheap hackathon on science happening soon,science|hackathon,Technology,,,future
+premium webinar this month,webinar,,,false,this_month
+ticketed talks next week,talks,,,false,next_week
+conference at chennai next week,conference,,chennai,false,next_week
+festival at delhi today,festival,,delhi,false,today
+business exhibition at bangalore tomorrow,business|exhibition,Business,bangalore,,tomorrow
+ticketed workshop on science next week,science|workshop,Technology,,false,next_week
+webinar at amal jyothi tomorrow,webinar,,amal jyothi,false,tomorrow
+music seminar this week in mumbai,music|seminar,Arts,mumbai,,this_week
+premium tech summit at remote today,tech|summit,Technology,remote,false,today
+webinar at amal jyothi today,webinar,,amal jyothi,false,today
+leadership exhibition this week in hyderabad,leadership|exhibition,Business,hyderabad,,this_week
+free conference weekend,conference,,,true,weekend
+paid concert weekend,concert,,,false,weekend
+music classes weekend in chennai,music|classes,Arts,chennai,true,weekend
+premium session on marketing this week,marketing|session,Business,,false,this_week
+talks at delhi weekend,talks,,delhi,,weekend
+cheap panel tomorrow,panel,,,,tomorrow
+paid meetup this week,meetup,,,false,this_week
+session on startup upcoming,startup|session,Business,,,future
+workshop at remote happening soon,workshop,,remote,false,future
+free festival on music today,music|festival,Arts,,true,today
+design conference tomorrow in amal jyothi,design|conference,Arts,amal jyothi,false,tomorrow
+ticketed conference upcoming,conference,,,false,future
+ticketed fitness conference at hyderabad tomorrow,fitness|conference,Health,hyderabad,false,tomorrow
+paid exhibition this month,exhibition,,,false,this_month
+premium meetup on music today,music|meetup,Arts,,false,today
+paid fitness summit at delhi happening soon,fitness|summit,Health,delhi,false,future
+ticketed festival next week,festival,,,false,next_week
+free talks tomorrow,talks,,,true,tomorrow
+marketing meetup this month in online,marketing|meetup,Business,online,,this_month
+marketing session today in pune,marketing|session,Business,pune,,today
+ticketed workshop on design weekend,design|workshop,Arts,,false,weekend
+hackathon on startup tomorrow,startup|hackathon,Business,,,tomorrow
+paid bootcamp this month,bootcamp,,,false,this_month
+premium festival on startup happening soon,startup|festival,Business,,false,future
+exhibition at online upcoming,exhibition,,online,,future
+paid meetup weekend,meetup,,,false,weekend
+paid summit on science weekend,science|summit,Technology,,false,weekend
+webinar at chennai weekend,webinar,,chennai,false,weekend
+networking at chennai today,networking,,chennai,false,today
+premium panel today,panel,,,false,today
+yoga exhibition happening soon in kochi,yoga|exhibition,Health,kochi,false,future
+fitness exhibition today in online,fitness|exhibition,Health,online,false,today
+free finance summit at mumbai upcoming,finance|summit,Business,mumbai,true,future
+concert upcoming,concert,,,,future
+yoga webinar happening soon in remote,yoga|webinar,Health,remote,false,future
+paid session on marketing this month,marketing|session,Business,,false,this_month
+exhibition next week,exhibition,,,,next_week
+art webinar this month in remote,art|webinar,Arts,remote,true,this_month
+concert at remote upcoming,concert,,remote,true,future
+leadership panel next week in online,leadership|panel,Business,online,false,next_week
+cheap festival upcoming,festival,,,,future
+workshop at online today,workshop,,online,,today
+free summit on leadership next week,leadership|summit,Business,,true,next_week
+ticketed summit today,summit,,,false,today
+concert weekend,concert,,,,weekend
+premium design classes at hyderabad weekend,design|classes,Arts,hyderabad,false,weekend
+paid classes on coding next week,coding|classes,Technology,,false,next_week
+classes on science happening soon,science|classes,Technology,,,future
+free networking tomorrow,networking,,,true,tomorrow
+marketing meetup weekend in trivandrum,marketing|meetup,Business,trivandrum,false,weekend
+exhibition at mumbai this month,exhibition,,mumbai,false,this_month
+business summit upcoming in amal jyothi,business|summit,Business,amal jyothi,false,future
+free talks on coding this week,coding|talks,Technology,,true,this_week
+concert at chennai next week,concert,,chennai,false,next_week
+science panel this week in kochi,science|panel,Technology,kochi,,this_week
+premium talks today,talks,,,false,today
+music workshop at trivandrum this month,music|workshop,Arts,trivandrum,,this_month
+cheap conference this month,conference,,,,this_month
+ticketed networking on coding this month,coding|networking,Technology,,false,this_month
+ticketed talks tomorrow,talks,,,false,tomorrow
+free science concert at trivandrum upcoming,science|concert,Technology,trivandrum,true,future
+premium webinar on design tomorrow,design|webinar,Arts,,false,tomorrow
+summit at remote weekend,summit,,remote,true,weekend
+ticketed coding seminar at bangalore tomorrow,coding|seminar,Technology,bangalore,false,tomorrow
+cheap expo next week,expo,,,,next_week
+cheap design festival at trivandrum this week,design|festival,Arts,trivandrum,,this_week
+cheap session on health today,health|session,Health,,,today
+cheap networking tomorrow,networking,,,,tomorrow
+workshop at mumbai upcoming,workshop,,mumbai,,future
+paid art exhibition at amal jyothi next week,art|exhibition,Arts,amal jyothi,false,next_week
+cheap science bootcamp at chennai today,science|bootcamp,Technology,chennai,,today
+ticketed talks on music weekend,music|talks,Arts,,false,weekend
+health classes this week in remote,health|classes,Health,remote,false,this_week
+ticketed conference on business next week,business|conference,Business,,false,next_week
+seminar at mumbai tomorrow,seminar,,mumbai,false,tomorrow
+networking tomorrow,networking,,,,tomorrow
+finance meetup this week in online,finance|meetup,Business,online,false,this_week
+cheap bootcamp on tech upcoming,tech|bootcamp,Technology,,,future
+coding conference happening soon in trivandrum,coding|conference,Technology,trivandrum,false,future
+meetup on marketing next week,marketing|meetup,Business,,,next_week
+premium meetup on design tomorrow,design|meetup,Arts,,false,tomorrow
+free expo tomorrow,expo,,,true,tomorrow
+ticketed exhibition on business upcoming,business|exhibition,Business,,false,future
+finance conference happening soon in remote,finance|conference,Business,remote,,future
+panel on business tomorrow,business|panel,Business,,,tomorrow
+cheap bootcamp this week,bootcamp,,,,this_week
+cheap workshop on design next week,design|workshop,Arts,,,next_week
+panel at pune happening soon,panel,,pune,false,future
+cheap exhibition this week,exhibition,,,,this_week
+paid business bootcamp at chennai tomorrow,business|bootcamp,Business,chennai,false,tomorrow
+paid festival on wellness tomorrow,wellness|festival,Health,,false,tomorrow
+hackathon at kochi happening soon,hackathon,,kochi,false,future
+cheap talks on finance happening soon,finance|talks,Business,,,future
+seminar on science tomorrow,science|seminar,Technology,,,tomorrow
+design seminar this week in amal jyothi,design|seminar,Arts,amal jyothi,false,this_week
+ticketed conference on business upcoming,business|conference,Business,,false,future
+startup summit next week in online,startup|summit,Business,online,,next_week
+finance expo upcoming in pune,finance|expo,Business,pune,true,future
+networking at online weekend,networking,,online,false,weekend
+concert at trivandrum next week,concert,,trivandrum,false,next_week
+yoga webinar at mumbai today,yoga|webinar,Health,mumbai,,today
+premium concert on music upcoming,music|concert,Arts,,false,future
+cheap hackathon tomorrow,hackathon,,,,tomorrow
+paid wellness concert at remote upcoming,wellness|concert,Health,remote,false,future
+ticketed seminar weekend,seminar,,,false,weekend
+exhibition at delhi weekend,exhibition,,delhi,false,weekend
+paid health networking at hyderabad this month,health|networking,Health,hyderabad,false,this_month
+premium coding networking at amal jyothi upcoming,coding|networking,Technology,amal jyothi,false,future
+premium summit this week,summit,,,false,this_week
+talks at hyderabad upcoming,talks,,hyderabad,,future
+webinar at chennai next week,webinar,,chennai,false,next_week
+premium workshop on business this week,business|workshop,Business,,false,this_week
+science concert at bangalore this week,science|concert,Technology,bangalore,,this_week
+health meetup this month in trivandrum,health|meetup,Health,trivandrum,false,this_month
+design concert next week in online,design|concert,Arts,online,,next_week
+business session today in kochi,business|session,Business,kochi,true,today
+yoga workshop happening soon in chennai,yoga|workshop,Health,chennai,,future
+cheap talks on startup today,startup|talks,Business,,,today
+cheap leadership webinar at trivandrum this month,leadership|webinar,Business,trivandrum,,this_month
+classes at kochi happening soon,classes,,kochi,,future
+health webinar at kochi upcoming,health|webinar,Health,kochi,,future
+seminar at remote next week,seminar,,remote,false,next_week
+seminar at delhi today,seminar,,delhi,false,today
+science seminar weekend in trivandrum,science|seminar,Technology,trivandrum,false,weekend
+free business bootcamp at online weekend,business|bootcamp,Business,online,true,weekend
+free panel on tech this week,tech|panel,Technology,,true,this_week
+webinar at trivandrum weekend,webinar,,trivandrum,true,weekend
+ticketed festival on yoga upcoming,yoga|festival,Health,,false,future
+classes tomorrow,classes,,,,tomorrow
+networking at hyderabad next week,networking,,hyderabad,,next_week
+free hackathon on business happening soon,business|hackathon,Business,,true,future
+finance bootcamp at hyderabad tomorrow,finance|bootcamp,Business,hyderabad,,tomorrow
+talks at kochi this week,talks,,kochi,,this_week
+ticketed summit next week,summit,,,false,next_week
+premium talks this month,talks,,,false,this_month
+festival weekend,festival,,,,weekend
+premium expo on yoga tomorrow,yoga|expo,Health,,false,tomorrow
+paid leadership workshop at remote this month,leadership|workshop,Business,remote,false,this_month
+panel on finance today,finance|panel,Business,,,today
+free festival today,festival,,,true,today
+conference at delhi upcoming,conference,,delhi,false,future
+cheap classes on marketing next week,marketing|classes,Business,,,next_week
+wellness meetup at chennai next week,wellness|meetup,Health,chennai,,next_week
+session on startup upcoming,startup|session,Business,,,future
+cheap wellness concert at bangalore happening soon,wellness|concert,Health,bangalore,,future
+cheap hackathon on coding tomorrow,coding|hackathon,Technology,,,tomorrow
+business panel at mumbai next week,business|panel,Business,mumbai,,next_week
+paid webinar on finance happening soon,finance|webinar,Business,,false,future
+yoga webinar this week in mumbai,yoga|webinar,Health,mumbai,true,this_week
+classes at online tomorrow,classes,,online,,tomorrow
+ticketed seminar on marketing this month,marketing|seminar,Business,,false,this_month
+tech seminar this week in kochi,tech|seminar,Technology,kochi,false,this_week
+conference on science tomorrow,science|conference,Technology,,,tomorrow
+exhibition at trivandrum upcoming,exhibition,,trivandrum,false,future
+art seminar happening soon in bangalore,art|seminar,Arts,bangalore,,future
+expo this month,expo,,,,this_month
+exhibition at mumbai next week,exhibition,,mumbai,false,next_week
+ticketed summit on startup today,startup|summit,Business,,false,today
+ticketed summit today,summit,,,false,today
+cheap hackathon happening soon,hackathon,,,,future
+music seminar next week in pune,music|seminar,Arts,pune,true,next_week
+paid hackathon tomorrow,hackathon,,,false,tomorrow
+bootcamp at bangalore happening soon,bootcamp,,bangalore,false,future
+finance workshop next week in kochi,finance|workshop,Business,kochi,false,next_week
+paid expo on yoga today,yoga|expo,Health,,false,today
+ticketed fitness exhibition at bangalore this month,fitness|exhibition,Health,bangalore,false,this_month
+premium seminar today,seminar,,,false,today
+meetup at hyderabad this week,meetup,,hyderabad,false,this_week
+networking on coding tomorrow,coding|networking,Technology,,,tomorrow
+free exhibition this week,exhibition,,,true,this_week
+art exhibition weekend in chennai,art|exhibition,Arts,chennai,true,weekend
+art conference happening soon in remote,art|conference,Arts,remote,true,future
+art seminar weekend in amal jyothi,art|seminar,Arts,amal jyothi,,weekend
+premium webinar on business this week,business|webinar,Business,,false,this_week
+hackathon at delhi tomorrow,hackathon,,delhi,false,tomorrow
+ticketed business webinar at mumbai this week,business|webinar,Business,mumbai,false,this_week
+tech classes next week in remote,tech|classes,Technology,remote,,next_week
+ticketed webinar on wellness weekend,wellness|webinar,Health,,false,weekend
+paid hackathon happening soon,hackathon,,,false,future
+ticketed conference weekend,conference,,,false,weekend
+workshop at online tomorrow,workshop,,online,,tomorrow
+webinar at online tomorrow,webinar,,online,false,tomorrow
+cheap concert on design happening soon,design|concert,Arts,,,future
+paid meetup on finance this month,finance|meetup,Business,,false,this_month
+meetup on coding today,coding|meetup,Technology,,,today
+cheap exhibition tomorrow,exhibition,,,,tomorrow
+design summit happening soon in trivandrum,design|summit,Arts,trivandrum,,future
+free meetup on music today,music|meetup,Arts,,true,today
+coding concert at mumbai this week,coding|concert,Technology,mumbai,,this_week
+wellness exhibition today in chennai,wellness|exhibition,Health,chennai,false,today
+expo at delhi next week,expo,,delhi,true,next_week
+cheap talks on business next week,business|talks,Business,,,next_week
+marketing summit this month in kochi,marketing|summit,Business,kochi,false,this_month
+marketing webinar weekend in bangalore,marketing|webinar,Business,bangalore,false,weekend
+paid workshop on wellness next week,wellness|workshop,Health,,false,next_week
+premium business bootcamp at remote this week,business|bootcamp,Business,remote,false,this_week
+marketing panel weekend in kochi,marketing|panel,Business,kochi,,weekend
+paid music session at hyderabad today,music|session,Arts,hyderabad,false,today
+ticketed seminar on design next week,design|seminar,Arts,,false,next_week
+cheap leadership hackathon at hyderabad this week,leadership|hackathon,Business,hyderabad,,this_week
+science exhibition tomorrow in amal jyothi,science|exhibition,Technology,amal jyothi,false,tomorrow
+premium panel on art upcoming,art|panel,Arts,,false,future
+free meetup next week,meetup,,,true,next_week
+music hackathon today in bangalore,music|hackathon,Arts,bangalore,false,today
+bootcamp at hyderabad tomorrow,bootcamp,,hyderabad,true,tomorrow
+free session on finance tomorrow,finance|session,Business,,true,tomorrow
+free bootcamp today,bootcamp,,,true,today
+workshop at trivandrum upcoming,workshop,,trivandrum,false,future
+cheap tech networking at bangalore next week,tech|networking,Technology,bangalore,,next_week
+art workshop this week in bangalore,art|workshop,Arts,bangalore,false,this_week
+cheap tech expo at kochi happening soon,tech|expo,Technology,kochi,,future
+premium classes tomorrow,classes,,,false,tomorrow
+free exhibition this month,exhibition,,,true,this_month
+premium coding meetup at remote this month,coding|meetup,Technology,remote,false,this_month
+bootcamp on finance happening soon,finance|bootcamp,Business,,,future
+free art seminar at trivandrum upcoming,art|seminar,Arts,trivandrum,true,future
+ticketed bootcamp tomorrow,bootcamp,,,false,tomorrow
+finance conference happening soon in pune,finance|conference,Business,pune,true,future
+ticketed coding summit at hyderabad tomorrow,coding|summit,Technology,hyderabad,false,tomorrow
+free webinar today,webinar,,,true,today
+free leadership talks at pune next week,leadership|talks,Business,pune,true,next_week
+cheap business hackathon at pune today,business|hackathon,Business,pune,,today
+cheap conference this month,conference,,,,this_month
+fitness hackathon weekend in mumbai,fitness|hackathon,Health,mumbai,true,weekend
+cheap bootcamp tomorrow,bootcamp,,,,tomorrow
+exhibition at online next week,exhibition,,online,false,next_week
+workshop at remote weekend,workshop,,remote,false,weekend
+marketing talks weekend in chennai,marketing|talks,Business,chennai,true,weekend
+festival at remote happening soon,festival,,remote,false,future
+seminar at amal jyothi today,seminar,,amal jyothi,,today
+ticketed webinar weekend,webinar,,,false,weekend
+premium summit today,summit,,,false,today
+bootcamp on marketing this week,marketing|bootcamp,Business,,,this_week
+cheap workshop this week,workshop,,,,this_week
+health expo today in remote,health|expo,Health,remote,true,today
+free wellness panel at kochi tomorrow,wellness|panel,Health,kochi,true,tomorrow
+cheap concert on leadership this week,leadership|concert,Business,,,this_week
+hackathon at bangalore next week,hackathon,,bangalore,,next_week
+classes at bangalore weekend,classes,,bangalore,true,weekend
+design workshop happening soon in online,design|workshop,Arts,online,,future
+meetup at online next week,meetup,,online,false,next_week
+premium session on finance this month,finance|session,Business,,false,this_month
+cheap bootcamp on finance weekend,finance|bootcamp,Business,,,weekend
+free festival happening soon,festival,,,true,future
+cheap leadership workshop at delhi weekend,leadership|workshop,Business,delhi,,weekend
+tech exhibition next week in trivandrum,tech|exhibition,Technology,trivandrum,,next_week
+free fitness seminar at kochi happening soon,fitness|seminar,Health,kochi,true,future
+ticketed talks today,talks,,,false,today
+concert this week,concert,,,,this_week
+expo at trivandrum weekend,expo,,trivandrum,,weekend
+startup workshop next week in hyderabad,startup|workshop,Business,hyderabad,false,next_week
+exhibition at delhi weekend,exhibition,,delhi,false,weekend
+premium session on science this week,science|session,Technology,,false,this_week
+cheap seminar on marketing this week,marketing|seminar,Business,,,this_week
+paid summit happening soon,summit,,,false,future
+fitness meetup upcoming in amal jyothi,fitness|meetup,Health,amal jyothi,false,future
+workshop on health next week,health|workshop,Health,,,next_week
+conference at kochi this month,conference,,kochi,true,this_month
+premium workshop on coding tomorrow,coding|workshop,Technology,,false,tomorrow
+free festival on business weekend,business|festival,Business,,true,weekend
+yoga talks today in hyderabad,yoga|talks,Health,hyderabad,false,today
+cheap classes on art upcoming,art|classes,Arts,,,future
+premium meetup on health next week,health|meetup,Health,,false,next_week
+free webinar this month,webinar,,,true,this_month
+design exhibition this week in mumbai,design|exhibition,Arts,mumbai,false,this_week
+coding hackathon next week in mumbai,coding|hackathon,Technology,mumbai,,next_week
+free seminar on business this month,business|seminar,Business,,true,this_month
+talks at pune this month,talks,,pune,,this_month
+cheap startup webinar at delhi next week,startup|webinar,Business,delhi,,next_week
+summit at remote weekend,summit,,remote,false,weekend
+ticketed seminar happening soon,seminar,,,false,future
+panel at kochi tomorrow,panel,,kochi,false,tomorrow
+meetup at amal jyothi this week,meetup,,amal jyothi,,this_week
+paid bootcamp on wellness today,wellness|bootcamp,Health,,false,today
+health summit this month in hyderabad,health|summit,Health,hyderabad,,this_month
+free art webinar at kochi today,art|webinar,Arts,kochi,true,today
+summit at remote happening soon,summit,,remote,,future
+summit on leadership this week,leadership|summit,Business,,,this_week
+ticketed startup expo at chennai this week,startup|expo,Business,chennai,false,this_week
+fitness exhibition today in delhi,fitness|exhibition,Health,delhi,true,today
+hackathon at mumbai today,hackathon,,mumbai,true,today
+concert at amal jyothi this week,concert,,amal jyothi,false,this_week
+business bootcamp this month in amal jyothi,business|bootcamp,Business,amal jyothi,,this_month
+premium expo happening soon,expo,,,false,future
+free talks on finance happening soon,finance|talks,Business,,true,future
+coding bootcamp weekend in trivandrum,coding|bootcamp,Technology,trivandrum,true,weekend
+wellness networking weekend in trivandrum,wellness|networking,Health,trivandrum,,weekend
+premium conference on art today,art|conference,Arts,,false,today
+ticketed meetup happening soon,meetup,,,false,future
+concert at amal jyothi tomorrow,concert,,amal jyothi,,tomorrow
+talks at hyderabad tomorrow,talks,,hyderabad,true,tomorrow
+summit today,summit,,,,today
+free meetup this month,meetup,,,true,this_month
+cheap classes upcoming,classes,,,,future
+premium festival weekend,festival,,,false,weekend
+cheap tech classes at pune weekend,tech|classes,Technology,pune,,weekend
+free science seminar at pune this week,science|seminar,Technology,pune,true,this_week
+expo on design today,design|expo,Arts,,,today
+free seminar this month,seminar,,,true,this_month
+business session this month in delhi,business|session,Business,delhi,true,this_month
+startup bootcamp this week in chennai,startup|bootcamp,Business,chennai,,this_week
+expo at online weekend,expo,,online,true,weekend
+business session upcoming in trivandrum,business|session,Business,trivandrum,false,future
+paid workshop on wellness tomorrow,wellness|workshop,Health,,false,tomorrow
+ticketed classes tomorrow,classes,,,false,tomorrow
+ticketed bootcamp weekend,bootcamp,,,false,weekend
+festival at remote this month,festival,,remote,false,this_month
+coding summit upcoming in amal jyothi,coding|summit,Technology,amal jyothi,false,future
+paid seminar on wellness today,wellness|seminar,Health,,false,today
+design concert today in delhi,design|concert,Arts,delhi,false,today
+paid conference on music upcoming,music|conference,Arts,,false,future
+hackathon at mumbai happening soon,hackathon,,mumbai,false,future
+premium marketing festival at online upcoming,marketing|festival,Business,online,false,future
+expo at hyderabad upcoming,expo,,hyderabad,true,future
+coding exhibition upcoming in delhi,coding|exhibition,Technology,delhi,,future
+ticketed expo upcoming,expo,,,false,future
+bootcamp at chennai this week,bootcamp,,chennai,false,this_week
+hackathon at amal jyothi weekend,hackathon,,amal jyothi,false,weekend
+conference at pune this week,conference,,pune,,this_week
+tech session today in bangalore,tech|session,Technology,bangalore,,today
+webinar weekend,webinar,,,,weekend
+free festival on design this month,design|festival,Arts,,true,this_month
+wellness expo upcoming in hyderabad,wellness|expo,Health,hyderabad,,future
+paid classes today,classes,,,false,today
+webinar at hyderabad happening soon,webinar,,hyderabad,,future
+free session upcoming,session,,,true,future
+free wellness hackathon at remote tomorrow,wellness|hackathon,Health,remote,true,tomorrow
+cheap seminar weekend,seminar,,,,weekend
+premium bootcamp upcoming,bootcamp,,,false,future
+coding expo today in remote,coding|expo,Technology,remote,,today
+exhibition this week,exhibition,,,,this_week
+free fitness summit at delhi weekend,fitness|summit,Health,delhi,true,weekend
+hackathon at bangalore tomorrow,hackathon,,bangalore,false,tomorrow
+free conference tomorrow,conference,,,true,tomorrow
+premium wellness hackathon at amal jyothi next week,wellness|hackathon,Health,amal jyothi,false,next_week
+yoga hackathon this month in remote,yoga|hackathon,Health,remote,false,this_month
+yoga seminar next week in online,yoga|seminar,Health,online,false,next_week
+music webinar at mumbai this month,music|webinar,Arts,mumbai,,this_month
+yoga bootcamp at remote this month,yoga|bootcamp,Health,remote,,this_month
+paid wellness workshop at kochi upcoming,wellness|workshop,Health,kochi,false,future
+paid design concert at trivandrum today,design|concert,Arts,trivandrum,false,today
+classes at remote happening soon,classes,,remote,,future
+paid webinar tomorrow,webinar,,,false,tomorrow
+cheap finance session at mumbai this week,finance|session,Business,mumbai,,this_week
+meetup at remote happening soon,meetup,,remote,false,future
+ticketed seminar on leadership today,leadership|seminar,Business,,false,today
+paid science expo at remote this week,science|expo,Technology,remote,false,this_week
+free festival on coding tomorrow,coding|festival,Technology,,true,tomorrow
+paid exhibition on art happening soon,art|exhibition,Arts,,false,future
+cheap panel on finance this month,finance|panel,Business,,,this_month
+hackathon at pune happening soon,hackathon,,pune,true,future
+concert at remote next week,concert,,remote,false,next_week
+paid summit on music next week,music|summit,Arts,,false,next_week
+premium talks on leadership upcoming,leadership|talks,Business,,false,future
+cheap science talks at hyderabad this month,science|talks,Technology,hyderabad,,this_month
+coding exhibition happening soon in hyderabad,coding|exhibition,Technology,hyderabad,false,future
+ticketed expo on science happening soon,science|expo,Technology,,false,future
+coding exhibition today in kochi,coding|exhibition,Technology,kochi,false,today
+leadership hackathon happening soon in remote,leadership|hackathon,Business,remote,false,future
+marketing talks tomorrow in delhi,marketing|talks,Business,delhi,false,tomorrow
+ticketed startup expo at online tomorrow,startup|expo,Business,online,false,tomorrow
+cheap coding networking at trivandrum upcoming,coding|networking,Technology,trivandrum,,future
+coding conference this week in pune,coding|conference,Technology,pune,false,this_week
+session on music today,music|session,Arts,,,today
+wellness workshop happening soon in remote,wellness|workshop,Health,remote,false,future
+workshop at hyderabad this week,workshop,,hyderabad,,this_week
+premium leadership networking at amal jyothi this week,leadership|networking,Business,amal jyothi,false,this_week
+premium networking on health today,health|networking,Health,,false,today
+workshop weekend,workshop,,,,weekend
+free talks weekend,talks,,,true,weekend
+concert this week,concert,,,,this_week
+ticketed bootcamp this month,bootcamp,,,false,this_month
+summit today,summit,,,,today
+paid classes on fitness this week,fitness|classes,Health,,false,this_week
+paid festival on startup today,startup|festival,Business,,false,today
+paid bootcamp on leadership weekend,leadership|bootcamp,Business,,false,weekend
+art hackathon this week in amal jyothi,art|hackathon,Arts,amal jyothi,true,this_week
+science exhibition next week in delhi,science|exhibition,Technology,delhi,,next_week
+panel at trivandrum happening soon,panel,,trivandrum,false,future
+design hackathon happening soon in amal jyothi,design|hackathon,Arts,amal jyothi,false,future
+music bootcamp tomorrow in kochi,music|bootcamp,Arts,kochi,false,tomorrow
+paid festival on fitness tomorrow,fitness|festival,Health,,false,tomorrow
+tech seminar upcoming in pune,tech|seminar,Technology,pune,false,future
+workshop at amal jyothi happening soon,workshop,,amal jyothi,false,future
+music exhibition today in remote,music|exhibition,Arts,remote,,today
+leadership bootcamp next week in remote,leadership|bootcamp,Business,remote,,next_week
+festival on coding today,coding|festival,Technology,,,today
+coding classes weekend in trivandrum,coding|classes,Technology,trivandrum,false,weekend
+fitness summit this month in kochi,fitness|summit,Health,kochi,false,this_month
+meetup tomorrow,meetup,,,,tomorrow
+marketing festival weekend in delhi,marketing|festival,Business,delhi,false,weekend
+panel at trivandrum upcoming,panel,,trivandrum,,future
+session at remote today,session,,remote,,today
+panel at pune next week,panel,,pune,false,next_week
+business meetup tomorrow in pune,business|meetup,Business,pune,,tomorrow
+cheap hackathon upcoming,hackathon,,,,future
+paid session this week,session,,,false,this_week
+free meetup on yoga this month,yoga|meetup,Health,,true,this_month
+panel on music happening soon,music|panel,Arts,,,future
+free classes on finance next week,finance|classes,Business,,true,next_week
+ticketed design expo at hyderabad this month,design|expo,Arts,hyderabad,false,this_month
+festival this week,festival,,,,this_week
+premium talks today,talks,,,false,today
+workshop at bangalore this week,workshop,,bangalore,false,this_week
+expo weekend,expo,,,,weekend
+fitness festival at hyderabad this week,fitness|festival,Health,hyderabad,,this_week
+premium health festival at hyderabad today,health|festival,Health,hyderabad,false,today
+networking at mumbai today,networking,,mumbai,true,today
+free webinar tomorrow,webinar,,,true,tomorrow
+workshop at online this month,workshop,,online,,this_month
+summit on tech this week,tech|summit,Technology,,,this_week
+hackathon at pune this month,hackathon,,pune,false,this_month
+free seminar this month,seminar,,,true,this_month
+paid bootcamp next week,bootcamp,,,false,next_week
+session at amal jyothi today,session,,amal jyothi,false,today
+free yoga webinar at amal jyothi tomorrow,yoga|webinar,Health,amal jyothi,true,tomorrow
+marketing summit at delhi this week,marketing|summit,Business,delhi,,this_week
+premium wellness concert at amal jyothi upcoming,wellness|concert,Health,amal jyothi,false,future
+leadership exhibition tomorrow in online,leadership|exhibition,Business,online,false,tomorrow
+ticketed panel on science weekend,science|panel,Technology,,false,weekend
+free art workshop at pune next week,art|workshop,Arts,pune,true,next_week
+health talks today in hyderabad,health|talks,Health,hyderabad,true,today
+marketing workshop next week in online,marketing|workshop,Business,online,false,next_week
+free networking tomorrow,networking,,,true,tomorrow
+premium concert next week,concert,,,false,next_week
+premium hackathon weekend,hackathon,,,false,weekend
+meetup happening soon,meetup,,,,future
+expo at bangalore this week,expo,,bangalore,false,this_week
+workshop at kochi this month,workshop,,kochi,false,this_month
+networking on design this month,design|networking,Arts,,,this_month
+free exhibition this week,exhibition,,,true,this_week
+webinar at online next week,webinar,,online,true,next_week
+free talks on leadership upcoming,leadership|talks,Business,,true,future
+tech festival this week in remote,tech|festival,Technology,remote,,this_week
+premium workshop on design happening soon,design|workshop,Arts,,false,future
+business webinar this month in online,business|webinar,Business,online,false,this_month
+paid workshop on music this month,music|workshop,Arts,,false,this_month
+ticketed tech talks at bangalore happening soon,tech|talks,Technology,bangalore,false,future
+seminar at amal jyothi upcoming,seminar,,amal jyothi,true,future
+workshop at amal jyothi this week,workshop,,amal jyothi,false,this_week
+seminar at remote upcoming,seminar,,remote,true,future
+design talks this week in mumbai,design|talks,Arts,mumbai,false,this_week
+marketing hackathon upcoming in delhi,marketing|hackathon,Business,delhi,false,future
+meetup next week,meetup,,,,next_week
+free networking on yoga tomorrow,yoga|networking,Health,,true,tomorrow
+cheap yoga expo at online weekend,yoga|expo,Health,online,,weekend
+finance talks next week in mumbai,finance|talks,Business,mumbai,false,next_week
+workshop at remote tomorrow,workshop,,remote,,tomorrow
+ticketed expo on design this month,design|expo,Arts,,false,this_month
+cheap festival on startup happening soon,startup|festival,Business,,,future
+design hackathon happening soon in chennai,design|hackathon,Arts,chennai,,future
+premium conference upcoming,conference,,,false,future
+yoga seminar weekend in online,yoga|seminar,Health,online,false,weekend
+paid bootcamp next week,bootcamp,,,false,next_week
+paid art concert at mumbai upcoming,art|concert,Arts,mumbai,false,future
+coding webinar tomorrow in remote,coding|webinar,Technology,remote,false,tomorrow
+free session upcoming,session,,,true,future
+cheap classes on art upcoming,art|classes,Arts,,,future
+premium workshop on finance happening soon,finance|workshop,Business,,false,future
+tech webinar today in trivandrum,tech|webinar,Technology,trivandrum,false,today
+bootcamp at amal jyothi this month,bootcamp,,amal jyothi,true,this_month
+bootcamp at trivandrum this week,bootcamp,,trivandrum,true,this_week
+paid workshop on yoga weekend,yoga|workshop,Health,,false,weekend
+coding festival this week in bangalore,coding|festival,Technology,bangalore,false,this_week
+business festival weekend in hyderabad,business|festival,Business,hyderabad,false,weekend
+session at bangalore tomorrow,session,,bangalore,,tomorrow
+bootcamp at chennai this month,bootcamp,,chennai,,this_month
+wellness festival this month in online,wellness|festival,Health,online,true,this_month
+free webinar on coding tomorrow,coding|webinar,Technology,,true,tomorrow
+networking on startup tomorrow,startup|networking,Business,,,tomorrow
+ticketed talks on marketing this month,marketing|talks,Business,,false,this_month
+free science bootcamp at mumbai tomorrow,science|bootcamp,Technology,mumbai,true,tomorrow
+ticketed summit upcoming,summit,,,false,future
+ticketed business conference at pune this month,business|conference,Business,pune,false,this_month
+festival at kochi happening soon,festival,,kochi,,future
+premium bootcamp on wellness this month,wellness|bootcamp,Health,,false,this_month
+talks today,talks,,,,today
+paid art meetup at delhi next week,art|meetup,Arts,delhi,false,next_week
+seminar on marketing today,marketing|seminar,Business,,,today
+yoga concert weekend in kochi,yoga|concert,Health,kochi,false,weekend
+premium panel this week,panel,,,false,this_week
+conference at delhi this week,conference,,delhi,,this_week
+free networking today,networking,,,true,today
+premium conference on yoga weekend,yoga|conference,Health,,false,weekend
+wellness session happening soon in hyderabad,wellness|session,Health,hyderabad,false,future
+webinar at kochi happening soon,webinar,,kochi,false,future
+music concert next week in delhi,music|concert,Arts,delhi,false,next_week
+free art webinar at delhi tomorrow,art|webinar,Arts,delhi,true,tomorrow
+finance classes weekend in chennai,finance|classes,Business,chennai,,weekend
+free tech summit at online tomorrow,tech|summit,Technology,online,true,tomorrow
+free summit happening soon,summit,,,true,future
+cheap tech webinar at remote today,tech|webinar,Technology,remote,,today
+talks at kochi this week,talks,,kochi,false,this_week
+paid business summit at hyderabad upcoming,business|summit,Business,hyderabad,false,future
+festival at amal jyothi today,festival,,amal jyothi,,today
+leadership exhibition upcoming in chennai,leadership|exhibition,Business,chennai,false,future
+leadership panel this week in chennai,leadership|panel,Business,chennai,false,this_week
+finance festival today in kochi,finance|festival,Business,kochi,false,today
+classes at online this week,classes,,online,true,this_week
+yoga seminar this month in hyderabad,yoga|seminar,Health,hyderabad,false,this_month
+free seminar next week,seminar,,,true,next_week
+yoga meetup happening soon in online,yoga|meetup,Health,online,false,future
+premium exhibition next week,exhibition,,,false,next_week
+premium bootcamp on startup upcoming,startup|bootcamp,Business,,false,future
+concert at pune weekend,concert,,pune,false,weekend
+cheap conference this month,conference,,,,this_month
+ticketed art networking at online this month,art|networking,Arts,online,false,this_month
+hackathon at pune tomorrow,hackathon,,pune,false,tomorrow
+free classes on tech happening soon,tech|classes,Technology,,true,future
+seminar at amal jyothi upcoming,seminar,,amal jyothi,,future
+bootcamp at remote this month,bootcamp,,remote,,this_month
+festival at amal jyothi happening soon,festival,,amal jyothi,false,future
+ticketed exhibition on fitness upcoming,fitness|exhibition,Health,,false,future
+networking at hyderabad today,networking,,hyderabad,,today
+conference at pune this week,conference,,pune,true,this_week
+premium expo upcoming,expo,,,false,future
+premium exhibition on wellness this month,wellness|exhibition,Health,,false,this_month
+paid classes on tech tomorrow,tech|classes,Technology,,false,tomorrow
+ticketed leadership concert at kochi tomorrow,leadership|concert,Business,kochi,false,tomorrow
+design webinar upcoming in bangalore,design|webinar,Arts,bangalore,,future
+paid design expo at pune tomorrow,design|expo,Arts,pune,false,tomorrow
+exhibition at pune this month,exhibition,,pune,false,this_month
+bootcamp at online tomorrow,bootcamp,,online,false,tomorrow
+paid session on music next week,music|session,Arts,,false,next_week
+cheap meetup weekend,meetup,,,,weekend
+meetup this month,meetup,,,,this_month
+leadership workshop weekend in online,leadership|workshop,Business,online,,weekend
+hackathon at online happening soon,hackathon,,online,false,future
+leadership talks upcoming in remote,leadership|talks,Business,remote,,future
+marketing talks today in remote,marketing|talks,Business,remote,,today
+bootcamp at amal jyothi weekend,bootcamp,,amal jyothi,false,weekend
+free workshop today,workshop,,,true,today
+paid workshop tomorrow,workshop,,,false,tomorrow
+ticketed festival weekend,festival,,,false,weekend
+startup concert upcoming in hyderabad,startup|concert,Business,hyderabad,false,future
+summit weekend,summit,,,,weekend
+classes at mumbai happening soon,classes,,mumbai,false,future
+conference on startup today,startup|conference,Business,,,today
+business conference this week in mumbai,business|conference,Business,mumbai,,this_week
+networking upcoming,networking,,,,future
+premium art talks at delhi tomorrow,art|talks,Arts,delhi,false,tomorrow
+workshop at pune upcoming,workshop,,pune,false,future
+yoga meetup tomorrow in trivandrum,yoga|meetup,Health,trivandrum,,tomorrow
+startup talks this week in bangalore,startup|talks,Business,bangalore,,this_week
+wellness hackathon this month in delhi,wellness|hackathon,Health,delhi,false,this_month
+business session today in delhi,business|session,Business,delhi,false,today
+free talks on tech upcoming,tech|talks,Technology,,true,future
+classes at delhi this week,classes,,delhi,,this_week
+webinar weekend,webinar,,,,weekend
+cheap seminar on marketing today,marketing|seminar,Business,,,today
+music seminar tomorrow in remote,music|seminar,Arts,remote,,tomorrow
+health meetup next week in kochi,health|meetup,Health,kochi,false,next_week
+music conference next week in amal jyothi,music|conference,Arts,amal jyothi,,next_week
+free yoga exhibition at mumbai tomorrow,yoga|exhibition,Health,mumbai,true,tomorrow
+networking at hyderabad this week,networking,,hyderabad,false,this_week
+design panel this week in amal jyothi,design|panel,Arts,amal jyothi,false,this_week
+marketing hackathon upcoming in chennai,marketing|hackathon,Business,chennai,false,future
+leadership networking happening soon in chennai,leadership|networking,Business,chennai,false,future
+ticketed classes on wellness happening soon,wellness|classes,Health,,false,future
+premium talks on design today,design|talks,Arts,,false,today
+session at kochi today,session,,kochi,,today
+ticketed panel on design happening soon,design|panel,Arts,,false,future
+design expo tomorrow in kochi,design|expo,Arts,kochi,false,tomorrow
+science expo tomorrow in chennai,science|expo,Technology,chennai,false,tomorrow

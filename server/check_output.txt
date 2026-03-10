@@ -1,0 +1,17 @@
+Connected to MongoDB
+Current Time: 2026-03-09T06:05:48.442Z
+Recent Memories:
+- Memory ID: 69ae5278c9b90e1c81e4f764
+  Event: Hackathon (69a6834b116d7fd29f640cb2)
+  IsCompleted: false
+  StartDate: 2026-03-09T04:53:00.000Z
+  EndDate: undefined
+  Calculated End: 2026-03-09T07:53:00.000Z
+  Live Match: true
+- Memory ID: 69ae4dd4fe16d114e0b2d915
+  Event: Hackathon (698438ed1f4d18c9692e2455)
+  IsCompleted: true
+  StartDate: 2026-02-26T00:58:00.000Z
+  EndDate: 2026-03-03T04:03:00.000Z
+  Calculated End: 2026-03-03T04:03:00.000Z
+  Live Match: false

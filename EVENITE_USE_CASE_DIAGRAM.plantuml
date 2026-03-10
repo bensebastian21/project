@@ -1,0 +1,44 @@
+@startuml
+' Use Case Diagram for Evenite System
+title Evenite: Event Management System - Use Case Diagram
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+left to right direction
+actor "Student" as student
+actor "Host" as host
+actor "Administrator" as admin
+
+rectangle "Evenite System" {
+  student -- (Browse Events)
+  student -- (Register for Event)
+  student -- (View Registration Status)
+  student -- (Provide Feedback)
+  student -- (Collect Certificate)
+  student -- (Manage Profile)
+  student -- (Connect with Peers)
+  
+  host -- (Create Event)
+  host -- (Manage Event)
+  host -- (Track Registrations)
+  host -- (Generate Certificate)
+  host -- (View Analytics)
+  host -- (Manage Profile)
+  
+  admin -- (Manage Users)
+  admin -- (Verify Students)
+  admin -- (Monitor System)
+  admin -- (Generate Reports)
+  admin -- (Manage Content)
+  admin -- (Configure System)
+  
+  (Browse Events) .> (Search Events) : extends
+  (Browse Events) .> (Filter Events) : extends
+  (Register for Event) .> (Cancel Registration) : extends
+  (Manage Event) .> (Update Event) : extends
+  (Manage Event) .> (Delete Event) : extends
+  (Manage Event) .> (Publish Event) : extends
+}
+@enduml

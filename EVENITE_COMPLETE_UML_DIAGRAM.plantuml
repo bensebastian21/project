@@ -1,0 +1,455 @@
+@startuml
+' Title and Theme
+title Evenite: Event Management System for Students - Complete UML Diagram
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+
+' Package structure
+package "Evenite System" {
+  ' Actors
+  actor "Student" as student
+  actor "Host" as host
+  actor "Administrator" as admin
+  
+  ' Use Case Diagram
+  rectangle "Use Cases" [
+    == Use Case Diagram ==
+    ....
+  ]
+  
+  student -- (Browse Events)
+  student -- (Register for Event)
+  student -- (View Registration Status)
+  student -- (Provide Feedback)
+  student -- (Collect Certificate)
+  student -- (Manage Profile)
+  student -- (Connect with Peers)
+  
+  host -- (Create Event)
+  host -- (Manage Event)
+  host -- (Track Registrations)
+  host -- (Generate Certificate)
+  host -- (View Analytics)
+  host -- (Manage Profile)
+  
+  admin -- (Manage Users)
+  admin -- (Verify Students)
+  admin -- (Monitor System)
+  admin -- (Generate Reports)
+  admin -- (Manage Content)
+  admin -- (Configure System)
+  
+  (Browse Events) .> (Search Events) : extends
+  (Browse Events) .> (Filter Events) : extends
+  (Register for Event) .> (Cancel Registration) : extends
+  (Manage Event) .> (Update Event) : extends
+  (Manage Event) .> (Delete Event) : extends
+  (Manage Event) .> (Publish Event) : extends
+  
+  ' Class Diagram
+  rectangle "Class Diagram" [
+    == Class Diagram ==
+    ....
+  ]
+  
+  class User {
+    -userId: String
+    -username: String
+    -email: String
+    -password: String
+    -role: String
+    -profilePic: String
+    -createdAt: Date
+    -updatedAt: Date
+    +login()
+    +logout()
+    +updateProfile()
+  }
+  
+  class StudentClass {
+    -studentId: String
+    -institute: String
+    -phone: String
+    -isVerified: Boolean
+    +registerForEvent()
+    +provideFeedback()
+    +collectCertificate()
+  }
+  
+  class HostClass {
+    -hostId: String
+    -organization: String
+    -contactInfo: String
+    +createEvent()
+    +manageEvent()
+    +trackRegistrations()
+  }
+  
+  class AdministratorClass {
+    -adminId: String
+    -permissions: String[]
+    +manageUsers()
+    +verifyStudents()
+    +monitorSystem()
+  }
+  
+  class Event {
+    -eventId: String
+    -title: String
+    -description: String
+    -date: Date
+    -location: String
+    -capacity: Integer
+    -status: String
+    +create()
+    +update()
+    +delete()
+    +publish()
+  }
+  
+  class Registration {
+    -registrationId: String
+    -status: String
+    -registeredAt: Date
+    -attended: Boolean
+    +confirm()
+    +cancel()
+  }
+  
+  class Feedback {
+    -feedbackId: String
+    -rating: Integer
+    -comment: String
+    -submittedAt: Date
+    +submit()
+  }
+  
+  class Certificate {
+    -certificateId: String
+    -issuedAt: Date
+    -expiresAt: Date
+    -certificateUrl: String
+    +generate()
+    +revoke()
+  }
+  
+  class Notification {
+    -notificationId: String
+    -message: String
+    -timestamp: Date
+    -isRead: Boolean
+    +send()
+    +markAsRead()
+  }
+  
+  ' Class Relationships
+  User <|-- StudentClass
+  User <|-- HostClass
+  User <|-- AdministratorClass
+  
+  StudentClass "1" -- "0..*" Registration
+  HostClass "1" -- "0..*" Event
+  Event "1" -- "0..*" Registration
+  Event "1" -- "0..*" Feedback
+  Event "1" -- "0..*" Certificate
+  
+  Registration "0..*" -- "1" Event
+  Registration "0..*" -- "1" StudentClass
+  Feedback "0..*" -- "1" Event
+  Feedback "0..*" -- "1" StudentClass
+  Certificate "0..*" -- "1" Event
+  Certificate "0..*" -- "1" StudentClass
+  
+  User "1" -- "0..*" Notification
+  Event "1" -- "0..*" Notification
+  
+  ' Object Diagram
+  rectangle "Object Diagram" [
+    == Object Diagram ==
+    ....
+  ]
+  
+  object "student1: Student" as s1 {
+    userId = "S001"
+    username = "john_doe"
+    email = "john@example.com"
+    role = "student"
+  }
+  
+  object "host1: Host" as h1 {
+    userId = "H001"
+    username = "tech_fest_org"
+    email = "contact@techfest.com"
+    role = "host"
+  }
+  
+  object "event1: Event" as e1 {
+    eventId = "E001"
+    title = "Tech Fest 2025"
+    date = "2025-12-15"
+    location = "Main Auditorium"
+    capacity = 200
+  }
+  
+  object "registration1: Registration" as r1 {
+    registrationId = "R001"
+    status = "confirmed"
+    attended = false
+  }
+  
+  object "feedback1: Feedback" as f1 {
+    feedbackId = "F001"
+    rating = 5
+    comment = "Great event!"
+  }
+  
+  s1 --> r1
+  h1 --> e1
+  e1 --> r1
+  r1 --> f1
+  
+  ' Component Diagram
+  rectangle "Component Diagram" [
+    == Component Diagram ==
+    ....
+  ]
+  
+  package "Frontend" {
+    [React App] as frontend
+    [Authentication Module] as authModule
+    [Event Management Module] as eventModule
+    [User Profile Module] as profileModule
+    [Notification Module] as notifModule
+  }
+  
+  package "Backend" {
+    [API Gateway] as apiGateway
+    [Auth Service] as authService
+    [Event Service] as eventService
+    [User Service] as userService
+    [Notification Service] as notifService
+    [Database Adapter] as dbAdapter
+  }
+  
+  package "Database" {
+    [MongoDB] as database
+  }
+  
+  package "External Services" {
+    [Cloudinary] as cloudinary
+    [Email Service] as emailService
+  }
+  
+  frontend --> apiGateway : HTTP/HTTPS
+  authModule --> authService
+  eventModule --> eventService
+  profileModule --> userService
+  notifModule --> notifService
+  
+  apiGateway --> authService : REST API
+  apiGateway --> eventService : REST API
+  apiGateway --> userService : REST API
+  apiGateway --> notifService : REST API
+  
+  authService --> dbAdapter
+  eventService --> dbAdapter
+  userService --> dbAdapter
+  notifService --> dbAdapter
+  dbAdapter --> database
+  
+  eventService --> cloudinary : Image Storage
+  notifService --> emailService : Send Emails
+  
+  ' Deployment Diagram
+  rectangle "Deployment Diagram" [
+    == Deployment Diagram ==
+    ....
+  ]
+  
+  node "Client Devices" {
+    node "Browser" {
+      [Web Application] as webapp
+    }
+  }
+  
+  node "Vercel Cloud" {
+    node "Frontend Server" {
+      [React Frontend] as frontendDeploy
+    }
+    
+    node "Backend Server" {
+      [Node.js API] as backendDeploy
+    }
+  }
+  
+  node "Database Server" {
+    [MongoDB Atlas] as databaseDeploy
+  }
+  
+  node "Cloud Storage" {
+    [Cloudinary Storage] as storageDeploy
+  }
+  
+  node "Email Service" {
+    [SMTP Server] as emailDeploy
+  }
+  
+  webapp --> frontendDeploy : HTTPS
+  frontendDeploy --> backendDeploy : HTTPS
+  backendDeploy --> databaseDeploy : MongoDB Wire Protocol
+  backendDeploy --> storageDeploy : HTTPS
+  backendDeploy --> emailDeploy : SMTP
+  
+  ' State Chart Diagrams
+  rectangle "State Chart Diagrams" [
+    == State Chart Diagrams ==
+    ....
+  ]
+  
+  state "User Authentication States" as AuthState {
+    [*] --> LoggedOut
+    LoggedOut --> LoggingIn : submit credentials
+    LoggingIn --> Authenticated : valid credentials
+    LoggingIn --> Error : invalid credentials
+    Error --> LoggingIn : retry
+    Authenticated --> LoggedOut : logout
+    Authenticated --> Active : continue session
+    Active --> Authenticated : session timeout
+    Active --> LoggedOut : logout
+    
+    state LoggingIn {
+      [*] --> ValidatingInput
+      ValidatingInput --> CheckingCredentials : input valid
+      CheckingCredentials --> AuthSuccess : credentials valid
+      CheckingCredentials --> AuthFailure : credentials invalid
+      AuthSuccess --> [*]
+      AuthFailure --> [*]
+    }
+  }
+  
+  state "Event Lifecycle States" as EventState {
+    [*] --> Draft
+    Draft --> Published : publish event
+    Draft --> Cancelled : cancel event
+    Published --> RegistrationOpen : open registration
+    RegistrationOpen --> RegistrationClosed : close registration
+    RegistrationClosed --> InProgress : event starts
+    InProgress --> Completed : event ends
+    Completed --> CertificateGeneration : generate certificates
+    CertificateGeneration --> FeedbackCollection : collect feedback
+    FeedbackCollection --> Archived : archive event
+    Cancelled --> [*]
+    Archived --> [*]
+    
+    Draft : Event created
+    Published : Event visible to users
+    RegistrationOpen : Users can register
+    RegistrationClosed : Registration deadline passed
+    InProgress : Event is happening
+    Completed : Event finished
+    CertificateGeneration : Creating certificates
+    FeedbackCollection : Collecting feedback
+    Archived : Event archived
+    Cancelled : Event cancelled
+  }
+  
+  ' Activity Diagrams
+  rectangle "Activity Diagrams" [
+    == Activity Diagrams ==
+    ....
+  ]
+  
+  activity "Event Registration Process" as RegActivity {
+    [*] --> Start
+    Start --> BrowseEvents
+    BrowseEvents --> SelectEvent : Event chosen
+    SelectEvent --> CheckAvailability : Check if event has capacity
+    CheckAvailability --> RegistrationForm : Event has capacity
+    CheckAvailability --> EventFull : Event is full
+    EventFull --> BrowseEvents : Choose another event
+    RegistrationForm --> FillDetails : Enter personal info
+    FillDetails --> SubmitRegistration : Submit form
+    SubmitRegistration --> ValidateInput : Validate data
+    ValidateInput --> SaveRegistration : Data valid
+    ValidateInput --> ShowErrors : Data invalid
+    ShowErrors --> FillDetails : Correct errors
+    SaveRegistration --> SendConfirmation : Save to database
+    SendConfirmation --> SendNotification : Notify user
+    SendNotification --> RegistrationComplete
+    RegistrationComplete --> [*]
+  }
+  
+  activity "Event Creation Process" as CreateActivity {
+    [*] --> StartCreate
+    StartCreate --> LoginAsHost
+    LoginAsHost --> AccessDashboard : Successful login
+    AccessDashboard --> CreateEvent : Click create event
+    CreateEvent --> EventForm : Display form
+    EventForm --> FillEventDetails : Enter event info
+    FillEventDetails --> ValidateDetails : Submit form
+    ValidateDetails --> SaveEvent : Details valid
+    ValidateDetails --> ShowErrorsCreate : Details invalid
+    ShowErrorsCreate --> FillEventDetails : Correct errors
+    SaveEvent --> UploadMedia : Save to database
+    UploadMedia --> ProcessUpload : Upload images
+    ProcessUpload --> PublishEvent : Media processed
+    PublishEvent --> NotifyFollowers : Send notifications
+    NotifyFollowers --> EventPublished : Complete
+    EventPublished --> [*]
+  }
+  
+  ' Sequence Diagrams
+  rectangle "Sequence Diagrams" [
+    == Sequence Diagrams ==
+    ....
+  ]
+  
+  == User Registration Sequence ==
+  actor UserSeq as "User"
+  participant "Frontend" as FES
+  participant "Auth Service" as AuthS
+  participant "Database" as DBS
+  
+  UserSeq -> FES: Enter registration details
+  FES -> AuthS: Validate input
+  AuthS -> AuthS: Hash password
+  AuthS -> DBS: Save user data
+  DBS --> AuthS: Confirmation
+  AuthS --> FES: Registration success
+  FES -> UserSeq: Display success message
+  FES -> UserSeq: Redirect to login
+  
+  == Event Registration Sequence ==
+  actor StudentSeq as "Student"
+  participant "Frontend" as FEE
+  participant "Event Service" as EventSE
+  participant "Database" as DBE
+  participant "Notification Service" as NotifSE
+  
+  StudentSeq -> FEE: Browse events
+  FEE -> EventSE: Request events
+  EventSE -> DBE: Fetch events
+  DBE --> EventSE: Return events
+  EventSE --> FEE: Display events
+  FEE -> StudentSeq: Show events
+  
+  StudentSeq -> FEE: Select event
+  FEE -> EventSE: Check capacity
+  EventSE -> DBE: Get registration count
+  DBE --> EventSE: Return count
+  EventSE --> FEE: Confirm availability
+  FEE -> StudentSeq: Show registration form
+  
+  StudentSeq -> FEE: Submit registration
+  FEE -> EventSE: Process registration
+  EventSE -> DBE: Save registration
+  DBE --> EventSE: Confirmation
+  EventSE -> NotifSE: Send confirmation
+  NotifSE -> StudentSeq: Notification
+  EventSE --> FEE: Registration success
+  FEE -> StudentSeq: Display confirmation
+}
+
+@enduml

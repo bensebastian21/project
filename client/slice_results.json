@@ -1,0 +1,6 @@
+{
+  "Events": "Unexpected token (1532:14)",
+  "Feedbacks": "Expected corresponding JSX closing tag for <main>. (2503:14)",
+  "Discover": "Unexpected token, expected \",\" (2477:0)",
+  "Analytics": "Unexpected token, expected \",\" (2636:0)"
+}

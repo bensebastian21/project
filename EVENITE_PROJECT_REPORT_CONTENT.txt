@@ -1,0 +1,124 @@
+# EVENITE: EVENT MANAGEMENT SYSTEM FOR STUDENTS - PROJECT REPORT DETAILS
+
+## Project Overview
+Evenite is a comprehensive web-based event management platform designed to streamline and modernize event organization and participation for students and educational institutions. The system bridges the communication gap between event hosts (colleges, departments, student organizations) and participants (students) by providing a centralized, role-based ecosystem for event discovery, registration, management, and feedback.
+
+## Key Features
+- Role-based access control (Student, Host, Administrator)
+- Event discovery and registration system
+- Gamification elements (badges, levels, leaderboards)
+- Digital certificate generation
+- Customizable event review forms
+- Real-time notifications
+- Mobile-responsive design
+
+## Technology Stack
+- Frontend: React.js with Tailwind CSS
+- Backend: Node.js with Express.js
+- Database: MongoDB
+- Authentication: JWT tokens and OAuth integration
+- Cloud Storage: Cloudinary for image/document storage
+
+## User Roles
+
+### Student
+- Discover and browse events
+- Register for events with one-click functionality
+- Track attendance history
+- Collect digital certificates
+- Provide feedback through customizable review forms
+- Connect with peers through social features
+- Earn badges and points through gamification
+
+### Host
+- Create and manage events
+- Track registrations and attendance
+- Manage attendee lists
+- Generate analytics reports
+- Create and distribute digital certificates
+- Communicate with participants
+- Event image galleries and capacity management
+
+### Administrator
+- Manage all users
+- Oversee event activities
+- Verify student identities through document verification
+- Monitor platform analytics
+- Review feedback
+- Ensure system integrity
+
+## System Architecture
+- Web-based application accessible on desktops, tablets, and smartphones
+- Secure login with JWT tokens and OAuth integration
+- Personalized dashboards for each user role
+- Real-time data handling and updates
+- Secure data encryption and protection
+
+## Database Design
+- Document-oriented database using MongoDB
+- Collections for Users, Events, Registrations, Feedback, Certificates
+- Embedded documents for related data
+- References for shared data across collections
+- Indexing for performance optimization
+
+## Implementation Details
+- Frontend deployment on Vercel
+- Backend deployment on Vercel serverless functions
+- MongoDB Atlas for cloud database hosting
+- Cloudinary for image and document storage
+- Responsive design for cross-device compatibility
+
+## Testing
+- Unit testing for individual components
+- Integration testing for component interactions
+- System testing for overall functionality
+- User acceptance testing
+- Cross-browser compatibility testing
+
+## Future Enhancements
+- Mobile application development (Android/iOS)
+- Advanced analytics and predictive insights
+- Payment integration for paid events
+- Social media integration
+- Virtual and hybrid event support
+- Enhanced gamification features
+- Improved notification systems
+- Accessibility improvements
+
+## Technical Specifications
+- Processor: Intel i3 or equivalent and above
+- RAM: 8GB minimum, 16GB recommended
+- Storage: 500GB HDD or 256GB SSD
+- Network: Stable internet connection
+- Display: 1366x768 resolution minimum
+
+## Software Requirements
+- React.js, JavaScript, Tailwind CSS (Frontend)
+- Node.js, Express.js (Backend)
+- MongoDB (Database)
+- Compatible with Windows 7 and above
+
+## Development Methodology
+- Agile development approach
+- Iterative development of modular components
+- Continuous integration and testing
+- User-centric design principles
+
+## Security Features
+- JWT token authentication
+- OAuth integration
+- Email and phone verification
+- Student ID document verification
+- Data encryption
+- Secure access control
+
+## Report Structure
+1. Introduction
+2. System Study
+3. Requirement Analysis
+4. System Design
+5. System Testing
+6. Implementation
+7. Conclusion and Future Scope
+8. Bibliography
+9. Appendix
