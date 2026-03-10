@@ -66,3 +66,16 @@ venv/
 __pycache__/
 *.log
 .env
+
+node_modules/
+.cache/
+venv/
+__pycache__/
+.env
+*.log
+
+playwright-report/
+test-results/
+node_modules/
+venv/
+.cache/
