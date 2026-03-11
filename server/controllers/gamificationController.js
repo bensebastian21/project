@@ -1,12 +1,24 @@
 const User = require('../models/User');
+const FriendRequest = require('../models/FriendRequest');
 
-// Points configuration
+// PUBG-Style Tier Config
+const TIER_CONFIG = [
+  { name: 'Bronze', minPoints: 0, icon: '🥉' },
+  { name: 'Silver', minPoints: 1000, icon: '🥈' },
+  { name: 'Gold', minPoints: 2500, icon: '🥇' },
+  { name: 'Platinum', minPoints: 5000, icon: '💎' },
+  { name: 'Diamond', minPoints: 10000, icon: '💠' },
+  { name: 'Crown', minPoints: 20000, icon: '👑' },
+  { name: 'Ace', minPoints: 35000, icon: '🌟' },
+  { name: 'Conqueror', minPoints: 50000, icon: '🏆' },
+];
+
 const POINTS = {
   REGISTER_EVENT: 10,
   ATTEND_EVENT: 50,
   COMPLETE_PROFILE: 100,
   REFER_FRIEND: 20,
-  FIRST_EVENT: 100, // Bonus
+  FIRST_EVENT: 100,
   BOOKMARK_EVENT: 5,
   WRITE_REVIEW: 15,
   MAKE_FRIEND: 10,
@@ -14,91 +26,47 @@ const POINTS = {
   SUBSCRIBE_HOST: 25,
 };
 
-// Tiered Badge Registry
-const BADGE_REGISTRY = {
-  // 1. Social Butterfly (Friends)
-  SOCIALITE: {
-    id: 'socialite',
-    baseName: 'Social Butterfly',
-    tiers: [
-      { tier: 'bronze', threshold: 1, name: 'Friendly Face', icon: '👋', points: 50 },
-      { tier: 'silver', threshold: 10, name: 'Popular Pal', icon: '🤝', points: 150 },
-      { tier: 'gold', threshold: 50, name: 'Community Pillar', icon: '👑', points: 500 },
-    ],
-    statKey: 'friendsConnected',
-  },
-  // 2. Curator (Bookmarks)
-  CURATOR: {
-    id: 'curator',
-    baseName: 'Curator',
-    tiers: [
-      { tier: 'bronze', threshold: 5, name: 'Collector', icon: '📌', points: 30 },
-      { tier: 'silver', threshold: 20, name: 'Librarian', icon: '📚', points: 100 },
-      { tier: 'gold', threshold: 100, name: 'Museum Keeper', icon: '🏛️', points: 300 },
-    ],
-    statKey: 'eventsBookmarked',
-  },
-  // 3. Explorer (Attendance)
-  EXPLORER: {
-    id: 'explorer',
-    baseName: 'Explorer',
-    tiers: [
-      { tier: 'bronze', threshold: 1, name: 'First Steps', icon: '🌱', points: 50 },
-      { tier: 'silver', threshold: 5, name: 'Adventurer', icon: '🧭', points: 200 },
-      { tier: 'gold', threshold: 20, name: 'Globe Trotter', icon: '🌎', points: 800 },
-    ],
-    statKey: 'eventsAttended',
-  },
-  // 4. Critic (Reviews)
-  CRITIC: {
-    id: 'critic',
-    baseName: 'Critic',
-    tiers: [
-      { tier: 'bronze', threshold: 1, name: 'Voice', icon: '🗣️', points: 20 },
-      { tier: 'silver', threshold: 10, name: 'Reviewer', icon: '✍️', points: 100 },
-      { tier: 'gold', threshold: 25, name: 'Tastemaker', icon: '🎭', points: 400 },
-    ],
-    statKey: 'reviewsWritten',
-  },
-  // 5. Streaks (Login)
-  DEDICATED: {
-    id: 'dedicated',
-    baseName: 'Dedicated',
-    tiers: [
-      { tier: 'bronze', threshold: 3, name: 'Regular', icon: '📅', points: 30 },
-      { tier: 'silver', threshold: 7, name: 'Committed', icon: '🔥', points: 100 },
-      { tier: 'gold', threshold: 30, name: 'Unstoppable', icon: '🚀', points: 500 },
-    ],
-    statKey: 'maxLoginStreak',
-  },
-};
+// Achievement Definitions (PUBG-Style)
+const ACHIEVEMENTS = [
+  { id: 'first_blood', name: 'First Blood', description: 'Attend your first event', criteria: { stat: 'eventsAttended', value: 1 } },
+  { id: 'social_butterfly', name: 'Social Butterfly', description: 'Connect with 10 friends', criteria: { stat: 'friendsConnected', value: 10 } },
+  { id: 'marathon_runner', name: 'Marathon Runner', description: 'Maintain a 7-day login streak', criteria: { stat: 'maxLoginStreak', value: 7 } },
+  { id: 'top_critic', name: 'Top Critic', description: 'Write 20 reviews', criteria: { stat: 'reviewsWritten', value: 20 } },
+  { id: 'collector', name: 'Collector', description: 'Bookmark 50 events', criteria: { stat: 'eventsBookmarked', value: 50 } },
+];
 
-// Helper: Calculate level based on points (Level = sqrt(points/100))
-// Helper: Calculate level based on points (Quadratic Curve, Max Level 500)
-// Formula: Points = 10 * Level^2  =>  Level = sqrt(Points / 10)
-const calculateLevel = (points) => {
-  const level = Math.floor(Math.sqrt(points / 10));
-  return Math.min(500, Math.max(1, level));
+const calculateTier = (points) => {
+  let currentTier = TIER_CONFIG[0];
+  for (const tier of TIER_CONFIG) {
+    if (points >= tier.minPoints) {
+      currentTier = tier;
+    } else {
+      break;
+    }
+  }
+  return currentTier.name;
 };
 
 /**
- * Core function to update stats and check for badges via stat increments
+ * Core function to update stats, points, skill XP, tiers and achievements
  * @param {string} userId
- * @param {string} statKey - check User model gamificationStats
+ * @param {string} statKey - e.g. 'eventsAttended'
  * @param {number} incrementValue
- * @param {string} actionType - for point awarding
+ * @param {string} actionType - e.g. 'ATTEND_EVENT' for point awarding
+ * @param {string} category - technical, creative, management, social
  */
 exports.updateGamificationStats = async (
   userId,
   statKey,
   incrementValue = 1,
   actionType = null,
+  category = 'social'
 ) => {
   try {
     const user = await User.findById(userId);
     if (!user) return null;
 
-    // Ensure gamificationStats exists
+    // Initialize fields if missing
     if (!user.gamificationStats) {
       user.gamificationStats = {
         eventsAttended: 0,
@@ -111,71 +79,70 @@ exports.updateGamificationStats = async (
         maxLoginStreak: 0,
       };
     }
+    if (!user.skillXP) {
+      user.skillXP = { technical: 0, creative: 0, management: 0, social: 0 };
+    }
 
     // 1. Update Stat
     if (statKey && user.gamificationStats) {
-      // Mongoose should handle property access without hasOwnProperty on subdoc,
-      // but just to be safe and simple:
       if (user.gamificationStats[statKey] === undefined) user.gamificationStats[statKey] = 0;
       user.gamificationStats[statKey] += incrementValue;
     }
 
-    // 2. Award Points (if actionType provided)
+    // 2. Award Points & Skill XP
     let pointsEarned = 0;
     if (actionType && POINTS[actionType]) {
       pointsEarned = POINTS[actionType];
       user.points += pointsEarned;
+      user.seasonPoints += pointsEarned;
+
+      // Distribute points to skill category
+      if (user.skillXP[category] !== undefined) {
+        user.skillXP[category] += pointsEarned;
+      }
     }
 
-    // 3. Level Up Check
-    const newLevel = calculateLevel(user.points);
-    let levelUp = false;
-    if (newLevel > user.level) {
-      user.level = newLevel;
-      levelUp = true;
+    // 3. Level & Tier Check
+    // Level Curve: sqrt(totalPoints / 10)
+    user.level = Math.floor(Math.sqrt(user.points / 10)) || 1;
+
+    // Tier based on seasonPoints (Monthly progress)
+    const oldTier = user.tier || 'Bronze';
+    user.tier = calculateTier(user.seasonPoints);
+    const tierUp = oldTier !== user.tier;
+
+    // 4. Achievement Check
+    const newlyUnlocked = [];
+    for (const achievement of ACHIEVEMENTS) {
+      const alreadyUnlocked = user.achievements.some((a) => a.id === achievement.id);
+      if (!alreadyUnlocked && user.gamificationStats[achievement.criteria.stat] >= achievement.criteria.value) {
+        const unlock = {
+          id: achievement.id,
+          name: achievement.name,
+          description: achievement.description,
+          unlockedAt: new Date(),
+        };
+        user.achievements.push(unlock);
+        newlyUnlocked.push(unlock);
+
+        // Bonus points for achievement!
+        user.points += 100;
+        user.seasonPoints += 100;
+      }
     }
-
-    // 4. Check Badges
-    const newBadges = [];
-
-    // Iterate through all badge definitions
-    Object.values(BADGE_REGISTRY).forEach((badgeDef) => {
-      const userStatValue = user.gamificationStats[badgeDef.statKey];
-
-      // Check each tier
-      badgeDef.tiers.forEach((tier) => {
-        const badgeIdString = `${badgeDef.id}_${tier.tier}`;
-
-        // If user doesn't have this specific tier badge yet
-        const alreadyHas = user.badges.some((b) => b.id === badgeIdString);
-
-        if (!alreadyHas && userStatValue >= tier.threshold) {
-          // Award Badge!
-          const badgeObj = {
-            id: badgeIdString,
-            name: tier.name,
-            icon: tier.icon,
-            tier: tier.tier,
-            description: `${tier.name} (${badgeDef.baseName} ${tier.tier})`,
-            earnedAt: new Date(),
-          };
-          user.badges.push(badgeObj);
-          newBadges.push(badgeObj);
-
-          // Award bonus points for the badge
-          user.points += tier.points;
-        }
-      });
-    });
 
     await user.save();
 
     return {
       points: user.points,
+      seasonPoints: user.seasonPoints,
       level: user.level,
-      levelUp,
-      badges: user.badges,
-      newBadges,
+      tier: user.tier,
+      tierUp,
+      skillXP: user.skillXP,
+      achievements: user.achievements,
+      badges: user.badges || [],
+      newAchievements: newlyUnlocked,
       stats: user.gamificationStats,
     };
   } catch (error) {
@@ -184,42 +151,70 @@ exports.updateGamificationStats = async (
   }
 };
 
-// Legacy/Simple wrapper for direct point awarding
-exports.awardPoints = async (userId, actionType) => {
-  // Map legacy actions to stats if possible, or just award points
+// Legacy/Bulk wrapper
+exports.awardPoints = async (userId, actionType, category = 'social') => {
   let statKey = null;
-
   switch (actionType) {
-    case 'ATTEND_EVENT':
-      statKey = 'eventsAttended';
-      break;
-    case 'BOOKMARK_EVENT':
-      statKey = 'eventsBookmarked';
-      break; // Virtual action for controller
-    case 'WRITE_REVIEW':
-      statKey = 'reviewsWritten';
-      break; // Virtual
-    case 'REFER_FRIEND':
-      statKey = 'friendsConnected';
-      break;
-    case 'SUBSCRIBE_HOST':
-      statKey = 'hostSubscriptions';
-      break;
+    case 'ATTEND_EVENT': statKey = 'eventsAttended'; break;
+    case 'BOOKMARK_EVENT': statKey = 'eventsBookmarked'; break;
+    case 'WRITE_REVIEW': statKey = 'reviewsWritten'; break;
+    case 'REFER_FRIEND': statKey = 'friendsConnected'; break;
+    case 'SUBSCRIBE_HOST': statKey = 'hostSubscriptions'; break;
   }
-
-  return await exports.updateGamificationStats(userId, statKey, 1, actionType);
+  return await exports.updateGamificationStats(userId, statKey, 1, actionType, category);
 };
 
+// Skill-Based Leaderboard
 exports.getLeaderboard = async (req, res) => {
   try {
+    const category = req.query.category || req.query.type || 'global'; // global, seasonal, friends
+    const skill = req.query.skill; // technical, creative, management, social
     const limit = parseInt(req.query.limit) || 10;
-    const users = await User.find({ role: 'student', isDeleted: { $ne: true } })
-      .sort({ points: -1 })
-      .limit(limit)
-      .select('fullname username profilePic points level institute badges gamificationStats');
+    const userId = req.user?.id;
 
-    res.json(users);
+    let query = { role: 'student', isDeleted: { $ne: true } };
+    let sort = { points: -1 };
+
+    // 1. Handle Relationship Category
+    if (category === 'friends' && userId) {
+      const friendships = await FriendRequest.find({
+        status: 'accepted',
+        $or: [{ from: userId }, { to: userId }]
+      }).lean();
+
+      const friendIds = friendships.map(f =>
+        String(f.from) === String(userId) ? f.to : f.from
+      );
+      friendIds.push(userId); // Include self
+      query._id = { $in: friendIds };
+    } else if (category === 'seasonal') {
+      sort = { seasonPoints: -1 };
+    }
+
+    // 2. Handle Skill Sorting (Overrides default sort if present)
+    if (['technical', 'creative', 'management', 'social'].includes(skill)) {
+      sort = { [`skillXP.${skill}`]: -1 };
+    } else if (!skill && ['technical', 'creative', 'management', 'social'].includes(category)) {
+      // Backward compatibility for old single-param calls
+      sort = { [`skillXP.${category}`]: -1 };
+    }
+
+    const users = await User.find(query)
+      .sort(sort)
+      .limit(limit)
+      .select('fullname username profilePic points seasonPoints tier skillXP level achievements')
+      .lean();
+
+    // Map _id to id for frontend consistency if needed (Dashboard uses both but component uses user.id || user._id)
+    const formattedUsers = users.map(u => ({
+      ...u,
+      id: u._id,
+      isMe: userId && String(u._id) === String(userId)
+    }));
+
+    res.json(formattedUsers);
   } catch (error) {
+    console.error('Leaderboard Fetch Error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -227,22 +222,25 @@ exports.getLeaderboard = async (req, res) => {
 exports.getUserRank = async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await User.findById(userId).select('points gamificationStats badges level');
+    const user = await User.findById(userId).select('points seasonPoints tier skillXP level achievements badges gamificationStats');
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const rank =
-      (await User.countDocuments({
-        points: { $gt: user.points },
-        role: 'student',
-        isDeleted: { $ne: true },
-      })) + 1;
+    const rank = await User.countDocuments({
+      points: { $gt: user.points },
+      role: 'student',
+      isDeleted: { $ne: true },
+    }) + 1;
 
     res.json({
       rank,
       points: user.points,
+      seasonPoints: user.seasonPoints,
+      tier: user.tier,
+      skillXP: user.skillXP,
       level: user.level,
       stats: user.gamificationStats,
-      badges: user.badges,
+      achievements: user.achievements,
+      badges: user.badges || [],
     });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });

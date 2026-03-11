@@ -19,6 +19,7 @@ const bayesianRoutes = require('./routes/bayesian');
 const decisionTreeRoutes = require('./routes/decisiontree');
 const genloopRoutes = require('./routes/genloop');
 const memoriesRoutes = require('./routes/memories');
+const marketingRoutes = require('./routes/marketing');
 
 const app = express();
 
@@ -180,6 +181,7 @@ app.use('/api/gamification', require('./routes/gamification'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/recommendations', require('./routes/recommendations'));
 app.use('/api/memories', memoriesRoutes);
+app.use('/api/marketing', marketingRoutes);
 app.use('/api/goals', require('./routes/goals'));
 app.use('/api', require('./routes/contact')); // Contact Form
 

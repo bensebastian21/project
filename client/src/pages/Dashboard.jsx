@@ -85,7 +85,7 @@ const DashboardBackground = () => (
   </div>
 );
 import {
-  GamifiedEventCard, AchievementBadge, BadgeCard, LevelProgress, StatsCard, Leaderboard
+  GamifiedEventCard, AchievementBadge, BadgeCard, LevelProgress, StatsCard, Leaderboard, SkillLeagues
 } from "../components/GamifiedComponents";
 import BadgeDetailModal from "../components/BadgeDetailModal";
 import FriendsSuggestions from "../components/friends/FriendsSuggestions";
@@ -161,7 +161,7 @@ export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("Explore");
   const [subscribedHosts, setSubscribedHosts] = useState([]);
-  const [userStats, setUserStats] = useState({ points: 0, level: 1, badges: [], streak: 0, achievements: [], totalEvents: 0, totalBookmarks: 0, totalSubscriptions: 0, totalReviews: 0 });
+  const [userStats, setUserStats] = useState({ points: 0, level: 1, tier: 'Bronze', seasonPoints: 0, skillXP: {}, badges: [], streak: 0, achievements: [], totalEvents: 0, totalBookmarks: 0, totalSubscriptions: 0, totalReviews: 0 });
   const [registrations, setRegistrations] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -170,6 +170,8 @@ export default function Dashboard() {
   const [isVerified, setIsVerified] = useState(false);
   const [leaderboardUsers, setLeaderboardUsers] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardCategory, setLeaderboardCategory] = useState('global');
+  const [leaderboardSkill, setLeaderboardSkill] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(true);
   const [navOverlayOpen, setNavOverlayOpen] = useState(false);
@@ -374,43 +376,32 @@ export default function Dashboard() {
   });
 
   const currentLevel = useMemo(() => {
-    // Formula: Level = sqrt(Points / 10)
-    const rawLevel = Math.floor(Math.sqrt(Math.max(0, userStats.points) / 10));
-    const lvl = Math.min(500, Math.max(1, rawLevel));
-
-    // Determine Rank Name based on Level
-    let rankName = "Rookie";
-    let icon = "🌱";
-    if (lvl >= 500) { rankName = "Legend"; icon = "🌟"; }
-    else if (lvl >= 100) { rankName = "Expert"; icon = "🏆"; }
-    else if (lvl >= 50) { rankName = "Enthusiast"; icon = "⭐"; }
-    else if (lvl >= 10) { rankName = "Explorer"; icon = "🚀"; }
+    // Trust server data if available, otherwise fallback to basic calculation
+    // Server now uses 100 XP per level
+    const lvl = userStats.level || 1;
 
     return {
       level: lvl,
-      name: rankName,
-      icon,
-      minPoints: 10 * Math.pow(lvl, 2)
+      name: userStats.tier || 'Bronze',
+      points: userStats.points || 0,
+      minPoints: lvl === 1 ? 0 : Math.pow(lvl, 2) * 10
     };
-  }, [userStats.points]);
+  }, [userStats.points, userStats.level, userStats.tier]);
 
   const nextLevel = useMemo(() => {
-    if (currentLevel.level >= 500) return null;
+    const nextLvl = currentLevel.level + 1;
     return {
-      level: currentLevel.level + 1,
-      minPoints: 10 * Math.pow(currentLevel.level + 1, 2)
+      level: nextLvl,
+      minPoints: Math.pow(nextLvl, 2) * 10
     };
   }, [currentLevel]);
 
   const levelProgress = useMemo(() => {
-    if (!nextLevel) return 100;
-    const prevPoints = 10 * Math.pow(currentLevel.level, 2);
-    const targetPoints = nextLevel.minPoints;
-    const currentPoints = userStats.points;
-    // Prevent divide by zero if points are same (shouldn't happen with unique squares)
-    if (targetPoints === prevPoints) return 100;
-
-    return Math.min(100, Math.max(0, ((currentPoints - prevPoints) / (targetPoints - prevPoints)) * 100));
+    const currentLvlMin = currentLevel.minPoints;
+    const nextLvlMin = nextLevel.minPoints;
+    const range = nextLvlMin - currentLvlMin;
+    const progress = userStats.points - currentLvlMin;
+    return Math.max(0, Math.min(100, (progress / range) * 100));
   }, [userStats.points, currentLevel, nextLevel]);
 
   const userKey = (base) => { const email = user?.email || null; return email ? `${base}:${email}` : base; };
@@ -538,7 +529,7 @@ export default function Dashboard() {
       try {
         const { data } = await api.post('/api/host/public/smart-search', { query });
         if (data && data.events) {
-          // If the API says fallback is true, it means Gemini failed entirely and returned standard local search results from backend.
+          // If the API says fallback is true, it means AI failed entirely and returned standard local search results from backend.
           setAiEvents(data.events);
           setParsedSearchParams(data.parsedQuery || null);
         } else {
@@ -967,6 +958,8 @@ export default function Dashboard() {
   const checkBadges = () => {
     // Retroactive badge unlock: Check if stats meet criteria but badge is missing
     // This fixes the "100% but locked" issue if backend hasn't synced yet
+    if (!userStats.badges) return;
+
     const newBadges = [];
     const earnedBadgeIds = new Set(userStats.badges.map(b => (typeof b === 'string' ? b : b.id)));
 
@@ -1068,6 +1061,9 @@ export default function Dashboard() {
           const newStats = {
             points: data.points || 0,
             level: data.level || 1,
+            tier: data.tier || 'Bronze',
+            seasonPoints: data.seasonPoints || 0,
+            skillXP: data.skillXP || {},
             badges: data.badges || [],
             achievements: data.badges || [],
             rank: data.rank,
@@ -1114,30 +1110,7 @@ export default function Dashboard() {
 
 
 
-  // Update local derived stats from authoritative server lists
-  useEffect(() => {
-    // Derive stats from the actual loaded lists to ensure accuracy
-    // "Events" card now shows all active registrations (status: registered)
-    const registeredCount = registrations.filter(r => r.status === 'registered').length;
-
-    setUserStats(prev => ({
-      ...prev,
-      totalEvents: registeredCount,
-      totalBookmarks: bookmarks.length,
-      totalSubscriptions: subscriptions.length,
-      totalReviews: feedbacks.length
-    }));
-  }, [registrations, bookmarks, subscriptions, feedbacks]);
-  // Derive points from current totals to ensure Achievements points add up correctly
-  useEffect(() => {
-    const p = (userStats.totalEvents || 0) * (GAMIFICATION.points.register || 0)
-      + (userStats.totalBookmarks || 0) * (GAMIFICATION.points.bookmark || 0)
-      + (userStats.totalSubscriptions || 0) * (GAMIFICATION.points.subscribe || 0)
-      + (userStats.totalReviews || 0) * (GAMIFICATION.points.review || 0)
-      + (userStats.streak || 0) * (GAMIFICATION.points.streak || 0);
-    setUserStats(prev => ({ ...prev, points: p }));
-  }, [userStats.totalEvents, userStats.totalBookmarks, userStats.totalSubscriptions, userStats.totalReviews, userStats.streak]);
-  useEffect(() => { checkBadges(); }, [userStats.totalEvents, userStats.totalBookmarks, userStats.totalSubscriptions, userStats.totalReviews]);
+  useEffect(() => { checkBadges(); }, [userStats.points]);
   useEffect(() => { saveLS(userKey(STORAGE.gamification), userStats); }, [userStats, user]);
 
   const ensureVerified = async () => { try { const token = localStorage.getItem("token"); if (!token) return false; const { data } = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } }); if (!data?.emailVerified || !data?.phoneVerified) { toast.info("Please verify your email and phone to continue"); navigate("/profile?tab=otp"); return false; } return true; } catch (_) { return false; } };
@@ -1191,12 +1164,31 @@ export default function Dashboard() {
         const headers = { headers: { Authorization: `Bearer ${token}` } };
 
         // Parallel fetch for efficiency
-        const [regsRes, booksRes, subsRes, revsRes] = await Promise.all([
+        const [regsRes, booksRes, subsRes, revsRes, rankRes] = await Promise.all([
           api.get('/api/host/public/my-registrations', headers).catch(() => ({ data: [] })),
           api.get('/api/bookmarks', headers).catch(() => ({ data: [] })),
           api.get('/api/subscriptions', headers).catch(() => ({ data: [] })),
-          api.get('/api/reviews/my', headers).catch(() => ({ data: [] }))
+          api.get('/api/reviews/my', headers).catch(() => ({ data: [] })),
+          api.get('/api/gamification/my-rank', headers).catch(() => ({ data: null }))
         ]);
+
+        if (rankRes?.data) {
+          const s = rankRes.data;
+          setUserStats({
+            points: s.points || 0,
+            level: s.level || 1,
+            tier: s.tier || 'Bronze',
+            seasonPoints: s.seasonPoints || 0,
+            skillXP: s.skillXP || {},
+            streak: s.stats?.loginStreak || 0,
+            achievements: s.achievements || [],
+            badges: s.badges || [],
+            totalEvents: s.stats?.eventsAttended || 0,
+            totalBookmarks: s.stats?.eventsBookmarked || 0,
+            totalSubscriptions: s.stats?.hostSubscriptions || 0,
+            totalReviews: s.stats?.reviewsWritten || 0
+          });
+        }
 
         if (Array.isArray(regsRes.data)) {
           const mapped = regsRes.data.map(r => ({
@@ -1255,88 +1247,34 @@ export default function Dashboard() {
   useEffect(() => saveLS(userKey(STORAGE.notifications), notifications), [notifications, user]);
   useEffect(() => saveLS(userKey(STORAGE.feedbacks), feedbacks), [feedbacks, user]);
 
-  // Load friends leaderboard when tab is active (robust parsing of /api/friends)
+  // Fetch leaderboard based on category and optional skill
   useEffect(() => {
-    const run = async () => {
+    const fetchLeaderboard = async () => {
       if (activeTab !== 'Leaderboard') return;
       try {
         setLeaderboardLoading(true);
         const token = localStorage.getItem('token');
         if (!token) { setLeaderboardUsers([]); return; }
-        const headers = { headers: { Authorization: `Bearer ${token}` } };
 
-        const resp = await api.get('/api/friends', headers);
-        const raw = resp?.data;
-        const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.friends) ? raw.friends : []);
-        if (process.env.NODE_ENV !== 'production') {
-          // eslint-disable-next-line no-console
-          console.log('Leaderboard /api/friends raw:', raw);
-        }
+        const { data } = await api.get('/api/gamification/leaderboard', {
+          params: {
+            category: leaderboardCategory,
+            skill: leaderboardSkill,
+            limit: 20
+          },
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-        const normalized = arr.map((item) => {
-          const u = item?.friend || item?.user || item?.to || item?.from || item;
-          if (!u) return null;
-          const sid = u?._id || u?.id || item?._id || item?.id;
-          if (!sid) return null;
-          return { sid: String(sid), name: u.fullname || u.username || 'Friend' };
-        }).filter(Boolean);
-
-        if (normalized.length === 0) { setLeaderboardUsers([]); return; }
-
-        const statsArr = await Promise.all(normalized.map(async ({ sid, name }) => {
-          try {
-            const { data: st } = await api.get(`/api/users/${sid}/stats`, headers);
-            const totals = st || {};
-            const basePts = (totals.totalEvents || 0) * (GAMIFICATION.points.register || 0)
-              + (totals.totalBookmarks || 0) * (GAMIFICATION.points.bookmark || 0)
-              + (totals.totalSubscriptions || 0) * (GAMIFICATION.points.subscribe || 0)
-              + (totals.totalReviews || 0) * (GAMIFICATION.points.review || 0)
-              + (totals.streak || 0) * (GAMIFICATION.points.streak || 0);
-            const badgePointsMap = Object.fromEntries(GAMIFICATION.badges.map(b => [b.id, b.points || 0]));
-            const badgesSum = Array.isArray(totals.badges) ? totals.badges.reduce((s, id) => s + (badgePointsMap[id] || 0), 0) : 0;
-            const pts = basePts + badgesSum;
-            const level = GAMIFICATION.levels.slice().reverse().find(l => pts >= l.minPoints) || GAMIFICATION.levels[0];
-            return { id: sid, name, level: level.level, points: pts };
-          } catch {
-            return null;
-          }
-        }));
-
-        // Include current user in leaderboard as well
-        let selfEntry = null;
-        try {
-          const meId = user?._id || user?.id;
-          if (meId) {
-            const { data: stMe } = await api.get(`/api/users/${meId}/stats`, headers);
-            const totalsMe = stMe || {};
-            const basePtsMe = (totalsMe.totalEvents || 0) * (GAMIFICATION.points.register || 0)
-              + (totalsMe.totalBookmarks || 0) * (GAMIFICATION.points.bookmark || 0)
-              + (totalsMe.totalSubscriptions || 0) * (GAMIFICATION.points.subscribe || 0)
-              + (totalsMe.totalReviews || 0) * (GAMIFICATION.points.review || 0)
-              + (totalsMe.streak || 0) * (GAMIFICATION.points.streak || 0);
-            const badgeMap = Object.fromEntries(GAMIFICATION.badges.map(b => [b.id, b.points || 0]));
-            const badgesSumMe = Array.isArray(totalsMe.badges) ? totalsMe.badges.reduce((s, id) => s + (badgeMap[id] || 0), 0) : 0;
-            const ptsMe = basePtsMe + badgesSumMe;
-            const levelMe = GAMIFICATION.levels.slice().reverse().find(l => ptsMe >= l.minPoints) || GAMIFICATION.levels[0];
-            selfEntry = { id: String(meId), name: user?.fullname || user?.username || 'You', level: levelMe.level, points: ptsMe, isMe: true };
-          }
-        } catch { /* ignore self fetch errors */ }
-
-        // Merge, dedupe by id (favor self entry), sort
-        const merged = [...statsArr.filter(Boolean), selfEntry].filter(Boolean);
-        const byId = new Map();
-        for (const it of merged) { byId.set(String(it.id), it); }
-        const finalList = Array.from(byId.values()).sort((a, b) => b.points - a.points);
-        setLeaderboardUsers(finalList);
-      } catch (_) {
+        setLeaderboardUsers(data || []);
+      } catch (e) {
+        console.error("Failed to load leaderboard:", e);
         setLeaderboardUsers([]);
       } finally {
         setLeaderboardLoading(false);
       }
     };
-    run();
-  }, [activeTab, user]);
-
+    fetchLeaderboard();
+  }, [activeTab, leaderboardCategory, leaderboardSkill, user]);
   const handleLogout = () => { ["student.registrations", "student.bookmarks", "student.subscriptions", "student.subscriptions.meta", "student.notifications", "student.feedbacks", "student.gamification"].forEach(k => localStorage.removeItem(k)); localStorage.removeItem("user"); localStorage.removeItem("token"); navigate("/"); };
   useEffect(() => { const onClick = (e) => { if (profileMenuOpen && !e.target.closest('.profile-menu')) setProfileMenuOpen(false); }; document.addEventListener('mousedown', onClick); return () => document.removeEventListener('mousedown', onClick); }, [profileMenuOpen]);
 
@@ -2392,7 +2330,14 @@ export default function Dashboard() {
                         </button>
                       </div>
                     ) : (
-                      <Leaderboard users={leaderboardUsers} currentUserId={user?._id || user?.id} />
+                      <Leaderboard
+                        users={leaderboardUsers}
+                        currentUserId={user?._id || user?.id}
+                        category={leaderboardCategory}
+                        skill={leaderboardSkill}
+                        onCategoryChange={setLeaderboardCategory}
+                        onSkillChange={setLeaderboardSkill}
+                      />
                     )}
                   </div>
                 )
@@ -2401,7 +2346,17 @@ export default function Dashboard() {
               {
                 activeTab === "Achievements" && (
                   <div className="space-y-8">
-                    <LevelProgress currentLevel={currentLevel} nextLevel={nextLevel} progress={levelProgress} points={userStats.points} />
+                    <LevelProgress
+                      currentLevel={currentLevel}
+                      nextLevel={nextLevel}
+                      progress={levelProgress}
+                      points={userStats.points}
+                      seasonPoints={userStats.seasonPoints}
+                      tier={userStats.tier}
+                    />
+
+                    <SkillLeagues skillXP={userStats.skillXP} />
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       <StatsCard title="Events Attended" value={userStats.totalEvents} icon={Calendar} color="blue" />
                       <StatsCard title="Bookmarks" value={userStats.totalBookmarks} icon={Bookmark} color="purple" />

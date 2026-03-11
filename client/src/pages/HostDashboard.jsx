@@ -42,6 +42,8 @@ import {
   MessageSquare,
   Sparkles,
   AlertTriangle,
+  Send,
+  Radio,
 } from 'lucide-react';
 
 import api from '../utils/api';
@@ -51,6 +53,7 @@ import QRCodeScanner from '../components/QRCodeScanner';
 import CertificateEditor from '../components/CertificateEditor';
 import AiFeedbackDashboard from '../components/AiFeedbackDashboard';
 import GenLoopStudio from '../components/host/GenLoopStudio';
+import MarketingCopywriter from '../components/host/MarketingCopywriter';
 // Charts
 import {
   ResponsiveContainer,
@@ -1793,6 +1796,7 @@ export default function HostDashboard() {
                   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
                   { id: 'certificates', label: 'Certificates', icon: Award },
                   { id: 'ai-insights', label: 'AI Insights', icon: Brain },
+                  { id: 'marketing', label: 'AI Marketing', icon: Send },
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
@@ -1840,7 +1844,7 @@ export default function HostDashboard() {
                   {activeTab === 'analytics' && 'Analyze your event performance and insights'}
                   {activeTab === 'certificates' && 'Design custom certificates for your events'}
                   {activeTab === 'ai-insights' &&
-                    'Gemini-powered feedback analysis, charts, and improvement suggestions'}
+                    'AI-powered feedback analysis, charts, and improvement suggestions'}
                 </p>
               </div>
 
@@ -1894,6 +1898,8 @@ export default function HostDashboard() {
                   <CertificateEditor events={events} />
                 </div>
               )}
+
+
 
               {/* Profile Tab */}
               {activeTab === 'profile' && (
@@ -2440,6 +2446,16 @@ export default function HostDashboard() {
                                   >
                                     <Trophy className="w-3 h-3" />
                                     Certificates
+                                  </button>
+                                )}
+                                {/* Live Control Panel Button */}
+                                {!event.isCompleted && (
+                                  <button
+                                    onClick={() => navigate(`/host/live/${event._id}`)}
+                                    className="flex-1 px-3 py-2 bg-red-100 text-red-800 hover:bg-red-200 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all rounded-none text-xs font-bold uppercase flex items-center justify-center gap-1"
+                                  >
+                                    <Radio className="w-3 h-3" />
+                                    Live Mode
                                   </button>
                                 )}
                                 {/* Classify Event Button */}
@@ -3339,6 +3355,13 @@ export default function HostDashboard() {
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* AI Marketing Tab */}
+              {activeTab === 'marketing' && (
+                <div className="animate-fadeIn">
+                  <MarketingCopywriter events={events} />
                 </div>
               )}
 

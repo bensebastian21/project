@@ -46,7 +46,7 @@ export default function SupportChatbot() {
         const { data } = await api.get(`/api/chat/${tid}`, headers);
         if (Array.isArray(data?.messages) && data.messages.length) setMessages(data.messages);
       }
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -109,7 +109,10 @@ export default function SupportChatbot() {
           className="fixed bottom-24 right-5 z-[95] w-[min(96vw,420px)] h-[min(80vh,600px)] bg-slate-900 border border-slate-700 rounded-2xl shadow-xl flex flex-col overflow-hidden"
         >
           <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-900">
-            <div className="text-lg font-bold text-white">Support</div>
+            <div className="flex flex-col">
+              <div className="text-lg font-bold text-white leading-tight">Support</div>
+              <div className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Powered by Groq</div>
+            </div>
             <button
               onClick={() => setOpen(false)}
               className="p-1.5 rounded-lg hover:bg-slate-800 transition-colors"

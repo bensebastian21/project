@@ -240,11 +240,9 @@ export const BadgeCard = ({ badge, earned = false, progress = {}, onClick }) => 
   };
 
   const getRarityBorder = (rarity) => {
-    // In brutalist design, we primarily use black borders, but we can use color for backgrounds/accents
     return 'border-black';
   };
 
-  // Calculate progress
   const totalRequired = badge.criteria?.reduce((sum, c) => sum + c.required, 0) || 1;
   const totalCurrent =
     badge.criteria?.reduce((sum, c) => {
@@ -263,7 +261,6 @@ export const BadgeCard = ({ badge, earned = false, progress = {}, onClick }) => 
         : 'opacity-70 hover:opacity-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
         }`}
     >
-      {/* Rarity Indicator */}
       {earned && (
         <div
           className={`absolute top-0 left-0 px-2 py-0.5 border-r-2 border-b-2 border-black text-[9px] font-bold uppercase tracking-widest ${rarityClass}`}
@@ -272,7 +269,6 @@ export const BadgeCard = ({ badge, earned = false, progress = {}, onClick }) => 
         </div>
       )}
 
-      {/* Badge Icon */}
       <div className="flex flex-col items-center mb-3 mt-2">
         <div
           className={`relative w-16 h-16 flex items-center justify-center text-3xl mb-3 border-2 border-black transition-all duration-300 ${earned
@@ -295,21 +291,18 @@ export const BadgeCard = ({ badge, earned = false, progress = {}, onClick }) => 
           )}
         </div>
 
-        {/* Badge Name */}
         <h4
           className={`text-sm font-black uppercase tracking-tight text-center leading-tight ${earned ? 'text-black' : 'text-neutral-500'}`}
         >
           {badge.name}
         </h4>
 
-        {/* Points */}
         <div className="flex items-center gap-1 mt-1 border border-black px-2 py-0.5 bg-neutral-100">
           <Zap className={`w-3 h-3 text-black`} />
           <span className={`text-[10px] font-bold text-black`}>+{badge.points} XP</span>
         </div>
       </div>
 
-      {/* Progress Bar (for locked badges) */}
       {!earned && overallProgress > 0 && (
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1">
@@ -361,43 +354,70 @@ export const AchievementBadge = ({ badge, earned = false, size = 'md' }) => {
   );
 };
 
-// Level Progress Component
-export const LevelProgress = ({ currentLevel, nextLevel, progress, points }) => {
+// Level & Tier Progress Component (PUBG-Style)
+export const LevelProgress = ({ currentLevel, nextLevel, progress, points, seasonPoints = 0, tier = "Bronze" }) => {
+  const tiers = {
+    Bronze: { icon: '🥉', color: 'bg-orange-100 text-orange-800' },
+    Silver: { icon: '🥈', color: 'bg-slate-100 text-slate-800' },
+    Gold: { icon: '🥇', color: 'bg-yellow-100 text-yellow-800' },
+    Platinum: { icon: '💎', color: 'bg-cyan-100 text-cyan-800' },
+    Diamond: { icon: '💠', color: 'bg-blue-100 text-blue-800' },
+    Crown: { icon: '👑', color: 'bg-purple-100 text-purple-800' },
+    Ace: { icon: '🌟', color: 'bg-red-100 text-red-800' },
+    Conqueror: { icon: '🏆', color: 'bg-amber-100 text-amber-800' },
+  };
+
+  const currentTier = tiers[tier] || tiers.Bronze;
+
   return (
     <div className="bg-white border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-      <div className="flex justify-between items-end mb-6">
-        <div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">
-            Current Status
+      <div className="flex justify-between items-end mb-6 flex-wrap gap-4">
+        <div className="flex items-center gap-4">
+          <div className={`w-16 h-16 flex items-center justify-center border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-3xl ${currentTier.color}`}>
+            {currentTier.icon}
           </div>
-          <div className="flex items-center gap-4">
-            <div className="bg-black text-white p-3 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
-              <Crown className="w-8 h-8" />
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-1">
+              Current Rank
             </div>
-            <div>
-              <h3 className="text-2xl font-black text-black uppercase tracking-tighter">
-                {currentLevel.name}
-              </h3>
-              <p className="text-sm font-bold uppercase tracking-wide text-blue-700 bg-blue-100 px-2 py-0.5 inline-block border border-blue-900 border-dashed">
+            <h3 className="text-2xl font-black text-black uppercase tracking-tighter">
+              {tier}
+            </h3>
+            <div className="space-x-2">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-blue-700 bg-blue-100 px-2 py-0.5 inline-block border border-blue-900 border-dashed">
                 Level {currentLevel.level}
+              </p>
+              <p className="text-[10px] font-bold uppercase tracking-wide text-green-700 bg-green-100 px-2 py-0.5 inline-block border border-green-900 border-dashed">
+                {currentLevel.name}
               </p>
             </div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-4xl font-black text-black tracking-tighter">
-            {points.toLocaleString()}
+
+        <div className="flex gap-4 sm:gap-8 ml-auto">
+          <div className="text-right">
+            <div className="text-2xl font-black text-black tracking-tighter">
+              {seasonPoints.toLocaleString()}
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+              Season Pts
+            </div>
           </div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-            Total Points
+          <div className="text-right border-l-2 border-black pl-4 sm:pl-8">
+            <div className="text-2xl font-black text-black tracking-tighter">
+              {points.toLocaleString()}
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+              Lifetime XP
+            </div>
           </div>
         </div>
       </div>
 
       {nextLevel && (
         <div className="space-y-3">
-          <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-black">
-            <span>Next: Level {currentLevel.level + 1}</span>
+          <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-black">
+            <span>Next Level: {currentLevel.level + 1}</span>
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="h-4 bg-neutral-100 border-2 border-black w-full relative">
@@ -405,14 +425,69 @@ export const LevelProgress = ({ currentLevel, nextLevel, progress, points }) => 
               className="h-full bg-black transition-all duration-1000"
               style={{ width: `${progress}%` }}
             />
-            {/* Striped pattern overlay for effect */}
             <div className="absolute inset-0 bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2NkQAKrVq36zwjjgzhhYWGMYAEYB8RmROaABADeOQ8CXl/xfgAAAABJRU5ErkJggg==')] opacity-20 pointer-events-none mix-blend-overlay"></div>
           </div>
-          <div className="text-right text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-            {nextLevel.minPoints - points} XP needed
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">Monthly season resets in 12 days</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+              {nextLevel.minPoints - points} XP needed
+            </span>
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Skill Leagues Component
+export const SkillLeagues = ({ skillXP = {} }) => {
+  const categories = [
+    { key: 'technical', name: 'Technical', icon: Brain, color: 'blue' },
+    { key: 'creative', name: 'Creative', icon: Sparkles, color: 'purple' },
+    { key: 'management', name: 'Management', icon: Target, color: 'orange' },
+    { key: 'social', name: 'Social', icon: Users, color: 'green' },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {categories.map((cat) => {
+        const Icon = cat.icon;
+        const xp = skillXP[cat.key] || 0;
+        const level = Math.floor(Math.sqrt(xp / 10)) || 1;
+        const currentMin = level === 1 ? 0 : Math.pow(level, 2) * 10;
+        const nextMin = Math.pow(level + 1, 2) * 10;
+        const progress = Math.max(0, Math.min(100, ((xp - currentMin) / (nextMin - currentMin)) * 100));
+
+        const colors = {
+          blue: 'bg-blue-50 border-blue-200 text-blue-700',
+          purple: 'bg-purple-50 border-purple-200 text-purple-700',
+          orange: 'bg-orange-50 border-orange-200 text-orange-700',
+          green: 'bg-green-50 border-green-200 text-green-700',
+        };
+
+        return (
+          <div key={cat.key} className="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-2px] transition-all">
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`p-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${colors[cat.color]}`}>
+                <Icon className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-tight">{cat.name} League</h4>
+                <p className="text-[9px] font-bold text-neutral-500 uppercase">Level {level}</p>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[8px] font-bold uppercase">
+                <span>XP: {xp}</span>
+                <span>Tier 1</span>
+              </div>
+              <div className="h-1.5 bg-neutral-100 border border-black overflow-hidden">
+                <div className="h-full bg-black" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -455,67 +530,196 @@ export const StatsCard = ({ title, value, icon: Icon, color, trend = null }) => 
 };
 
 // Leaderboard Component
-export const Leaderboard = ({ users = [], currentUserId = null }) => {
+// Leaderboard Component
+export const Leaderboard = ({ users = [], currentUserId = null, category = 'global', skill = null, onCategoryChange, onSkillChange }) => {
+  const tiers = {
+    Bronze: { icon: '🥉', color: 'bg-orange-100 text-orange-800' },
+    Silver: { icon: '🥈', color: 'bg-slate-100 text-slate-800' },
+    Gold: { icon: '🥇', color: 'bg-yellow-100 text-yellow-800' },
+    Platinum: { icon: '💎', color: 'bg-cyan-100 text-cyan-800' },
+    Diamond: { icon: '💠', color: 'bg-blue-100 text-blue-800' },
+    Crown: { icon: '👑', color: 'bg-purple-100 text-purple-800' },
+    Ace: { icon: '🌟', color: 'bg-red-100 text-red-800' },
+    Conqueror: { icon: '🏆', color: 'bg-amber-100 text-amber-800' },
+  };
+
+  const categories = [
+    { id: 'global', label: 'Global', icon: Trophy },
+    { id: 'friends', label: 'Friends', icon: Users },
+    { id: 'seasonal', label: 'Season', icon: Flame },
+  ];
+
+  const skillCategories = [
+    { id: null, label: 'All', icon: Target },
+    { id: 'technical', label: 'Techie', icon: Brain },
+    { id: 'creative', label: 'Creative', icon: Sparkles },
+    { id: 'management', label: 'Manager', icon: Target },
+    { id: 'social', label: 'Social', icon: Users },
+  ];
+
   return (
     <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
-      <div className="p-6 border-b-2 border-black flex items-center justify-between bg-neutral-50">
-        <h3 className="text-lg font-black text-black flex items-center gap-3 uppercase tracking-wide">
-          <Trophy className="w-6 h-6 text-black" />
-          Top Performers
-        </h3>
+      {/* Leaderboard Header & Filters */}
+      <div className="p-6 border-b-2 border-black bg-neutral-50 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-black text-black flex items-center gap-3 uppercase tracking-wide">
+            <Trophy className="w-8 h-8 text-black" />
+            Hall of Fame
+          </h3>
+          <div className="flex bg-neutral-200 p-1 border-2 border-black">
+            {categories.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => onCategoryChange?.(cat.id)}
+                  className={`px-4 py-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-all ${category === cat.id ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]' : 'text-neutral-500 hover:text-black'}`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Skill Category Filters */}
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-black/10">
+          {skillCategories.map((cat) => {
+            const Icon = cat.icon;
+            return (
+              <button
+                key={cat.id || 'all'}
+                onClick={() => onSkillChange?.(cat.id)}
+                className={`flex-1 min-w-[80px] px-3 py-2 flex items-center justify-center gap-2 border-2 border-black text-[10px] font-black uppercase tracking-tight transition-all hover:bg-neutral-100 ${skill === cat.id ? 'bg-emerald-100 text-emerald-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-neutral-500'}`}
+              >
+                <Icon className="w-3 h-3" />
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="divide-y-2 divide-black">
-        {users.slice(0, 10).map((user, index) => {
-          const isMe = user.isMe || (currentUserId && String(currentUserId) === String(user.id));
-          const rank = index + 1;
+        {users.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-neutral-400 font-bold uppercase tracking-widest italic">No legends found in this bracket...</p>
+          </div>
+        ) : (
+          users.slice(0, 20).map((user, index) => {
+            const isMe = user.isMe || (currentUserId && String(currentUserId) === String(user._id || user.id || user.sid));
+            const rank = index + 1;
+            const tierData = tiers[user.tier || 'Bronze'] || tiers.Bronze;
 
-          return (
-            <div
-              key={user.id}
-              className={`flex items-center p-4 hover:bg-neutral-100 transition-colors ${isMe ? 'bg-blue-50' : ''}`}
-            >
-              <div className="w-10 text-center font-black text-xl text-neutral-400 italic">
-                #{rank}
-              </div>
+            // Determine what XP to show
+            let xpValue = user.points || 0;
+            let xpLabel = 'Total XP';
 
-              <div className="flex-1 flex items-center gap-4">
-                <div
-                  className={`w-10 h-10 border-2 border-black flex items-center justify-center text-sm font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${rank === 1
-                    ? 'bg-yellow-400 text-black'
-                    : rank === 2
-                      ? 'bg-neutral-300 text-black'
-                      : rank === 3
-                        ? 'bg-orange-400 text-black'
-                        : 'bg-white text-black'
-                    }`}
-                >
-                  {user.name.charAt(0)}
+            if (skill && ['technical', 'creative', 'management', 'social'].includes(skill)) {
+              xpValue = (user.skillXP && user.skillXP[skill]) || 0;
+              xpLabel = `${skill.charAt(0).toUpperCase() + skill.slice(1)} XP`;
+            } else if (category === 'seasonal') {
+              xpValue = user.seasonPoints || 0;
+              xpLabel = 'Season XP';
+            } else if (!skill && ['technical', 'creative', 'management', 'social'].includes(category)) {
+              // Backward compatibility / shortcut
+              xpValue = (user.skillXP && user.skillXP[category]) || 0;
+              xpLabel = `${category.charAt(0).toUpperCase() + category.slice(1)} XP`;
+            }
+
+            return (
+              <div
+                key={user._id || user.id || user.sid || index}
+                className={`flex items-center p-4 hover:bg-neutral-100 transition-colors relative group ${isMe ? 'bg-blue-50' : ''}`}
+              >
+                {/* Rank Number */}
+                <div className="w-12 flex flex-col items-center justify-center">
+                  <div className={`text-2xl font-black italic ${rank === 1 ? 'text-yellow-500' : rank === 2 ? 'text-neutral-400' : rank === 3 ? 'text-orange-500' : 'text-neutral-300'}`}>
+                    {rank}
+                  </div>
+                  <div className="text-[8px] font-bold text-neutral-400 uppercase">Rank</div>
                 </div>
-                <div>
-                  <div className="text-sm font-bold text-black flex items-center gap-2 uppercase tracking-tight">
-                    {user.name}
-                    {isMe && (
-                      <span className="text-[9px] bg-blue-600 text-white border border-black px-1.5 py-0.5 font-bold uppercase tracking-widest">
-                        YOU
+
+                {/* User Info */}
+                <div className="flex-1 flex items-center gap-4 ml-2">
+                  <div className="relative">
+                    <div
+                      className={`w-14 h-14 border-2 border-black flex items-center justify-center text-lg font-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-transform group-hover:scale-105 ${rank === 1 ? 'bg-yellow-400' : 'bg-white'}`}
+                    >
+                      {user.profilePic ? (
+                        <img src={user.profilePic} alt={user.fullname || user.username || 'User'} className="w-full h-full object-cover" />
+                      ) : (
+                        (user.fullname || user.username || 'U').charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    {/* Small Tier Icon Floating */}
+                    <div className={`absolute -bottom-1 -right-1 w-6 h-6 border border-black rounded-sm flex items-center justify-center text-xs shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${tierData.color}`}>
+                      {tierData.icon}
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="text-sm font-black text-black flex items-center gap-2 uppercase tracking-tight truncate">
+                      {user.fullname || user.username}
+                      {isMe && (
+                        <span className="text-[9px] bg-blue-600 text-white border border-black px-1.5 py-0.5 font-bold uppercase tracking-widest">
+                          YOU
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-bold text-neutral-500 uppercase">Lv.{user.level || 1}</span>
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-black/10 ${tierData.color}`}>
+                        {user.tier || 'Bronze'}
                       </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
-                    Level {user.level}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="text-right">
-                <div className="text-sm font-black text-black">{user.points.toLocaleString()}</div>
-                <div className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">
-                  Points
+                {/* XP Stats */}
+                <div className="text-right">
+                  <div className="text-lg font-black text-black leading-none">
+                    {xpValue.toLocaleString()}
+                  </div>
+                  <div className="text-[8px] font-bold text-neutral-400 uppercase tracking-widest mt-1">{xpLabel}</div>
+
+                  {/* Skill Badges if applicable */}
+                  {category === 'global' && user.skillXP && (
+                    <div className="flex gap-1 mt-1 justify-end">
+                      {Object.entries(user.skillXP)
+                        .filter(([_, xp]) => xp > 500)
+                        .map(([skill, _]) => {
+                          const skillData = skillCategories.find(s => s.id === skill);
+                          if (!skillData) return null;
+                          const SvgIcon = skillData.icon;
+                          return (
+                            <div key={skill} className="w-4 h-4 bg-black text-white p-0.5" title={`${skillData.label} Legend`}>
+                              <SvgIcon className="w-full h-full" />
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
                 </div>
+
+                {/* Top Rank Accents */}
+                {rank <= 3 && (
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${rank === 1 ? 'bg-yellow-400' : rank === 2 ? 'bg-neutral-300' : 'bg-orange-400'}`} />
+                )}
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
+      </div>
+
+      {/* Leaderboard Footer */}
+      <div className="p-3 bg-neutral-900 text-white text-[9px] font-bold uppercase tracking-[0.2em] flex justify-between items-center">
+        <span>Resets Monthly</span>
+        <div className="flex gap-4">
+          <span className="text-emerald-400">Next Reset: 22 Days</span>
+          <span className="text-neutral-500">Live Updates</span>
+        </div>
       </div>
     </div>
   );

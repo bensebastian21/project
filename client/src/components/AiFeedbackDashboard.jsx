@@ -332,7 +332,7 @@ export default function AiFeedbackDashboard({ api, bearer }) {
         <p className="font-black text-xl uppercase tracking-widest animate-pulse">
           Loading AI Portfolio...
         </p>
-        <p className="text-slate-500 font-medium text-sm">Gemini is analyzing your events 🔍</p>
+        <p className="text-slate-500 font-medium text-sm">AI is analyzing your events 🔍</p>
       </div>
     );
   }
@@ -348,7 +348,7 @@ export default function AiFeedbackDashboard({ api, bearer }) {
             <Brain className="w-5 h-5 text-yellow-400" />
             <h2 className="font-black uppercase tracking-widest text-sm">AI Insights</h2>
           </div>
-          <p className="text-neutral-400 text-xs font-medium">Gemini-powered feedback analysis</p>
+          <p className="text-neutral-400 text-xs font-medium">AI-powered feedback analysis</p>
         </div>
 
         {/* Portfolio button */}
@@ -637,7 +637,7 @@ export default function AiFeedbackDashboard({ api, bearer }) {
               <div className="flex flex-col items-center py-20 gap-4">
                 <Brain className="w-12 h-12 text-yellow-500 animate-pulse" />
                 <p className="font-black uppercase tracking-widest text-sm animate-pulse">
-                  Gemini is generating insights...
+                  AI is generating insights...
                 </p>
               </div>
             )}

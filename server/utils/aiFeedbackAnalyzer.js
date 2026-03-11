@@ -1,26 +1,43 @@
 // server/utils/aiFeedbackAnalyzer.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-function getGenAI() {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
-  if (!apiKey) return null;
-  return new GoogleGenerativeAI(apiKey);
+// Helper to call Groq via fetch
+async function callAI(prompt) {
+  const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+  if (!apiKey) throw new Error('API_KEY is missing');
+
+  const MODEL = 'llama-3.3-70b-versatile';
+  const url = `https://api.groq.com/openai/v1/chat/completions`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    console.error('AI API Error:', data);
+    throw new Error(data?.error?.message || 'AI API call failed');
+  }
+
+  return data?.choices?.[0]?.message?.content || '';
 }
 
 /**
- * Analyzes the sentiment of a review comment using Google Gemini.
+ * Analyzes the sentiment of a review comment using AI.
  */
 async function analyzeSentiment(comment) {
   if (!comment || typeof comment !== 'string' || comment.trim().length === 0) {
     return { label: 'Neutral', score: 50 };
   }
-  const genAI = getGenAI();
-  if (!genAI) {
-    console.warn('API_KEY is missing. Defaulting to Neutral sentiment.');
-    return { label: 'Neutral', score: 50 };
-  }
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const prompt = `
 Analyze the sentiment of the following event review.
 Respond ONLY with a valid JSON object in this exact format:
@@ -30,12 +47,7 @@ Where 0 is extremely negative, 50 is neutral, and 100 is extremely positive.
 
 Review: "${comment}"
     `;
-    const result = await model.generateContent(prompt);
-    const responseText = result.response
-      .text()
-      .replace(/\`\`\`json/g, '')
-      .replace(/\`\`\`/g, '')
-      .trim();
+    const responseText = await callAI(prompt);
     try {
       const parsed = JSON.parse(responseText);
       let label = parsed.label;
@@ -47,7 +59,7 @@ Review: "${comment}"
       return { label: 'Neutral', score: 50 };
     }
   } catch (error) {
-    console.error('Gemini sentiment analysis failed:', error);
+    console.error('AI sentiment analysis failed:', error);
     return { label: 'Neutral', score: 50 };
   }
 }
@@ -59,13 +71,7 @@ async function generateEventAIInsights(reviews) {
   if (!reviews || !Array.isArray(reviews) || reviews.length === 0) return null;
   const meaningfulReviews = reviews.filter((r) => r.comment && r.comment.trim().length > 0);
   if (meaningfulReviews.length === 0) return null;
-  const genAI = getGenAI();
-  if (!genAI) {
-    console.warn('API_KEY is missing. Cannot generate AI event insights.');
-    return null;
-  }
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const reviewsText = meaningfulReviews
       .map((r, i) => `Review ${i + 1} (Rating: ${r.overallRating || 'N/A'}): "${r.comment}"`)
       .join('\n');
@@ -93,9 +99,8 @@ Reviews:
 ${reviewsText}
     `;
 
-    const result = await model.generateContent(prompt);
-    let responseText = result.response
-      .text()
+    const responseTextRaw = await callAI(prompt);
+    const responseText = responseTextRaw
       .replace(/\`\`\`json/g, '')
       .replace(/\`\`\`/g, '')
       .trim();
@@ -119,11 +124,11 @@ ${reviewsText}
             : 50,
       };
     } catch {
-      console.error('Failed to parse Gemini collective insights JSON:', responseText);
+      console.error('Failed to parse AI collective insights JSON:', responseText);
       return null;
     }
   } catch (error) {
-    console.error('Gemini collective insights generation failed:', error);
+    console.error('AI collective insights generation failed:', error);
     return null;
   }
 }
@@ -137,21 +142,13 @@ async function generateCrossEventInsights(eventsData) {
   const eventsWithReviews = eventsData.filter((e) => e.reviews && e.reviews.length > 0);
   if (eventsWithReviews.length === 0) return null;
 
-  const genAI = getGenAI();
-  if (!genAI) {
-    console.warn('API_KEY is missing. Cannot generate portfolio insights.');
-    return null;
-  }
-
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
     const eventsText = eventsWithReviews
       .map((ev) => {
         const avgRating = ev.reviews.length
           ? (
-              ev.reviews.reduce((s, r) => s + (r.overallRating || 0), 0) / ev.reviews.length
-            ).toFixed(1)
+            ev.reviews.reduce((s, r) => s + (r.overallRating || 0), 0) / ev.reviews.length
+          ).toFixed(1)
           : 'N/A';
         const comments = ev.reviews
           .filter((r) => r.comment && r.comment.trim())
@@ -186,9 +183,8 @@ Events Data:
 ${eventsText}
     `;
 
-    const result = await model.generateContent(prompt);
-    let responseText = result.response
-      .text()
+    const responseTextRaw = await callAI(prompt);
+    const responseText = responseTextRaw
       .replace(/\`\`\`json/g, '')
       .replace(/\`\`\`/g, '')
       .trim();
@@ -216,7 +212,7 @@ ${eventsText}
       return null;
     }
   } catch (error) {
-    console.error('Gemini portfolio insights failed:', error);
+    console.error('AI portfolio insights failed:', error);
     return null;
   }
 }

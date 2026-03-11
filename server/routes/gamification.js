@@ -18,7 +18,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-router.get('/leaderboard', gamificationController.getLeaderboard);
+router.get('/leaderboard', authenticateToken, gamificationController.getLeaderboard);
 router.get('/my-rank', authenticateToken, gamificationController.getUserRank);
 
 // Manual point award (e.g. from frontend interactions verified by token)

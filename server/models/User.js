@@ -127,9 +127,21 @@ const userSchema = new mongoose.Schema({
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date },
 
-  // Gamification
-  points: { type: Number, default: 0 },
+  // Gamification (PUBG-Style)
+  points: { type: Number, default: 0 }, // Total lifetime points
   level: { type: Number, default: 1 },
+  tier: {
+    type: String,
+    enum: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Crown', 'Ace', 'Conqueror'],
+    default: 'Bronze',
+  },
+  seasonPoints: { type: Number, default: 0 }, // Monthly reset points
+  skillXP: {
+    technical: { type: Number, default: 0 },
+    creative: { type: Number, default: 0 },
+    management: { type: Number, default: 0 },
+    social: { type: Number, default: 0 },
+  },
   gamificationStats: {
     eventsAttended: { type: Number, default: 0 },
     eventsBookmarked: { type: Number, default: 0 },
@@ -145,9 +157,24 @@ const userSchema = new mongoose.Schema({
       id: String,
       name: String,
       icon: String,
-      tier: { type: String, enum: ['bronze', 'silver', 'gold', 'platinum'], default: 'bronze' }, // New tiered system
+      tier: { type: String, enum: ['bronze', 'silver', 'gold', 'platinum'], default: 'bronze' },
       earnedAt: { type: Date, default: Date.now },
       description: String,
+    },
+  ],
+  achievements: [
+    {
+      id: String,
+      name: String,
+      description: String,
+      unlockedAt: { type: Date, default: Date.now },
+    },
+  ],
+  rankHistory: [
+    {
+      season: String,
+      tier: String,
+      points: Number,
     },
   ],
 

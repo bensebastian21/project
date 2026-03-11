@@ -29,6 +29,8 @@ import {
   BellRing,
   LayoutDashboard,
   ChevronDown,
+  ShieldAlert, ShieldCheck, ShieldX,
+  Banknote, IndianRupee, Landmark, Building2, GraduationCap, RefreshCw, CheckCircle, User
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -46,6 +48,7 @@ import {
   Cell,
 } from 'recharts';
 import config from '../config';
+import { io } from 'socket.io-client';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -106,6 +109,22 @@ export default function AdminPanel() {
   });
   const [sendingNotification, setSendingNotification] = useState(false);
   const navigate = useNavigate();
+
+  // Traffic & Heatmap State
+  const [activeTraffic, setActiveTraffic] = useState(0);
+  const [heatmapClicks, setHeatmapClicks] = useState([]);
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [fraudLogs, setFraudLogs] = useState([]);
+  const [loadingFraudLogs, setLoadingFraudLogs] = useState(false);
+
+  // Financials State
+  const [financialStats, setFinancialStats] = useState(null);
+  const [ledger, setLedger] = useState([]);
+  const [loadingFinancials, setLoadingFinancials] = useState(false);
+  const [payoutForm, setPayoutForm] = useState({ hostId: '', amount: '', note: '' });
+  const [hostSearchQuery, setHostSearchQuery] = useState('');
+  const [showHostDropdown, setShowHostDropdown] = useState(false);
+  const [hostSummaries, setHostSummaries] = useState([]);
 
   // Validation functions
   const validateField = (field, value) => {
@@ -303,9 +322,9 @@ export default function AdminPanel() {
         tags:
           typeof eventForm.tags === 'string'
             ? eventForm.tags
-                .split(',')
-                .map((t) => t.trim())
-                .filter(Boolean)
+              .split(',')
+              .map((t) => t.trim())
+              .filter(Boolean)
             : eventForm.tags,
         capacity: parseInt(eventForm.capacity) || 0,
         price: parseFloat(eventForm.price) || 0,
@@ -433,7 +452,7 @@ export default function AdminPanel() {
     if ((field === 'password' || field === 'confirmPassword') && editTouched['confirmPassword']) {
       const matchMsg =
         (field === 'password' ? value : editHostForm.password) ===
-        (field === 'confirmPassword' ? value : editHostForm.confirmPassword)
+          (field === 'confirmPassword' ? value : editHostForm.confirmPassword)
           ? ''
           : 'Passwords do not match';
       setEditErrors((prev) => ({ ...prev, confirmPassword: matchMsg }));
@@ -484,12 +503,27 @@ export default function AdminPanel() {
     window.onpopstate = () => window.history.go(1);
   }, []);
 
+  const adminSidebarItems = [
+    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
+    { id: 'users', name: 'Users', icon: Users },
+    { id: 'hosts', name: 'Hosts', icon: Building2 },
+    { id: 'events', name: 'Events', icon: Calendar },
+    { id: 'host-applications', name: 'Host Applications', icon: UserPlus },
+    { id: 'verify-students', name: 'Verify Students', icon: GraduationCap },
+    { id: 'fraud', name: 'Fraud & Spam', icon: ShieldAlert },
+    { id: 'financials', name: 'Financials', icon: IndianRupee },
+  ];
+
   useEffect(() => {
-    if (activeTab === 'host-applications' || activeTab === 'view-hosts') {
-      fetchHostApplications();
-    }
-    if (activeTab === 'verify-students') {
-      fetchPendingVerifications();
+    if (activeTab === 'dashboard' || activeTab === 'analytics' || activeTab === 'monitor') fetchMetrics();
+    if (activeTab === 'view-hosts') fetchHosts();
+    if (activeTab === 'events') fetchAdminEvents();
+    if (activeTab === 'host-applications') fetchHostApplications();
+    if (activeTab === 'verify-students') fetchPendingVerifications();
+    if (activeTab === 'fraud') fetchFraudLogs();
+    if (activeTab === 'financials') {
+      fetchFinancials();
+      fetchHosts();
     }
   }, [activeTab]);
 
@@ -520,6 +554,44 @@ export default function AdminPanel() {
       setCheckingAdmin(false);
     }
   };
+
+  // Socket connection for Heatmap Tab
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const token = localStorage.getItem('token');
+    const socketUrl = process.env.REACT_APP_API_URL || config.apiBaseUrl.replace(/\/api$/, '');
+    const socket = io(socketUrl, { auth: { token } });
+
+    socket.on('connect', () => {
+      setSocketConnected(true);
+      socket.emit('join_admin_room');
+    });
+
+    socket.on('disconnect', () => {
+      setSocketConnected(false);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Heatmap socket error:', err);
+      setSocketConnected(false);
+    });
+
+    socket.on('active_users_count', (count) => {
+      setActiveTraffic(count);
+    });
+
+    socket.on('new_click', (data) => {
+      setHeatmapClicks(prev => {
+        const next = [...prev, data];
+        // Keep only last 100 clicks to avoid memory bloat
+        if (next.length > 100) return next.slice(next.length - 100);
+        return next;
+      });
+    });
+
+    return () => socket.disconnect();
+  }, [isAdmin]);
 
   const fetchHosts = async () => {
     try {
@@ -552,6 +624,42 @@ export default function AdminPanel() {
       toast.error('Error fetching host applications');
     } finally {
       setLoadingApplications(false);
+    }
+  };
+
+  const fetchFraudLogs = async () => {
+    try {
+      setLoadingFraudLogs(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/admin/fraud-logs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch fraud logs');
+      const data = await response.json();
+      setFraudLogs(data);
+    } catch (error) {
+      toast.error('Error fetching fraud logs');
+    } finally {
+      setLoadingFraudLogs(false);
+    }
+  };
+
+  const updateFraudLogStatus = async (logId, status) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/admin/fraud-logs/${logId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error('Failed to update fraud log');
+      toast.success(`Log marked as ${status}`);
+      fetchFraudLogs();
+    } catch (error) {
+      toast.error('Error updating fraud log');
     }
   };
 
@@ -596,6 +704,65 @@ export default function AdminPanel() {
       fetchHostApplications();
     } catch (error) {
       toast.error('Error rejecting host application');
+    }
+  };
+
+  const fetchFinancials = async () => {
+    try {
+      setLoadingFinancials(true);
+      const token = localStorage.getItem('token');
+      const [ledgerRes, statsRes, summariesRes] = await Promise.all([
+        fetch(`${config.apiBaseUrl}/api/auth/admin/financials/ledger`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${config.apiBaseUrl}/api/auth/admin/financials/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch(`${config.apiBaseUrl}/api/auth/admin/financials/host-summaries`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      if (!ledgerRes.ok || !statsRes.ok || !summariesRes.ok) throw new Error('Failed to fetch financials');
+
+      const ledgerData = await ledgerRes.json();
+      const statsData = await statsRes.json();
+      const summariesData = await summariesRes.json();
+
+      setLedger(ledgerData);
+      setFinancialStats(statsData);
+      setHostSummaries(summariesData);
+    } catch (error) {
+      toast.error('Error fetching financial data');
+    } finally {
+      setLoadingFinancials(false);
+    }
+  };
+
+  const recordPayout = async (e) => {
+    e.preventDefault();
+    if (!payoutForm.hostId) {
+      toast.error('Please select a host from the search results');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${config.apiBaseUrl}/api/auth/admin/financials/payout/${payoutForm.hostId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount: Number(payoutForm.amount), note: payoutForm.note })
+      });
+
+      if (!response.ok) throw new Error('Payout failed');
+      toast.success('Payout recorded successfully');
+      setPayoutForm({ hostId: '', amount: '', note: '' });
+      setHostSearchQuery('');
+      fetchFinancials();
+    } catch (error) {
+      toast.error('Error recording payout');
     }
   };
 
@@ -1047,6 +1214,9 @@ export default function AdminPanel() {
                   { id: 'host-applications', icon: UserPlus, label: 'Host Applications' },
                   { id: 'verify-students', icon: CheckCircle2, label: 'Verify Students' },
                   { id: 'events', icon: Calendar, label: 'Manage Events' },
+                  { id: 'heatmap', icon: MapPin, label: 'Live Traffic & Heatmap' },
+                  { id: 'fraud', icon: ShieldAlert, label: 'Fraud & Spam' },
+                  { id: 'financials', icon: IndianRupee, label: 'Financials' },
                   { id: 'monitor', icon: Eye, label: 'Monitor Activity' },
                   { id: 'notifications', icon: BellRing, label: 'Notifications' },
                 ].map((item) => (
@@ -1231,7 +1401,7 @@ export default function AdminPanel() {
                       </h3>
                       <div className="flex-1 min-h-[300px] border-2 border-black bg-neutral-50 p-4">
                         {metrics.analytics.topCategories &&
-                        metrics.analytics.topCategories.length > 0 ? (
+                          metrics.analytics.topCategories.length > 0 ? (
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
@@ -1250,7 +1420,7 @@ export default function AdminPanel() {
                                     key={`cell-${index}`}
                                     fill={
                                       ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'][
-                                        index % 5
+                                      index % 5
                                       ]
                                     }
                                   />
@@ -1375,6 +1545,468 @@ export default function AdminPanel() {
                 )}
               </div>
             )}
+
+            {activeTab === 'heatmap' && (
+              <div className="animate-fadeIn max-w-7xl mx-auto space-y-8">
+                <h1 className="text-4xl font-black mb-8 flex items-center gap-3 text-black uppercase tracking-tighter">
+                  <div className="p-2 border-2 border-black bg-white text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <MapPin size={28} className="text-red-500" />
+                  </div>
+                  Live Traffic & Heatmap
+                </h1>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-red-50 border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
+                    <div className="p-4 border-2 border-black bg-red-400 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <Users size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold uppercase tracking-wide text-red-900">Active Users Right Now</h3>
+                      <div className="flex items-center gap-2">
+                        <p className="text-5xl font-black text-black tracking-tighter">
+                          {activeTraffic}
+                        </p>
+                        <div className="flex flex-col">
+                          <span className={`text-[10px] font-black px-1 border border-black ${socketConnected ? 'bg-green-400' : 'bg-red-400'}`}>
+                            {socketConnected ? 'CONNECTED' : 'DISCONNECTED'}
+                          </span>
+                          <span className="text-sm font-bold text-red-600 animate-pulse">● LIVE</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-yellow-50 border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-center">
+                    <h3 className="text-lg font-bold uppercase tracking-wide text-yellow-900 mb-2 border-b-2 border-black pb-2">How this works</h3>
+                    <p className="text-sm font-bold text-black leading-relaxed">
+                      Every click made by an authenticated user across the entire platform is captured and broadcasted here in real-time.
+                      Circles indicate the exact relative screen coordinates of where the user clicked.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white border-4 border-black p-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative w-full h-[600px] overflow-hidden">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+                  <div className="absolute top-4 left-4 bg-black text-white px-3 py-1 text-xs font-black uppercase tracking-widest z-10 border-2 border-transparent">
+                    Live Interaction Map
+                  </div>
+
+                  {/* Heatmap Container Overlay */}
+                  <div className="relative w-full h-full bg-slate-100/50">
+                    <AnimatePresence>
+                      {heatmapClicks.map((click, i) => (
+                        <motion.div
+                          key={`${click.timestamp}-${i}`}
+                          initial={{ scale: 0, opacity: 1 }}
+                          animate={{ scale: 2, opacity: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 1.5, ease: "easeOut" }}
+                          className="absolute w-8 h-8 -ml-4 -mt-4 rounded-full border-4 border-red-500 bg-red-500/20 pointer-events-none"
+                          style={{
+                            left: `${click.x}%`,
+                            top: `${click.y}%`
+                          }}
+                        >
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-black text-white px-1 text-[8px] font-bold uppercase whitespace-nowrap opacity-50">
+                            {click.path}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    {heatmapClicks.length === 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="bg-white border-2 border-black px-4 py-2 font-black uppercase tracking-widest text-neutral-400 rotate-[-5deg] shadow-[4px_4px_0_0_rgba(0,0,0,1)]">
+                          Waiting for user interactions...
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeTab === 'fraud' && (
+              <div className="animate-fadeIn max-w-7xl mx-auto space-y-8">
+                <h1 className="text-4xl font-black mb-8 flex items-center gap-3 text-black uppercase tracking-tighter">
+                  <div className="p-2 border-2 border-black bg-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]">
+                    <ShieldAlert size={28} />
+                  </div>
+                  Fraud & Spam Queue
+                </h1>
+
+                <div className="flex justify-between items-center bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="flex gap-4">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase text-neutral-500">Total Flagged</span>
+                      <span className="text-2xl font-black">{fraudLogs.length}</span>
+                    </div>
+                    <div className="w-[2px] bg-black/10"></div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black uppercase text-neutral-500">High Severity</span>
+                      <span className="text-2xl font-black text-red-600">{fraudLogs.filter(l => l.severity === 'High' && l.status === 'Pending').length}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={fetchFraudLogs}
+                    className="px-6 py-2 bg-black text-white font-bold uppercase text-xs border-2 border-black hover:bg-neutral-800 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none"
+                  >
+                    Refresh Queue
+                  </button>
+                </div>
+
+                {loadingFraudLogs ? (
+                  <div className="p-24 text-center">
+                    <div className="inline-block w-12 h-12 border-4 border-black border-t-transparent animate-spin mb-4"></div>
+                    <p className="font-bold text-neutral-400 animate-pulse uppercase tracking-widest">Scanning for suspicious activities...</p>
+                  </div>
+                ) : fraudLogs.length === 0 ? (
+                  <div className="bg-green-50 border-2 border-black p-12 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                    <ShieldCheck className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                    <h3 className="text-2xl font-black uppercase tracking-tight">System Secured</h3>
+                    <p className="font-bold text-neutral-600 uppercase text-sm tracking-wide">No suspicious activities flagged by the automated detector.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-6">
+                    {fraudLogs.map((log) => (
+                      <div
+                        key={log._id}
+                        className={`border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row gap-6 ${log.status === 'Dismissed' ? 'bg-neutral-100 opacity-60 grayscale' :
+                          log.severity === 'High' ? 'bg-red-50' :
+                            log.severity === 'Medium' ? 'bg-yellow-50' : 'bg-blue-50'
+                          }`}
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className={`text-[10px] font-black px-2 py-0.5 border-2 border-black uppercase ${log.severity === 'High' ? 'bg-red-500 text-white' :
+                              log.severity === 'Medium' ? 'bg-yellow-400 text-black' : 'bg-blue-400 text-black'
+                              }`}>
+                              {log.severity} Priority
+                            </span>
+                            <span className="font-mono text-[10px] font-bold text-neutral-500 uppercase">{new Date(log.createdAt).toLocaleString()}</span>
+                            <div className="ml-auto flex items-center gap-2">
+                              {log.status === 'Pending' && <span className="animate-pulse w-2 h-2 rounded-full bg-red-600"></span>}
+                              <span className="text-[10px] font-black uppercase bg-white border-2 border-black px-1.5">{log.status}</span>
+                            </div>
+                          </div>
+                          <h3 className="text-2xl font-black uppercase tracking-tight mb-1">{log.reason}</h3>
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className="bg-black text-white text-[10px] font-black px-1.5 py-0.5 uppercase">{log.targetType}</span>
+                            <p className="font-bold text-sm text-black">
+                              Target: <span className="underline decoration-2 underline-offset-4">{log.targetName}</span>
+                            </p>
+                          </div>
+
+                          {log.metadata && (
+                            <div className="p-3 bg-black/5 border-2 border-black/10 font-mono text-[10px] overflow-x-auto max-h-32 mb-2">
+                              <div className="font-bold mb-1 opacity-50 uppercase tracking-widest text-[8px]">Metadata Analysis:</div>
+                              {Object.entries(log.metadata).map(([key, val]) => (
+                                <div key={key} className="flex gap-2">
+                                  <span className="text-neutral-500">{key}:</span>
+                                  <span className="text-black font-bold">{JSON.stringify(val)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-3 justify-center min-w-[180px]">
+                          {log.status === 'Pending' ? (
+                            <>
+                              <button
+                                onClick={() => updateFraudLogStatus(log._id, 'Verified')}
+                                className="px-4 py-3 bg-red-600 text-white font-black uppercase text-xs border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all flex items-center justify-center gap-2 group"
+                              >
+                                <ShieldAlert size={16} className="group-hover:rotate-12 transition-transform" /> Confirm Fraud
+                              </button>
+                              <button
+                                onClick={() => updateFraudLogStatus(log._id, 'Dismissed')}
+                                className="px-4 py-3 bg-white text-black font-black uppercase text-xs border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all flex items-center justify-center gap-2"
+                              >
+                                <ShieldX size={16} /> Dismiss Flag
+                              </button>
+                            </>
+                          ) : (
+                            <div className={`flex flex-col items-center justify-center p-4 border-2 border-black text-center ${log.status === 'Verified' ? 'bg-red-400 text-black' : 'bg-green-400 text-black'}`}>
+                              {log.status === 'Verified' ? <ShieldAlert size={24} className="mb-1" /> : <ShieldCheck size={24} className="mb-1" />}
+                              <span className="font-black uppercase text-xs">Activity {log.status}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'financials' && (
+              <div className="animate-fadeIn max-w-7xl mx-auto space-y-8">
+                <h1 className="text-4xl font-black mb-8 flex items-center gap-3 text-black uppercase tracking-tighter">
+                  <div className="p-2 border-2 border-black bg-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]">
+                    <IndianRupee size={28} />
+                  </div>
+                  Financial Reconciliation
+                </h1>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                  {[
+                    { label: 'Gross Volume', value: `₹${financialStats?.revenue?.totalVolume?.toLocaleString() || 0}`, icon: IndianRupee, color: 'text-green-600', bg: 'bg-green-100' },
+                    { label: 'Platform Fees', value: `₹${financialStats?.revenue?.totalFees?.toLocaleString() || 0}`, icon: Landmark, color: 'text-blue-600', bg: 'bg-blue-100' },
+                    { label: 'Gross Earnings', value: `₹${financialStats?.revenue?.totalHostEarnings?.toLocaleString() || 0}`, icon: LayoutDashboard, color: 'text-purple-600', bg: 'bg-purple-100' },
+                    { label: 'Total Payouts', value: `₹${financialStats?.payouts?.totalPaid?.toLocaleString() || 0}`, icon: Banknote, color: 'text-orange-600', bg: 'bg-orange-100' },
+                  ].map((stat, i) => (
+                    <div key={i} className="bg-white border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center gap-4">
+                      <div className={`p-4 border-2 border-black ${stat.bg.replace('bg-', 'bg-')}`}>
+                        <stat.icon size={24} className="text-black" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-neutral-500">{stat.label}</p>
+                        <p className="text-2xl font-black text-black">{stat.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Ledger Table */}
+                  <div className="lg:col-span-2 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col">
+                    <div className="p-6 border-b-4 border-black flex justify-between items-center bg-indigo-50">
+                      <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                        <LayoutDashboard size={20} /> Transaction Ledger
+                      </h3>
+                      <button
+                        onClick={fetchFinancials}
+                        className="px-4 py-2 bg-black text-white text-xs font-bold uppercase border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                      >
+                        {loadingFinancials ? 'Syncing...' : 'Sync Ledger'}
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead className="bg-black text-white">
+                          <tr>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Date</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Event / Host</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Type</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Amount</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Fee</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y-2 divide-black/10">
+                          {ledger.length === 0 ? (
+                            <tr><td colSpan="6" className="px-6 py-12 text-center text-neutral-400 font-bold uppercase italic">No financial data available</td></tr>
+                          ) : (
+                            ledger.map((tx) => (
+                              <tr key={tx._id} className="hover:bg-neutral-50 transition-colors">
+                                <td className="px-6 py-4 font-mono text-xs font-bold">{new Date(tx.createdAt).toLocaleDateString()}</td>
+                                <td className="px-6 py-4">
+                                  <p className="font-black uppercase text-sm">{tx.eventId?.title || 'System Operation'}</p>
+                                  <p className="text-[10px] font-bold text-neutral-500 uppercase">{tx.hostId?.fullname}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className={`px-2 py-0.5 border-2 border-black text-[10px] font-black uppercase ${tx.type === 'TicketSale' ? 'bg-green-400' : tx.type === 'Payout' ? 'bg-orange-400' : 'bg-red-400'
+                                    }`}>
+                                    {tx.type}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 font-black">₹{Math.abs(tx.amount).toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold text-neutral-500 text-xs">₹{tx.platformFee}</td>
+                                <td className="px-6 py-4 text-right">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-green-600">
+                                    <CheckCircle size={14} /> {tx.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Host Earnings Breakdown */}
+                  <div className="lg:col-span-2 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col mb-8">
+                    <div className="p-6 border-b-4 border-black bg-blue-50">
+                      <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                        <Users size={20} /> Host Earnings Breakdown
+                      </h3>
+                    </div>
+                    <div className="overflow-x-auto relative">
+                      {loadingFinancials && (
+                        <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                          <div className="flex items-center gap-2 bg-black text-white px-4 py-2 text-xs font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent animate-spin"></div>
+                            Refreshing...
+                          </div>
+                        </div>
+                      )}
+                      <table className="w-full text-left">
+                        <thead className="bg-black text-white">
+                          <tr>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Host</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Categorized Earnings</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Total Earned</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Total Paid</th>
+                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Balance Owed</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y-2 divide-black/10">
+                          {hostSummaries.length === 0 ? (
+                            <tr><td colSpan="5" className="px-6 py-12 text-center text-neutral-400 font-bold uppercase italic">No host data available</td></tr>
+                          ) : (
+                            hostSummaries.map((s) => (
+                              <tr key={s._id} className="hover:bg-neutral-50 transition-colors">
+                                <td className="px-6 py-4">
+                                  <p className="font-black uppercase text-sm">{s.fullname}</p>
+                                  <p className="text-[10px] font-bold text-neutral-500 uppercase">{s.email}</p>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex flex-wrap gap-1">
+                                    {(s.categories || []).map((cat, idx) => (
+                                      <span key={idx} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 border border-indigo-200 text-[9px] font-black uppercase">
+                                        {cat.name}: ₹{cat.amount.toLocaleString()}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 font-bold">₹{s.totalEarned.toLocaleString()}</td>
+                                <td className="px-6 py-4 font-bold">₹{s.totalPaid.toLocaleString()}</td>
+                                <td className="px-6 py-4 text-right">
+                                  <span className={`px-3 py-1 border-2 border-black text-xs font-black uppercase ${s.remainingBalance > 0 ? 'bg-orange-400' : 'bg-green-400'}`}>
+                                    ₹{s.remainingBalance.toLocaleString()}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Payout Action Panel */}
+                  <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] h-fit sticky top-24">
+                    <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2 mb-6 pb-2 border-b-2 border-black">
+                      <Banknote size={24} /> Trigger Payout
+                    </h3>
+                    <form onSubmit={recordPayout} className="space-y-6">
+                      <label className="text-[10px] font-black uppercase text-neutral-500 flex items-center gap-1">
+                        <User size={12} /> Target Host
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          className={`w-full px-4 py-3 border-2 border-black font-bold outline-none focus:ring-4 focus:ring-indigo-100 transition-all ${payoutForm.hostId ? 'bg-green-50' : 'bg-neutral-50 focus:bg-white'}`}
+                          placeholder="Search host by name or email..."
+                          value={hostSearchQuery}
+                          onChange={(e) => {
+                            setHostSearchQuery(e.target.value);
+                            setPayoutForm({ ...payoutForm, hostId: '' }); // Clear selection on new search
+                            setShowHostDropdown(true);
+                          }}
+                          onFocus={() => setShowHostDropdown(true)}
+                        />
+                        {payoutForm.hostId && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 bg-green-500 text-white text-[8px] font-black uppercase px-2 py-1 rounded-sm border-2 border-black flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <CheckCircle size={10} /> Selected
+                          </div>
+                        )}
+                        {showHostDropdown && hostSearchQuery && (
+                          <div className="absolute z-50 left-0 right-0 mt-1 bg-white border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-h-60 overflow-y-auto">
+                            {hosts
+                              .filter(h =>
+                                h.fullname?.toLowerCase().includes(hostSearchQuery.toLowerCase()) ||
+                                h.email?.toLowerCase().includes(hostSearchQuery.toLowerCase())
+                              )
+                              .map(h => {
+                                const summary = hostSummaries.find(s => s._id === h._id);
+                                const balance = summary ? summary.remainingBalance : 0;
+                                return (
+                                  <button
+                                    key={h._id}
+                                    type="button"
+                                    onClick={() => {
+                                      setPayoutForm({ ...payoutForm, hostId: h._id });
+                                      setHostSearchQuery(h.fullname);
+                                      setShowHostDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-3 hover:bg-neutral-100 border-b-2 border-black last:border-b-0 flex justify-between items-center"
+                                  >
+                                    <div className="flex flex-col">
+                                      <span className="font-black text-sm uppercase">{h.fullname}</span>
+                                      <span className="text-[10px] font-bold text-neutral-500 uppercase">{h.email}</span>
+                                    </div>
+                                    {balance > 0 && (
+                                      <div className="text-right">
+                                        <span className="text-[10px] font-black bg-orange-100 text-orange-700 px-2 py-0.5 border border-orange-200 uppercase">
+                                          Owed: ₹{balance.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })
+                            }
+                            {hosts.filter(h =>
+                              h.fullname?.toLowerCase().includes(hostSearchQuery.toLowerCase()) ||
+                              h.email?.toLowerCase().includes(hostSearchQuery.toLowerCase())
+                            ).length === 0 && (
+                                <div className="px-4 py-3 text-xs font-bold text-neutral-400 italic">No hosts found</div>
+                              )}
+                          </div>
+                        )}
+                      </div>
+                      {payoutForm.hostId && (
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-[9px] font-black bg-green-100 text-green-700 px-2 py-0.5 border border-green-200">ID: {payoutForm.hostId} SELECTED</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPayoutForm({ ...payoutForm, hostId: '' });
+                              setHostSearchQuery('');
+                            }}
+                            className="text-[9px] font-black text-red-600 hover:underline uppercase"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-neutral-500 flex items-center gap-1">
+                          <IndianRupee size={12} /> Payout Amount (₹)
+                        </label>
+                        <input
+                          type="number"
+                          className="w-full px-4 py-3 border-2 border-black bg-neutral-50 font-bold focus:bg-white outline-none focus:ring-4 focus:ring-indigo-100 transition-all"
+                          placeholder="0.00"
+                          value={payoutForm.amount}
+                          onChange={(e) => setPayoutForm({ ...payoutForm, amount: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-neutral-500">Transaction Note</label>
+                        <textarea
+                          className="w-full px-4 py-3 border-2 border-black bg-neutral-50 font-bold focus:bg-white outline-none focus:ring-4 focus:ring-indigo-100 transition-all resize-none"
+                          rows="3"
+                          placeholder="Notes for the host..."
+                          value={payoutForm.note}
+                          onChange={(e) => setPayoutForm({ ...payoutForm, note: e.target.value })}
+                        />
+                      </div>
+                      <button className="w-full py-4 bg-black text-white text-sm font-black uppercase border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
+                        Execute Payout Record
+                      </button>
+                    </form>
+                    <div className="mt-8 p-4 bg-yellow-100 border-2 border-black">
+                      <p className="text-[10px] font-bold text-black uppercase leading-tight">
+                        Warning: This action records a ledger entry for a completed bank transfer. It does not initiate a real wire transfer.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
 
             {activeTab === 'verify-students' && (
               <div className="animate-fadeIn max-w-7xl mx-auto space-y-8">
@@ -1676,13 +2308,12 @@ export default function AdminPanel() {
                               </p>
                             </div>
                             <div
-                              className={`px-4 py-1.5 border-2 border-black text-sm font-black uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
-                                application.approvalStatus === 'pending'
-                                  ? 'bg-amber-300 text-black'
-                                  : application.approvalStatus === 'approved'
-                                    ? 'bg-green-400 text-black'
-                                    : 'bg-red-400 text-black'
-                              }`}
+                              className={`px-4 py-1.5 border-2 border-black text-sm font-black uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${application.approvalStatus === 'pending'
+                                ? 'bg-amber-300 text-black'
+                                : application.approvalStatus === 'approved'
+                                  ? 'bg-green-400 text-black'
+                                  : 'bg-red-400 text-black'
+                                }`}
                             >
                               {application.approvalStatus.charAt(0).toUpperCase() +
                                 application.approvalStatus.slice(1)}
@@ -1803,9 +2434,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('email', e.target.value)}
                         onFocus={() => handleHostFieldFocus('email')}
                         onBlur={() => handleHostFieldBlur('email')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.email ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.email ? 'border-red-500' : 'border-black'
+                          }`}
                         required
                       />
                       {hostErrors.email && (
@@ -1827,9 +2457,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('institute', e.target.value)}
                         onFocus={() => handleHostFieldFocus('institute')}
                         onBlur={() => handleHostFieldBlur('institute')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.institute ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.institute ? 'border-red-500' : 'border-black'
+                          }`}
                         required
                       />
                       {hostErrors.institute && (
@@ -1851,9 +2480,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('course', e.target.value)}
                         onFocus={() => handleHostFieldFocus('course')}
                         onBlur={() => handleHostFieldBlur('course')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.course ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.course ? 'border-red-500' : 'border-black'
+                          }`}
                         required
                       />
                       {hostErrors.course && (
@@ -1894,9 +2522,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('fullname', e.target.value)}
                         onFocus={() => handleHostFieldFocus('fullname')}
                         onBlur={() => handleHostFieldBlur('fullname')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.fullname ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.fullname ? 'border-red-500' : 'border-black'
+                          }`}
                         required
                       />
                       {hostErrors.fullname && (
@@ -1918,9 +2545,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('username', e.target.value)}
                         onFocus={() => handleHostFieldFocus('username')}
                         onBlur={() => handleHostFieldBlur('username')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.username ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.username ? 'border-red-500' : 'border-black'
+                          }`}
                         required
                       />
                       {hostErrors.username && (
@@ -1942,9 +2568,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('password', e.target.value)}
                         onFocus={() => handleHostFieldFocus('password')}
                         onBlur={() => handleHostFieldBlur('password')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.password ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.password ? 'border-red-500' : 'border-black'
+                          }`}
                         required
                       />
                       {hostErrors.password && (
@@ -1966,9 +2591,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('confirmPassword', e.target.value)}
                         onFocus={() => handleHostFieldFocus('confirmPassword')}
                         onBlur={() => handleHostFieldBlur('confirmPassword')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.confirmPassword ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.confirmPassword ? 'border-red-500' : 'border-black'
+                          }`}
                         required
                       />
                       {hostErrors.confirmPassword && (
@@ -1990,9 +2614,8 @@ export default function AdminPanel() {
                         onChange={(e) => handleHostFieldChange('age', e.target.value)}
                         onFocus={() => handleHostFieldFocus('age')}
                         onBlur={() => handleHostFieldBlur('age')}
-                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                          hostErrors.age ? 'border-red-500' : 'border-black'
-                        }`}
+                        className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.age ? 'border-red-500' : 'border-black'
+                          }`}
                         min="16"
                         max="100"
                         required
@@ -2023,9 +2646,8 @@ export default function AdminPanel() {
                           onChange={(e) => handleHostFieldChange('countryCode', e.target.value)}
                           onFocus={() => handleHostFieldFocus('countryCode')}
                           onBlur={() => handleHostFieldBlur('countryCode')}
-                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                            hostErrors.countryCode ? 'border-red-500' : 'border-black'
-                          }`}
+                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.countryCode ? 'border-red-500' : 'border-black'
+                            }`}
                         />
                         {hostErrors.countryCode && (
                           <p className="text-red-600 font-bold text-xs mt-1 flex items-center gap-1">
@@ -2046,9 +2668,8 @@ export default function AdminPanel() {
                           onChange={(e) => handleHostFieldChange('phone', e.target.value)}
                           onFocus={() => handleHostFieldFocus('phone')}
                           onBlur={() => handleHostFieldBlur('phone')}
-                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                            hostErrors.phone ? 'border-red-500' : 'border-black'
-                          }`}
+                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.phone ? 'border-red-500' : 'border-black'
+                            }`}
                           required
                         />
                         {hostErrors.phone && (
@@ -2078,9 +2699,8 @@ export default function AdminPanel() {
                           onChange={(e) => handleHostFieldChange('street', e.target.value)}
                           onFocus={() => handleHostFieldFocus('street')}
                           onBlur={() => handleHostFieldBlur('street')}
-                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                            hostErrors.street ? 'border-red-500' : 'border-black'
-                          }`}
+                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.street ? 'border-red-500' : 'border-black'
+                            }`}
                           required
                         />
                         {hostErrors.street && (
@@ -2102,9 +2722,8 @@ export default function AdminPanel() {
                           onChange={(e) => handleHostFieldChange('city', e.target.value)}
                           onFocus={() => handleHostFieldFocus('city')}
                           onBlur={() => handleHostFieldBlur('city')}
-                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                            hostErrors.city ? 'border-red-500' : 'border-black'
-                          }`}
+                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.city ? 'border-red-500' : 'border-black'
+                            }`}
                           required
                         />
                         {hostErrors.city && (
@@ -2125,9 +2744,8 @@ export default function AdminPanel() {
                           value={newHost.pincode}
                           onChange={(e) => handleHostFieldChange('pincode', e.target.value)}
                           onBlur={() => handleHostFieldBlur('pincode')}
-                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${
-                            hostErrors.pincode ? 'border-red-500' : 'border-black'
-                          }`}
+                          className={`w-full p-3 bg-white border-2 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all outline-none text-black font-bold placeholder:text-neutral-400 ${hostErrors.pincode ? 'border-red-500' : 'border-black'
+                            }`}
                           maxLength="6"
                           required
                         />
@@ -2286,11 +2904,10 @@ export default function AdminPanel() {
                                       toast.error('Toggle publish failed');
                                     }
                                   }}
-                                  className={`p-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${
-                                    ev.isPublished
-                                      ? 'bg-green-400 text-black'
-                                      : 'bg-white text-neutral-500'
-                                  }`}
+                                  className={`p-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${ev.isPublished
+                                    ? 'bg-green-400 text-black'
+                                    : 'bg-white text-neutral-500'
+                                    }`}
                                   title={ev.isPublished ? 'Unpublish' : 'Publish'}
                                 >
                                   {ev.isPublished ? (
@@ -2325,11 +2942,10 @@ export default function AdminPanel() {
                                       toast.error('Toggle complete failed');
                                     }
                                   }}
-                                  className={`p-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${
-                                    ev.isCompleted
-                                      ? 'bg-blue-400 text-black'
-                                      : 'bg-white text-neutral-500'
-                                  }`}
+                                  className={`p-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${ev.isCompleted
+                                    ? 'bg-blue-400 text-black'
+                                    : 'bg-white text-neutral-500'
+                                    }`}
                                   title={ev.isCompleted ? 'Mark active' : 'Mark completed'}
                                 >
                                   {ev.isCompleted ? (

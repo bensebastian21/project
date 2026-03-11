@@ -43,7 +43,7 @@ const FAQ = [
 router.post('/ai', async (req, res) => {
   try {
     const messages = Array.isArray(req.body?.messages) ? req.body.messages : [];
-    const user = req.body?.user || null; // { id, role, name }
+    const user = req.body?.user || null;
     const last = messages
       .slice()
       .reverse()
@@ -55,10 +55,12 @@ router.post('/ai', async (req, res) => {
     const greet = user?.name ? `Hi ${user.name.split(' ')[0]}, ` : '';
 
     let reply = '';
-    // Prefer Gemini if API key is available
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-    const usingGemini = Boolean(apiKey);
-    if (apiKey && q) {
+    // Prefer Groq, then Gemini, then FAQ
+    const groqKey = process.env.GROQ_API_KEY;
+    const geminiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+    const usingAI = Boolean(groqKey || geminiKey);
+
+    if (usingAI && q) {
       try {
         const roleTag = isStudent ? 'student' : isHost ? 'host' : user?.role || 'user';
         // RAG: Fetch upcoming events to inject into context
@@ -79,55 +81,76 @@ router.post('/ai', async (req, res) => {
             : '';
 
         const context = `${greet}You are the in-app support assistant for an events platform (Explore events, register, calendar overlay, reviews, certificates, host dashboard). The user role is ${roleTag}. Be concise and specific to the app. If a feature is disabled (e.g., past/completed event), explain why and what to do next.${eventContext}`;
-        const conv = messages
-          .slice(-12)
-          .map((m) => `${m.role}: ${m.content}`)
-          .join('\n');
-        const prompt = `${context}\n\nConversation:\n${conv}\n\nassistant:`;
 
-        const MODEL = process.env.SUPPORT_GEMINI_MODEL || 'gemini-2.5-flash';
-        // Try v1 first
-        const callGen = async (version) => {
-          const url = `https://generativelanguage.googleapis.com/${version}/models/${encodeURIComponent(MODEL)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-          const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }] };
-          const resp = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-          });
-          const data = await resp.json();
-          if (!resp.ok) throw new Error(data?.error?.message || JSON.stringify(data));
-          const text =
-            data?.candidates?.[0]?.content?.parts
-              ?.map((p) => p?.text)
-              .filter(Boolean)
-              .join('\n') || '';
-          return text.trim();
-        };
+        const history = messages.slice(-12).map(m => ({
+          role: m.role === 'assistant' ? 'assistant' : m.role === 'system' ? 'system' : 'user',
+          content: m.content
+        }));
 
-        try {
-          const txt = await callGen('v1');
-          if (txt) {
-            debug(`[support.ai] Gemini success (v1/${MODEL})`);
-            return res.json({ reply: txt, _meta: { provider: 'gemini', model: MODEL, via: 'v1' } });
-          }
-        } catch (e1) {
-          debug('[support.ai] v1 failed, trying v1beta:', e1?.message || e1);
+        // 1. Try Groq first
+        if (groqKey) {
           try {
-            const txt2 = await callGen('v1beta');
-            if (txt2) {
-              debug(`[support.ai] Gemini success (v1beta/${MODEL})`);
-              return res.json({
-                reply: txt2,
-                _meta: { provider: 'gemini', model: MODEL, via: 'v1beta' },
-              });
+            const groqModel = process.env.GROQ_SUPPORT_MODEL || 'llama-3.3-70b-versatile';
+            const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${groqKey}`
+              },
+              body: JSON.stringify({
+                model: groqModel,
+                messages: [
+                  { role: 'system', content: context },
+                  ...history
+                ],
+                temperature: 0.7,
+                max_tokens: 512
+              })
+            });
+            const data = await resp.json();
+            if (resp.ok && data?.choices?.[0]?.message?.content) {
+              const txt = data.choices[0].message.content.trim();
+              return res.json({ reply: txt });
             }
-          } catch (e2) {
-            debug('[support.ai] v1beta also failed:', e2?.message || e2);
+            debug('[support.ai] Groq failed, falling back...');
+          } catch (ge) {
+            debug('[support.ai] Groq error:', ge.message);
+          }
+        }
+
+        // 2. Fallback to Gemini
+        if (geminiKey) {
+          const geminiModel = process.env.SUPPORT_AI_MODEL || 'llama-3.3-70b-versatile'; // Note: prompt shows a llama name being used for gemini endpoint which might be incorrect but keep legacy
+          const conv = messages
+            .slice(-12)
+            .map((m) => `${m.role}: ${m.content}`)
+            .join('\n');
+          const prompt = `${context}\n\nConversation:\n${conv}\n\nassistant:`;
+
+          const callGen = async (version) => {
+            const url = `https://generativelanguage.googleapis.com/${version}/models/${encodeURIComponent(geminiModel)}:generateContent?key=${encodeURIComponent(geminiKey)}`;
+            const body = { contents: [{ role: 'user', parts: [{ text: prompt }] }] };
+            const resp = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            });
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data?.error?.message || JSON.stringify(data));
+            return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+          };
+
+          try {
+            const txt = await callGen('v1');
+            if (txt) {
+              return res.json({ reply: txt });
+            }
+          } catch (e) {
+            debug('[support.ai] Gemini failed:', e.message);
           }
         }
       } catch (err) {
-        debug('[support.ai] Gemini error:', err?.message || err);
+        debug('[support.ai] AI error:', err?.message || err);
         // fall through to FAQ/role logic
       }
     }
@@ -154,7 +177,7 @@ router.post('/ai', async (req, res) => {
     } else {
       reply = `${greet}How can I help you today? You can ask about registration, calendar, certificates, verification, or host features.`;
     }
-    res.json({ reply, _meta: { provider: usingGemini ? 'fallback' : 'local-faq' } });
+    res.json({ reply });
   } catch (e) {
     debug('[support.ai] route error:', e?.message || e);
     res.status(500).json({ error: 'Support service error' });

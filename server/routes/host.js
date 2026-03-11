@@ -12,9 +12,11 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const { storage, profileStorage, bannerStorage } = require('../utils/cloudinary');
+const FraudDetector = require('../services/fraudDetector');
 const { generatePDFTicket } = require('../services/ticketService');
 const { sendTicketEmail } = require('../utils/email');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Transaction = require('../models/Transaction');
 let ExcelJS;
 
 // Optional auth: decode JWT if provided, ignore if missing/invalid
@@ -602,6 +604,44 @@ router.get('/public/my-registrations', authenticateToken, async (req, res) => {
   }
 });
 
+// Public: Get Live Engagement State (Q&A/Polls)
+router.get('/public/events/:id/live', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await Event.findOne({ _id: id, isDeleted: { $ne: true } }).select('liveEngagement hostId coHosts');
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+
+    // Sort Q&A by upvotes to ensure order
+    if (event.liveEngagement && event.liveEngagement.qaList) {
+      event.liveEngagement.qaList.sort((a, b) => b.upvotes - a.upvotes);
+    }
+
+    res.json({ liveEngagement: event.liveEngagement || { isQaActive: false, qaList: [], polls: [] } });
+  } catch (err) {
+    console.error('Get live engagement error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Public: Get Live Engagement State (Q&A/Polls)
+router.get('/public/events/:id/live', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const event = await Event.findOne({ _id: id, isDeleted: { $ne: true } }).select('liveEngagement hostId coHosts');
+    if (!event) return res.status(404).json({ error: 'Event not found' });
+
+    // Sort Q&A by upvotes to ensure order
+    if (event.liveEngagement && event.liveEngagement.qaList) {
+      event.liveEngagement.qaList.sort((a, b) => b.upvotes - a.upvotes);
+    }
+
+    res.json({ liveEngagement: event.liveEngagement || { isQaActive: false, qaList: [], polls: [] } });
+  } catch (err) {
+    console.error('Get live engagement error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Public: Get QR Code ticket for a registered event
 router.get('/public/events/:id/ticket', authenticateToken, async (req, res) => {
   try {
@@ -1110,7 +1150,11 @@ router.post('/events', authenticateToken, requireHost, async (req, res) => {
 
     const event = new Event(data);
     await event.save();
-    res.json({ message: '✅ Event created', event });
+
+    // Automated Fraud Detection
+    FraudDetector.analyzeEvent(event).catch(err => console.error('Fraud analysis error:', err));
+
+    res.status(201).json({ message: '✅ Event created successfully', event });
   } catch (err) {
     console.error('Create event error:', err);
     if (err.name === 'ValidationError') {
@@ -1848,6 +1892,37 @@ router.post('/public/events/:id/register', authenticateToken, async (req, res) =
             console.error(`Failed to send ticket email to ${studentId}:`, err);
           }
         })();
+
+        // RECORD FINANCIAL TRANSACTION
+        (async () => {
+          try {
+            const price = event.price || 0;
+            const fee = Math.round(price * 0.10); // 10% platform fee
+            const earnings = price - fee;
+
+            const tx = new Transaction({
+              eventId: event._id,
+              hostId: event.hostId,
+              studentId: studentId,
+              amount: price,
+              currency: event.currency || 'INR',
+              platformFee: fee,
+              hostEarnings: earnings,
+              type: 'TicketSale',
+              status: 'Completed',
+              paymentId: `REG-${event._id.toString().slice(-4)}-${studentId.slice(-4)}-${Date.now().toString().slice(-4)}`,
+              metadata: {
+                method: price > 0 ? (squadId ? 'Squad/Bulk' : 'Direct') : 'Free',
+                registrationSource: 'portal'
+              }
+            });
+
+            await tx.save();
+            console.log(`Financial record created for student ${studentId} on event ${event._id}`);
+          } catch (err) {
+            console.error(`Failed to create financial record for student ${studentId}:`, err);
+          }
+        })();
       }
     }
 
@@ -1855,7 +1930,7 @@ router.post('/public/events/:id/register', authenticateToken, async (req, res) =
     await event.save();
 
     // Gamification: Award points to the caller (if solo, caller gets it. If squad, leader gets it for registering)
-    await gamificationController.awardPoints(req.user.id, 'REGISTER_EVENT');
+    await gamificationController.awardPoints(req.user.id, 'REGISTER_EVENT', event.category);
 
     res.json({
       message: `✅ Registered ${registeredCount} members successfully.`,
@@ -1960,26 +2035,26 @@ router.post('/events/train-classifier', authenticateToken, requireHost, async (r
 
 /**
  * POST /api/host/public/smart-search
- * Public endpoint to search events using Natural Language via Gemini
+ * Public endpoint to search events using Natural Language via API
  */
 router.post('/public/smart-search', async (req, res) => {
   try {
     const { query } = req.body;
     if (!query) return res.status(400).json({ error: 'Query is required' });
 
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+    const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
 
     let parsed = {};
 
     if (!apiKey) {
-      console.warn('No Gemini API key found. Falling back to empty search.');
+      console.warn('No AI API key found. Falling back to empty search.');
       return res.status(500).json({ error: 'API Key is missing for Smart Search' });
     }
 
     try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+      const MODEL = 'llama-3.3-70b-versatile';
+      const url = `https://api.groq.com/openai/v1/chat/completions`;
+
       const prompt = `
 You are an event search assistant. Extract search parameters from the following user query:
 "${query}"
@@ -1993,16 +2068,29 @@ Respond ONLY with a valid JSON object matching this exact structure (use null if
   "dateFilter": "string" // one of: "today", "tomorrow", "weekend", "this_week", "next_week", "this_month", or null
 }
       `;
-      const result = await model.generateContent(prompt);
-      const text = result.response
-        .text()
-        .replace(/\`\`\`json/g, '')
-        .replace(/\`\`\`/g, '')
-        .trim();
-      parsed = JSON.parse(text);
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error?.message || 'AI API call failed');
+      }
+
+      const text = data?.choices?.[0]?.message?.content || '';
+      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      parsed = JSON.parse(cleanJson);
     } catch (e) {
-      console.error('Gemini NLP search execution or parse failed:', e);
-      return res.status(500).json({ error: 'Failed to parse AI response' });
+      console.error('AI NLP search execution or parse failed:', e);
+      return res.status(500).json({ error: 'Failed to parse AI response', details: e.message });
     }
 
     // Build Mongo Query Object

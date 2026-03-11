@@ -12,7 +12,9 @@ import AllFriends from './pages/AllFriends';
 import PasswordReset from './components/PasswordReset'; // Import Password Reset
 import OAuthCallback from './components/OAuthCallback'; // OAuth callback handler
 import RequireAuth from './components/RequireAuth';
+import AttendeeLiveView from './pages/AttendeeLiveView';
 import HostDashboard from './pages/HostDashboard';
+import HostLivePanel from './pages/HostLivePanel';
 import HostPage from './pages/HostPage';
 import ReviewPage from './pages/ReviewPage';
 import CertificateVerify from './pages/CertificateVerify';
@@ -25,6 +27,7 @@ import Settings from './pages/Settings';
 import ChatPage from './pages/ChatPage';
 import ChatOverlay from './components/chat/ChatOverlay';
 import SupportChatbot from './components/SupportChatbot';
+import GlobalTrafficTracker from './components/GlobalTrafficTracker';
 function ChatbotGate() {
   const location = useLocation();
   const path = location.pathname;
@@ -32,7 +35,7 @@ function ChatbotGate() {
   try {
     const u = JSON.parse(localStorage.getItem('user') || 'null');
     role = u?.role || null;
-  } catch {}
+  } catch { }
   const show =
     (path === '/dashboard' && role === 'student') ||
     (path === '/host-dashboard' && role === 'host');
@@ -64,10 +67,10 @@ export default function App() {
         rtl={false}
         pauseOnFocusLoss={true}
         draggable={true}
-        pauseOnHover={true}
         theme="dark"
         style={{ top: '20px', right: '20px', zIndex: 9999 }}
       />
+      <GlobalTrafficTracker />
       <Routes>
         {/* New landing page as the first page */}
         <Route path="/" element={<LandingPage />} />
@@ -82,6 +85,14 @@ export default function App() {
           element={
             <RequireAuth allowedRoles={['student', 'admin', 'host']}>
               <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/event/:eventId/live"
+          element={
+            <RequireAuth allowedRoles={['student', 'admin', 'host']}>
+              <AttendeeLiveView />
             </RequireAuth>
           }
         />
@@ -106,6 +117,14 @@ export default function App() {
           element={
             <RequireAuth allowedRoles={['host', 'admin']}>
               <HostDashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/host/live/:eventId"
+          element={
+            <RequireAuth allowedRoles={['host', 'admin']}>
+              <HostLivePanel />
             </RequireAuth>
           }
         />

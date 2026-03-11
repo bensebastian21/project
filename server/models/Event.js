@@ -28,6 +28,31 @@ const feedbackSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const qaSchema = new mongoose.Schema({
+  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  studentName: { type: String, default: 'Anonymous' },
+  question: { type: String, required: true },
+  upvotes: { type: Number, default: 0 },
+  upvotedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Track upvoters
+  answered: { type: Boolean, default: false },
+  reply: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const pollOptionSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  votes: { type: Number, default: 0 }
+});
+
+const pollSchema = new mongoose.Schema({
+  question: { type: String, required: true },
+  options: [pollOptionSchema],
+  voters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Prevent duplicate voting
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, default: '' },
@@ -77,6 +102,13 @@ const eventSchema = new mongoose.Schema({
   coordinates: {
     type: [Number], // [longitude, latitude]
     index: '2dsphere',
+  },
+
+  // Live Engagement Features (Q&A / Polls)
+  liveEngagement: {
+    isQaActive: { type: Boolean, default: false },
+    qaList: [qaSchema],
+    polls: [pollSchema]
   },
 
   // GenLoop AI Features

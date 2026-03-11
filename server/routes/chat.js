@@ -97,7 +97,7 @@ router.post('/:id/message', authenticateToken, async (req, res) => {
     // append user message
     t.messages.push({ role: 'user', content });
 
-    // call support AI provider (Gemini if configured, else FAQ fallback)
+    // call support AI provider (AI if configured, else FAQ fallback)
     let reply = '';
     try {
       const origin = process.env.CHAT_SELF_ORIGIN || `http://localhost:${process.env.PORT || 5000}`;

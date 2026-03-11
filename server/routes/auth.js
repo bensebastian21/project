@@ -1,5 +1,6 @@
 // routes/auth.js
 const express = require("express");
+const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
@@ -10,7 +11,11 @@ const https = require("https");
 const User = require("../models/User");
 const Host = require("../models/Host");
 const { sendSmsTwilio } = require("../utils/sms");
-const { profileStorage, bannerStorage, documentStorage } = require("../utils/cloudinary");
+const { storage, profileStorage, bannerStorage, documentStorage } = require("../utils/cloudinary");
+const FraudDetector = require('../services/fraudDetector');
+const FraudLog = require('../models/FraudLog');
+const { sendResetEmail, sendVerificationEmail } = require('../utils/email');
+const Transaction = require("../models/Transaction");
 
 // Helper to POST form-encoded data without fetch (for Node versions < 18)
 // Create a reusable nodemailer transporter from environment
@@ -136,58 +141,6 @@ router.get("/check-availability", async (req, res) => {
 
 // User Settings (preferences) — defined after authenticateToken below
 
-const sendResetEmail = async (email, resetCode, fullname) => {
-  try {
-    const transporter = createTransporter();
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER || 'your-email@gmail.com',
-      to: email,
-      subject: 'Your Password Reset Code',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0;">🔐 Password Reset</h1>
-          </div>
-          
-          <div style="padding: 30px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
-            <h2 style="color: #333; margin-bottom: 20px;">Hello ${fullname || 'there'}!</h2>
-            <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-              You requested a password reset for your account. Enter the 6-digit code below to reset your password:
-            </p>
-            <div style="background: #e9ecef; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
-              <h3 style="color: #495057; margin: 0 0 10px 0;">Verification Code</h3>
-              <div style="background: white; padding: 15px; border: 2px dashed #dee2e6; border-radius: 5px; font-family: monospace; font-size: 22px; font-weight: bold; color: #495057; letter-spacing: 4px;">
-                ${resetCode}
-              </div>
-            </div>
-            
-            <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">
-              <strong>Important:</strong>
-            </p>
-            <ul style="color: #666; line-height: 1.6; margin-bottom: 20px; padding-left: 20px;">
-              <li>This code expires in 15 minutes</li>
-              <li>If you didn't request this reset, please ignore this email</li>
-              <li>For security, this code can only be used once</li>
-            </ul>
-            
-            <div style="text-align: center; margin-top: 30px;">
-              <p style="color: #999; font-size: 14px;">
-                Need help? Contact our support team.
-              </p>
-            </div>
-          </div>
-        </div>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
-    return true;
-  } catch (error) {
-    console.error('Email sending error:', error);
-    return false;
-  }
-};
 
 // =========================
 // Authentication Middleware
@@ -1178,6 +1131,9 @@ router.post("/register", uploadDocument.fields([
     const user = new User(userData);
     await user.save();
 
+    // Automated Fraud Detection
+    FraudDetector.analyzeUser(user).catch(err => console.error('Fraud analysis error:', err));
+
     res.json({ message: "✅ Registered. Verification pending — admin will review your document(s).", userId: user._id, pendingVerification: true });
   } catch (err) {
     console.error("❌ Registration error:", err);
@@ -2031,4 +1987,196 @@ router.get("/admin/metrics", authenticateToken, requireAdmin, async (req, res) =
   }
 });
 
+// =========================
+// Admin: Fraud & Spam Management
+// =========================
+router.get("/admin/fraud-logs", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const logs = await FraudLog.find({}).sort({ createdAt: -1 }).lean();
+    res.json(logs);
+  } catch (err) {
+    console.error("Admin list fraud logs error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.put("/admin/fraud-logs/:id", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['Pending', 'Verified', 'Dismissed'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const log = await FraudLog.findByIdAndUpdate(id, {
+      status,
+      resolvedAt: new Date(),
+      resolvedBy: req.user.id
+    }, { new: true });
+
+    if (!log) return res.status(404).json({ error: "Log not found" });
+    res.json({ message: "✅ Fraud log updated", log });
+  } catch (err) {
+    console.error("Admin update fraud log error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// =========================
+// Admin: Financial Reconciliation & Payouts
+// =========================
+
+router.get("/admin/financials/ledger", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({})
+      .populate("eventId", "title")
+      .populate("hostId", "fullname email")
+      .populate("studentId", "fullname")
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json(transactions);
+  } catch (err) {
+    console.error("Admin financials ledger error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/admin/financials/stats", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const stats = await Transaction.aggregate([
+      { $match: { status: 'Completed' } },
+      {
+        $group: {
+          _id: null,
+          totalVolume: {
+            $sum: { $cond: [{ $eq: ["$type", "TicketSale"] }, "$amount", 0] }
+          },
+          totalFees: { $sum: "$platformFee" },
+          totalGrossEarnings: {
+            $sum: { $cond: [{ $eq: ["$type", "TicketSale"] }, "$hostEarnings", 0] }
+          },
+          totalPaid: {
+            $sum: { $cond: [{ $eq: ["$type", "Payout"] }, { $abs: "$amount" }, 0] }
+          }
+        }
+      }
+    ]);
+
+    const result = stats[0] || { totalVolume: 0, totalFees: 0, totalGrossEarnings: 0, totalPaid: 0 };
+
+    res.json({
+      revenue: {
+        totalVolume: result.totalVolume,
+        totalFees: result.totalFees,
+        totalHostEarnings: result.totalGrossEarnings // Kept name for frontend compatibility
+      },
+      payouts: {
+        totalPaid: result.totalPaid
+      }
+    });
+  } catch (err) {
+    console.error("Admin financials stats error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/admin/financials/host-summaries", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const summaries = await Transaction.aggregate([
+      { $match: { status: 'Completed' } },
+      {
+        $lookup: {
+          from: 'events',
+          localField: 'eventId',
+          foreignField: '_id',
+          as: 'event'
+        }
+      },
+      { $unwind: { path: '$event', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: {
+            hostId: { $toObjectId: '$hostId' },
+            category: '$event.category'
+          },
+          earned: { $sum: { $cond: [{ $eq: ["$type", "TicketSale"] }, "$hostEarnings", 0] } },
+          paid: { $sum: { $cond: [{ $eq: ["$type", "Payout"] }, { $abs: "$amount" }, 0] } }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.hostId",
+          categories: {
+            $push: {
+              name: { $ifNull: ["$_id.category", "Uncategorized"] },
+              amount: "$earned"
+            }
+          },
+          totalEarned: { $sum: "$earned" },
+          totalPaid: { $sum: "$paid" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'host'
+        }
+      },
+      { $unwind: '$host' },
+      {
+        $project: {
+          _id: 1,
+          fullname: '$host.fullname',
+          email: '$host.email',
+          categories: 1,
+          totalEarned: 1,
+          totalPaid: 1,
+          remainingBalance: { $subtract: ["$totalEarned", "$totalPaid"] }
+        }
+      },
+      { $sort: { remainingBalance: -1 } }
+    ]);
+
+    res.json(summaries);
+  } catch (err) {
+    console.error("Admin host summaries error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/admin/financials/payout/:hostId", authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { hostId } = req.params;
+    const { amount, note } = req.body;
+
+    if (!amount || amount <= 0) return res.status(400).json({ error: "Invalid payout amount" });
+
+    // In a real app, this would trigger a Razorpay/Stripe Payout API
+    const payout = new Transaction({
+      eventId: new mongoose.Types.ObjectId(), // Placeholder for platform-wide payout
+      hostId: new mongoose.Types.ObjectId(hostId),
+      studentId: req.user.id, // Admin who triggered it
+      amount: -amount, // Negative to indicate outflow
+      currency: 'INR',
+      platformFee: 0,
+      hostEarnings: -amount,
+      type: 'Payout',
+      status: 'Completed',
+      paymentId: `PAYOUT-${Date.now()}`,
+      metadata: { note, triggeredBy: req.user.email }
+    });
+
+    await payout.save();
+    res.json({ message: "✅ Payout recorded successfully", payout });
+  } catch (err) {
+    console.error("Admin payout error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 module.exports = router;
+
+

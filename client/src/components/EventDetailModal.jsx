@@ -27,6 +27,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import FriendSelectorModal from './FriendSelectorModal';
 import { getImageUrl } from '../utils/imageUtils';
 import MemoriesHub from './events/MemoriesHub';
@@ -56,6 +57,7 @@ const EventDetailModal = ({
   const [copySuccess, setCopySuccess] = useState(false);
   const [friendSelectorOpen, setFriendSelectorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('details'); // 'details' | 'memories'
+  const navigate = useNavigate();
 
   const isToday = useMemo(() => {
     if (!event?.date) return false;
@@ -541,6 +543,14 @@ Check it out here: ${window.location.href}`;
                                   className="w-full py-2 bg-yellow-400 text-black border-2 border-black hover:bg-yellow-300 font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none"
                                 >
                                   <Trophy className="w-4 h-4" /> Certificate
+                                </button>
+                              )}
+                              {!event.isCompleted && (
+                                <button
+                                  onClick={() => navigate(`/event/${event._id}/live`)}
+                                  className="w-full py-2 bg-red-100 text-red-700 border-2 border-red-700 hover:bg-red-200 font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-[2px_2px_0px_0px_rgba(185,28,28,0.2)] active:translate-y-[2px] active:shadow-none"
+                                >
+                                  <MessageSquare className="w-4 h-4" /> Join Live Session
                                 </button>
                               )}
                               {event.isCompleted && attended && (

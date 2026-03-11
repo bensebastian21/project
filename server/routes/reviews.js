@@ -10,6 +10,7 @@ const {
   generateEventAIInsights,
   generateCrossEventInsights,
 } = require('../utils/aiFeedbackAnalyzer');
+const FraudDetector = require('../services/fraudDetector');
 
 // Reuse auth helpers from auth routes
 const jwt = require('jsonwebtoken');
@@ -248,7 +249,10 @@ router.post('/events/:eventId/reviews', authenticateToken, async (req, res) => {
     await review.populate('reviewerId', 'fullname email');
 
     // Gamification: Award points
-    await gamificationController.awardPoints(req.user.id, 'WRITE_REVIEW');
+    await gamificationController.awardPoints(req.user.id, 'WRITE_REVIEW', event.category);
+
+    // Automated Fraud Detection
+    FraudDetector.analyzeReview(review, req.user).catch(err => console.error('Fraud analysis error:', err));
 
     res.json({ message: '✅ Review submitted successfully', review });
   } catch (err) {

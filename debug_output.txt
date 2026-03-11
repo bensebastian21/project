@@ -1,4 +1,0 @@
-Connecting to DB: mongodb+srv://a...
-Connected to DB successfully
-Querying for: jomygeorge@duck.com
-ERROR: Operation `users.findOne()` buffering timed out after 10000ms

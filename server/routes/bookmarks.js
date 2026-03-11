@@ -69,7 +69,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Award points for bookmarking
-    await gamificationController.awardPoints(req.user.id, 'BOOKMARK_EVENT');
+    await gamificationController.awardPoints(req.user.id, 'BOOKMARK_EVENT', event.category);
 
     res.json({ message: 'Event bookmarked successfully', event });
   } catch (error) {
