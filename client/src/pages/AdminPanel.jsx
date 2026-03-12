@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   BellRing,
   LayoutDashboard,
+  MessageSquare,
   ChevronDown,
   ShieldAlert, ShieldCheck, ShieldX,
   Banknote, IndianRupee, Landmark, Building2, GraduationCap, RefreshCw, CheckCircle, User
@@ -49,6 +50,7 @@ import {
 } from 'recharts';
 import config from '../config';
 import { io } from 'socket.io-client';
+import SupportEscalationHub from '../components/admin/SupportEscalationHub';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -1217,6 +1219,7 @@ export default function AdminPanel() {
                   { id: 'heatmap', icon: MapPin, label: 'Live Traffic & Heatmap' },
                   { id: 'fraud', icon: ShieldAlert, label: 'Fraud & Spam' },
                   { id: 'financials', icon: IndianRupee, label: 'Financials' },
+                  { id: 'support-hub', icon: MessageSquare, label: 'Support Hub' },
                   { id: 'monitor', icon: Eye, label: 'Monitor Activity' },
                   { id: 'notifications', icon: BellRing, label: 'Notifications' },
                 ].map((item) => (
@@ -1254,6 +1257,7 @@ export default function AdminPanel() {
 
           {/* Main */}
           <div className="flex-1 p-8 overflow-y-auto">
+            {activeTab === 'support-hub' && <SupportEscalationHub />}
             {/* Dashboard Tab */}
             {/* Dashboard Tab */}
             {activeTab === 'dashboard' && (

@@ -51,14 +51,39 @@ const initSocket = (server) => {
     // Join a room specific to the user (for receiving messages)
     if (socket.user && socket.user.id) {
       socket.join(socket.user.id);
-      // Notify friends that user is online (optional enhancement)
+      
+      // Notify friends that user is online
       socket.broadcast.emit('user_online', socket.user.id);
+
+      // 📥 Mark undelivered messages as delivered when user connects
+      (async () => {
+        try {
+          const mongoose = require('mongoose');
+          if (mongoose.connection.readyState !== 1) {
+            console.log('[Socket] DB not ready, skipping auto-marking delivery for now');
+            return;
+          }
+          const undelivered = await Message.find({ receiver: socket.user.id, delivered: false });
+          if (undelivered.length > 0) {
+            await Message.updateMany(
+              { receiver: socket.user.id, delivered: false },
+              { $set: { delivered: true, deliveredAt: new Date() } }
+            );
+            
+            // Notify senders that their messages were delivered
+            const senderIds = [...new Set(undelivered.map(m => m.sender.toString()))];
+            senderIds.forEach(senderId => {
+              io.to(senderId).emit('messages_delivered', { receiverId: socket.user.id });
+            });
+          }
+        } catch (err) { console.error('Error auto-marking delivery:', err); }
+      })();
     }
 
     // Handle incoming private message
     socket.on('send_message', async (data) => {
       try {
-        const { receiverId, content } = data;
+        const { receiverId, content, type, metadata } = data;
         const senderId = socket.user?.id;
         if (!senderId) return;
 
@@ -74,33 +99,75 @@ const initSocket = (server) => {
           receiver: receiverId,
           content: encrypted.content,
           iv: encrypted.iv,
+          type: type || 'text',
+          metadata: metadata || {},
           read: false,
         });
 
-        // 3. Emit to Receiver (if online in their room)
-        // We send the *decrypted* content (or just the clear text) to the receiver socket for immediate display
-        // But for consistency, let's just send the struct and let client decrypt or send clear text if we trust the TLS tunnel.
-        // For simplicity here: sending CLEAR text to the socket receiver so they see it instantly.
-        // The DB stores encrypted.
+        // 3. Check if receiver is online
+        const receiverRoom = io.sockets.adapter.rooms.get(receiverId);
+        const isOnline = receiverRoom && receiverRoom.size > 0;
+
+        if (isOnline) {
+          message.delivered = true;
+          message.deliveredAt = new Date();
+          await message.save();
+        }
+
+        // 4. Emit to Receiver
         io.to(receiverId).emit('receive_message', {
           _id: message._id,
           sender: senderId,
           receiver: receiverId,
-          content: content, // Real-time delivery is over TLS, sending clear text for immediate UI update
+          content: content,
+          type: type || 'text',
+          metadata: metadata || {},
           createdAt: message.createdAt,
+          delivered: message.delivered,
+          read: message.read,
         });
 
-        // 4. Ack to Sender
+        // 5. Ack to Sender
         socket.emit('message_sent', {
           tempId: data.tempId,
           _id: message._id,
           content: content,
+          type: type || 'text',
+          metadata: metadata || {},
           createdAt: message.createdAt,
+          delivered: message.delivered,
+          read: message.read,
         });
       } catch (err) {
         console.error('Socket message error:', err);
         socket.emit('message_error', { error: 'Failed to send' });
       }
+    });
+
+    // Handle delivery acknowledgement from receiver
+    socket.on('message_delivered_ack', async ({ messageId, senderId }) => {
+      try {
+        await Message.findByIdAndUpdate(messageId, { delivered: true, deliveredAt: new Date() });
+        io.to(senderId).emit('message_delivered', { messageId, receiverId: socket.user?.id });
+      } catch (err) { console.error('delivered_ack error', err); }
+    });
+
+    // Handle read receipt
+    socket.on('mark_read', async ({ friendId }) => {
+      try {
+        const userId = socket.user?.id;
+        if (!userId || !friendId) return;
+
+        const result = await Message.updateMany(
+          { sender: friendId, receiver: userId, read: false },
+          { $set: { read: true, readAt: new Date() } }
+        );
+
+        if (result.modifiedCount > 0) {
+          // Notify the friend that their messages were read
+          io.to(friendId).emit('messages_read', { readerId: userId });
+        }
+      } catch (err) { console.error('mark_read error', err); }
     });
 
     // --- Live Event Engagement ---

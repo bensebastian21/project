@@ -14,6 +14,11 @@ const chatThreadSchema = new mongoose.Schema({
   ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, default: 'New Chat' },
   messages: { type: [messageSchema], default: [] },
+  isEscalated: { type: Boolean, default: false },
+  escalationStatus: { type: String, enum: ['Open', 'In-Progress', 'Closed'], default: 'Open' },
+  frustrationLevel: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Low' },
+  escalationSummary: { type: String },
+  escalatedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const FriendRequest = require('../models/FriendRequest');
 const User = require('../models/User');
 const Event = require('../models/Event');
+const Notification = require('../models/Notification');
 const gamificationController = require('../controllers/gamificationController');
 
 function authenticateToken(req, res, next) {
@@ -120,6 +121,17 @@ router.post('/requests', authenticateToken, async (req, res) => {
       });
 
     const fr = await FriendRequest.create({ from: req.user.id, to, status: 'pending' });
+    
+    // Create notification for the recipient
+    const sender = await User.findById(req.user.id).select('fullname').lean();
+    await Notification.create({
+      userId: to,
+      type: 'Friend Request',
+      title: 'New Friend Request',
+      message: `You have a new friend request from ${sender?.fullname || 'someone'}.`,
+      data: { requestId: fr._id }
+    });
+
     res.json({ message: 'Request sent', requestId: fr._id });
   } catch (e) {
     if (e.code === 11000) return res.status(200).json({ message: 'Request already exists' });

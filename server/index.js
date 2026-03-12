@@ -20,6 +20,7 @@ const decisionTreeRoutes = require('./routes/decisiontree');
 const genloopRoutes = require('./routes/genloop');
 const memoriesRoutes = require('./routes/memories');
 const marketingRoutes = require('./routes/marketing');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 
@@ -162,6 +163,7 @@ app.get('/health', (req, res) => {
 
 // ======= API Routes =======
 app.use('/api/auth', authRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/host', hostRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/friends', friendsRoutes);
@@ -183,6 +185,7 @@ app.use('/api/recommendations', require('./routes/recommendations'));
 app.use('/api/memories', memoriesRoutes);
 app.use('/api/marketing', marketingRoutes);
 app.use('/api/goals', require('./routes/goals'));
+app.use('/api/circles', require('./routes/circles'));
 app.use('/api', require('./routes/contact')); // Contact Form
 
 // ======= Cloudinary Image Proxy (for backward compatibility with local images) =======

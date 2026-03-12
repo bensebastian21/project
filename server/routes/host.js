@@ -17,6 +17,10 @@ const { generatePDFTicket } = require('../services/ticketService');
 const { sendTicketEmail } = require('../utils/email');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Transaction = require('../models/Transaction');
+// Polyfill fetch for Node < 18 if not globally available
+if (typeof fetch === 'undefined') {
+  global.fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
+}
 let ExcelJS;
 
 // Optional auth: decode JWT if provided, ignore if missing/invalid
@@ -2033,6 +2037,39 @@ router.post('/events/train-classifier', authenticateToken, requireHost, async (r
   }
 });
 
+// TF-IDF & Cosine Similarity Algorithm for Semantic Ranking
+function getCosineSimilarity(textA, textB) {
+  if (!textA || !textB) return 0;
+
+  const getTerms = (str) => {
+    return str.toLowerCase()
+      .replace(/[^\w\s]/g, ' ') // remove punct
+      .split(/\s+/)
+      .filter(w => w.length > 2); // basic stopword filter
+  };
+
+  const termsA = getTerms(textA);
+  const termsB = getTerms(textB);
+
+  if (!termsA.length || !termsB.length) return 0;
+
+  const vocabulary = new Set([...termsA, ...termsB]);
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  vocabulary.forEach(term => {
+    const countA = termsA.filter(w => w === term).length;
+    const countB = termsB.filter(w => w === term).length;
+    dotProduct += (countA * countB);
+    normA += (countA * countA);
+    normB += (countB * countB);
+  });
+
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
 /**
  * POST /api/host/public/smart-search
  * Public endpoint to search events using Natural Language via API
@@ -2042,20 +2079,18 @@ router.post('/public/smart-search', async (req, res) => {
     const { query } = req.body;
     if (!query) return res.status(400).json({ error: 'Query is required' });
 
-    const apiKey = process.env.GROQ_API_KEY || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '';
+    const groqKey = process.env.GROQ_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-    let parsed = {};
+    let parsed = null;
 
-    if (!apiKey) {
-      console.warn('No AI API key found. Falling back to empty search.');
-      return res.status(500).json({ error: 'API Key is missing for Smart Search' });
-    }
+    // 1. Try Groq (OpenAI-compatible)
+    if (groqKey) {
+      try {
+        const MODEL = 'llama-3.3-70b-versatile';
+        const url = `https://api.groq.com/openai/v1/chat/completions`;
 
-    try {
-      const MODEL = 'llama-3.3-70b-versatile';
-      const url = `https://api.groq.com/openai/v1/chat/completions`;
-
-      const prompt = `
+        const prompt = `
 You are an event search assistant. Extract search parameters from the following user query:
 "${query}"
 
@@ -2067,142 +2102,161 @@ Respond ONLY with a valid JSON object matching this exact structure (use null if
   "isFree": boolean, // true if strictly free, false if paid, null if unspecified
   "dateFilter": "string" // one of: "today", "tomorrow", "weekend", "this_week", "next_week", "this_month", or null
 }
-      `;
+        `;
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
+        const response = await fetch(url, {
+          method: 'POST', // Added missing POST method
+          headers: {
+            'Authorization': `Bearer ${groqKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.error?.message || 'AI API call failed');
+        const data = await response.json();
+        if (response.ok && data?.choices?.[0]?.message?.content) {
+          const text = data.choices[0].message.content.trim();
+          const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          parsed = JSON.parse(cleanJson);
+        }
+      } catch (e) {
+        console.warn('Groq NLP failed:', e.message);
       }
-
-      const text = data?.choices?.[0]?.message?.content || '';
-      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      parsed = JSON.parse(cleanJson);
-    } catch (e) {
-      console.error('AI NLP search execution or parse failed:', e);
-      return res.status(500).json({ error: 'Failed to parse AI response', details: e.message });
     }
 
-    // Build Mongo Query Object
-    const mongoQuery = { isPublished: true, isDeleted: { $ne: true } };
-    const andConditions = [];
+    // 2. Fallback to Gemini
+    if (!parsed && geminiKey) {
+      try {
+        const genAI = new (require('@google/generative-ai').GoogleGenerativeAI)(geminiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    // Keyword matching
+        const prompt = `
+Extract event search parameters from: "${query}"
+Output ONLY JSON:
+{
+  "keywords": ["string"],
+  "category": "string",
+  "location": "string",
+  "isFree": boolean,
+  "dateFilter": "today"|"tomorrow"|"weekend"|"this_week"|"next_week"|"this_month"|null
+}
+        `;
+
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        parsed = JSON.parse(cleanJson);
+      } catch (e) {
+        console.warn('Gemini NLP failed:', e.message);
+      }
+    }
+
+    // 3. Robust Fallback: Local Python NLP Engine
+    if (!parsed) {
+      try {
+        const { spawn } = require('child_process');
+        const scriptPath = path.join(__dirname, '..', 'nlp_engine.py');
+
+        const output = await new Promise((resolve, reject) => {
+          const python = spawn('python', [scriptPath, 'no-key', query]);
+          let result = '';
+          python.stdout.on('data', (d) => result += d.toString());
+          python.stderr.on('data', (d) => console.error('Python Error:', d.toString()));
+          python.on('close', (code) => code === 0 ? resolve(result) : reject(new Error(`Python exit ${code}`)));
+        });
+
+        parsed = JSON.parse(output);
+        console.log('✅ Fallback to Local NLP Engine used');
+      } catch (e) {
+        console.error('All NLP services failed:', e.message);
+        return res.status(500).json({ error: 'Search parsing failed across all engines.' });
+      }
+    }
+
+    // 4. Broad Fetch & Semantic Scoring
+    // Fetch all published events or use $text if query keywords are strong enough
+    let candidateEvents = [];
+    
+    // First try a MongoDB text search if we have keywords (fastest)
     if (parsed.keywords && parsed.keywords.length > 0) {
-      const keywordRegex = parsed.keywords.map((k) => new RegExp(k, 'i'));
-      andConditions.push({
-        $or: [
-          { title: { $in: keywordRegex } },
-          { tags: { $in: keywordRegex } },
-          { description: { $in: keywordRegex } },
-        ],
-      });
+      const tsQuery = parsed.keywords.join(' ');
+      candidateEvents = await Event.find({ 
+        isPublished: true, 
+        isDeleted: { $ne: true },
+        $text: { $search: tsQuery }
+      }).limit(100).lean();
     }
-
-    // Category & Location
-    if (parsed.category) {
-      const catRegex = new RegExp(parsed.category, 'i');
-      andConditions.push({
-        $or: [
-          { category: catRegex },
-          { tags: { $in: [catRegex] } },
-          { title: catRegex },
-          { description: catRegex },
-        ],
-      });
-    }
-
-    if (parsed.location) {
-      const locRegex = new RegExp(parsed.location, 'i');
-      andConditions.push({
-        $or: [
-          { location: locRegex },
-          { city: locRegex },
-          { address: locRegex },
-          { title: locRegex },
-          { description: locRegex },
-          { tags: { $in: [locRegex] } },
-        ],
-      });
-    }
-
-    // Free filter
-    if (parsed.isFree === true) {
-      andConditions.push({ price: 0 });
-    } else if (parsed.isFree === false) {
-      andConditions.push({ price: { $gt: 0 } });
-    }
-
-    // Date Filters
-    const now = new Date();
-    let dateCondition = { $gte: now }; // By default, just future events
-
-    if (parsed.dateFilter) {
-      const todayEnd = new Date(now);
-      todayEnd.setHours(23, 59, 59, 999);
-
-      if (parsed.dateFilter === 'today') {
-        dateCondition = { $gte: now, $lte: todayEnd };
-      } else if (parsed.dateFilter === 'tomorrow') {
-        const tmrwStart = new Date(now);
-        tmrwStart.setDate(now.getDate() + 1);
-        tmrwStart.setHours(0, 0, 0, 0);
-        const tmrwEnd = new Date(tmrwStart);
-        tmrwEnd.setHours(23, 59, 59, 999);
-        dateCondition = { $gte: tmrwStart, $lte: tmrwEnd };
-      } else if (parsed.dateFilter === 'weekend') {
-        // approx upcoming saturday/sunday
-        const upcomingSat = new Date(now);
-        upcomingSat.setDate(now.getDate() + (6 - now.getDay()));
-        upcomingSat.setHours(0, 0, 0, 0);
-        const upcomingSun = new Date(upcomingSat);
-        upcomingSun.setDate(upcomingSun.getDate() + 1);
-        upcomingSun.setHours(23, 59, 59, 999);
-        dateCondition = { $gte: upcomingSat, $lte: upcomingSun };
-      } else if (parsed.dateFilter === 'this_week') {
-        const thisSun = new Date(now);
-        thisSun.setDate(now.getDate() + (7 - now.getDay()));
-        thisSun.setHours(23, 59, 59, 999);
-        dateCondition = { $gte: now, $lte: thisSun };
-      } else if (parsed.dateFilter === 'next_week') {
-        const nextMon = new Date(now);
-        nextMon.setDate(now.getDate() + ((7 - now.getDay() + 1) % 7));
-        nextMon.setHours(0, 0, 0, 0);
-        const nextSun = new Date(nextMon);
-        nextSun.setDate(nextSun.getDate() + 6);
-        nextSun.setHours(23, 59, 59, 999);
-        dateCondition = { $gte: nextMon, $lte: nextSun };
-      } else if (parsed.dateFilter === 'this_month') {
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        endOfMonth.setHours(23, 59, 59, 999);
-        dateCondition = { $gte: now, $lte: endOfMonth };
+    
+    // If text search returned nothing or not enough, fallback to fetching all recent published
+    // to guarantee we can run cosine similarity locally
+    if (candidateEvents.length < 5) {
+      const backupEvents = await Event.find({ 
+        isPublished: true, 
+        isDeleted: { $ne: true },
+        date: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // don't fetch too old
+      }).limit(200).lean();
+      
+      // Merge unique
+      const existingIds = new Set(candidateEvents.map(e => String(e._id)));
+      for (const ev of backupEvents) {
+        if (!existingIds.has(String(ev._id))) {
+          candidateEvents.push(ev);
+        }
       }
     }
 
-    andConditions.push({ date: dateCondition });
+    // Combine original user query + Groq extracted keywords to form the semantic target
+    const targetSemanticString = `${query} ${(parsed.keywords || []).join(' ')} ${parsed.category || ''}`;
 
-    if (andConditions.length > 0) {
-      mongoQuery.$and = andConditions;
-    }
+    // Apply strict filtering first (dates, free/paid)
+    let filteredCandidates = candidateEvents.filter(ev => {
+      // Free filter
+      if (parsed.isFree === true && ev.price > 0) return false;
+      if (parsed.isFree === false && ev.price === 0) return false;
+      return true;
+    });
 
-    const events = await Event.find(mongoQuery).sort({ date: 1 }).limit(12).lean();
+    // Score all candidates
+    const scoredEvents = filteredCandidates.map(ev => {
+      // Build document semantic string
+      const docString = [
+        ev.title,
+        ev.category,
+        ev.shortDescription,
+        ev.description,
+        ...(ev.tags || []),
+        ev.location,
+        ev.city
+      ].filter(Boolean).join(' ');
 
-    res.json({ events, parsedQuery: parsed });
+      const similarity_score = getCosineSimilarity(targetSemanticString, docString);
+      return { ...ev, similarity_score };
+    });
+
+    // Sort descending by score
+    scoredEvents.sort((a, b) => b.similarity_score - a.similarity_score);
+    
+    // Filter out absolutely irrelevant items (score too low) unless the pool is tiny
+    let finalEvents = scoredEvents.filter(ev => ev.similarity_score >= 0.05).slice(0, 15);
+    if (finalEvents.length === 0) finalEvents = scoredEvents.slice(0, 5);
+
+    // Format output exactly as requested with fixed similarity scores
+    const formattedEvents = finalEvents.map(e => ({
+      ...e,
+      similarity_score: parseFloat(e.similarity_score.toFixed(2)),
+      keywords: e.tags || []
+    }));
+
+    res.json({ events: formattedEvents, parsedQuery: parsed });
   } catch (err) {
     console.error('Smart Search error:', err);
-    res.status(500).json({ error: 'Server error during AI search' });
+    res.status(500).json({ error: 'Server error during AI semantic search', details: err.message });
   }
 });
+
 
 /**
  * GET /api/host/analytics

@@ -13,6 +13,7 @@ import { Calendar } from 'lucide-react';
 import config from '../config';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
+import { logEvent } from '../utils/analytics';
 
 // --- Advanced Animation Components ---
 
@@ -83,10 +84,10 @@ const RedefinedBoxContent = () => (
       className="absolute inset-0 z-0 opacity-100 blur-xl"
       animate={{
         background: [
-          'radial-gradient(at 0% 0%, #ffdee9 0%, transparent 50%), radial-gradient(at 100% 0%, #c1fcd3 0%, transparent 50%), radial-gradient(at 100% 100%, #b5fffc 0%, transparent 50%), radial-gradient(at 0% 100%, #fffc00 0%, transparent 50%)',
-          'radial-gradient(at 100% 0%, #ffdee9 0%, transparent 50%), radial-gradient(at 100% 100%, #c1fcd3 0%, transparent 50%), radial-gradient(at 0% 100%, #b5fffc 0%, transparent 50%), radial-gradient(at 0% 0%, #fffc00 0%, transparent 50%)',
-          'radial-gradient(at 100% 100%, #ffdee9 0%, transparent 50%), radial-gradient(at 0% 100%, #c1fcd3 0%, transparent 50%), radial-gradient(at 0% 0%, #b5fffc 0%, transparent 50%), radial-gradient(at 100% 0%, #fffc00 0%, transparent 50%)',
-          'radial-gradient(at 0% 100%, #ffdee9 0%, transparent 50%), radial-gradient(at 0% 0%, #c1fcd3 0%, transparent 50%), radial-gradient(at 100% 0%, #b5fffc 0%, transparent 50%), radial-gradient(at 100% 100%, #fffc00 0%, transparent 50%)',
+          'radial-gradient(at 0% 0%, #7c3aed 0%, transparent 50%), radial-gradient(at 100% 0%, #db2777 0%, transparent 50%), radial-gradient(at 100% 100%, #2563eb 0%, transparent 50%), radial-gradient(at 0% 100%, #10b981 0%, transparent 50%)',
+          'radial-gradient(at 100% 0%, #7c3aed 0%, transparent 50%), radial-gradient(at 100% 100%, #db2777 0%, transparent 50%), radial-gradient(at 0% 100%, #2563eb 0%, transparent 50%), radial-gradient(at 0% 0%, #10b981 0%, transparent 50%)',
+          'radial-gradient(at 100% 100%, #7c3aed 0%, transparent 50%), radial-gradient(at 0% 100%, #db2777 0%, transparent 50%), radial-gradient(at 0% 0%, #2563eb 0%, transparent 50%), radial-gradient(at 100% 0%, #10b981 0%, transparent 50%)',
+          'radial-gradient(at 0% 100%, #7c3aed 0%, transparent 50%), radial-gradient(at 0% 0%, #db2777 0%, transparent 50%), radial-gradient(at 100% 0%, #2563eb 0%, transparent 50%), radial-gradient(at 100% 100%, #10b981 0%, transparent 50%)',
         ],
       }}
       transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
@@ -95,12 +96,12 @@ const RedefinedBoxContent = () => (
       className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] z-0 opacity-80 mix-blend-multiply"
       animate={{ rotate: 360 }}
       transition={{ duration: 45, repeat: Infinity, ease: 'linear' }}
-      style={{ background: 'conic-gradient(from 0deg at 50% 50%, #fbc2eb, #a6c1ee, #fbc2eb)' }}
+      style={{ background: 'conic-gradient(from 0deg at 50% 50%, #4c1d95, #1e3a8a, #4c1d95)' }}
     />
 
     <motion.h1
       layout="position"
-      className="relative z-10 text-[10vw] lg:text-[11vw] leading-[0.8] font-bold tracking-tighter uppercase transform skew-x-6 hover:skew-x-0 transition-transform duration-500 text-black mix-blend-multiply"
+      className="relative z-10 text-[10vw] lg:text-[11vw] leading-[0.8] font-bold tracking-tighter uppercase transform skew-x-6 hover:skew-x-0 transition-transform duration-500 text-white"
     >
       Redefined
     </motion.h1>
@@ -108,10 +109,37 @@ const RedefinedBoxContent = () => (
 );
 
 const EventCard = ({ event, index }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-10%' });
+
+  useEffect(() => {
+    if (isInView && event._id) {
+      logEvent({ 
+        eventId: event._id, 
+        type: 'impression', 
+        source: 'landing' 
+      });
+    }
+  }, [isInView, event._id]);
+
+  const handleClick = () => {
+    if (event._id) {
+      logEvent({ 
+        eventId: event._id, 
+        type: 'click', 
+        source: 'landing' 
+      });
+    }
+  };
+
   return (
     <ScrollReveal delay={index * 0.1} className="flex justify-center">
-      {/* Reduced Card Size (max-w-sm) but larger Text */}
-      <div className="group w-full max-w-md flex flex-col gap-6 cursor-pointer">
+      <Link 
+        ref={ref}
+        to={`/events/${event._id}`}
+        onClick={handleClick}
+        className="group w-full max-w-md flex flex-col gap-6 cursor-pointer"
+      >
         {/* Image Container - Square */}
         <div className="w-full aspect-square relative overflow-hidden bg-neutral-900 box-border border-4 border-transparent group-hover:border-black dark:group-hover:border-white transition-all duration-500">
           <motion.div
@@ -155,7 +183,7 @@ const EventCard = ({ event, index }) => {
             </span>
           </div>
         </div>
-      </div>
+      </Link>
     </ScrollReveal>
   );
 };
@@ -230,13 +258,13 @@ export default function LandingPage() {
           {!hasScrolled && (
             <motion.div
               layoutId="redefined-box"
-              className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white overflow-hidden"
+              className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black overflow-hidden"
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="flex flex-col items-center justify-center">
                 <motion.span
                   layoutId="events-text"
-                  className="text-[10vw] lg:text-[11vw] leading-[0.85] font-bold tracking-tighter uppercase mb-6 text-black"
+                  className="text-[10vw] lg:text-[11vw] leading-[0.85] font-bold tracking-tighter uppercase mb-6 text-white"
                 >
                   Events
                 </motion.span>
@@ -304,7 +332,7 @@ export default function LandingPage() {
                   {hasScrolled ? (
                     <motion.div
                       layoutId="redefined-box"
-                      className="relative px-6 py-4 md:px-10 md:py-6 inline-block w-full md:w-auto transform -skew-x-6 hover:skew-x-0 transition-transform duration-500 origin-left overflow-hidden border border-neutral-200 bg-white"
+                      className="relative px-6 py-4 md:px-10 md:py-6 inline-block w-full md:w-auto transform -skew-x-6 hover:skew-x-0 transition-transform duration-500 origin-left overflow-hidden border border-neutral-800 bg-black shadow-2xl shadow-purple-500/20"
                       transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
                     >
                       <RedefinedBoxContent />

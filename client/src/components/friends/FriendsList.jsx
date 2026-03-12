@@ -95,23 +95,7 @@ export default function FriendsList({ onViewProfile }) {
                   onClick={() => onViewProfile && onViewProfile(u)}
                   className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-white border-2 border-black text-black font-bold uppercase tracking-widest text-[10px] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all"
                 >
-                  <Eye className="w-3 h-3" /> Profile
-                </button>
-                <button
-                  onClick={() => {
-                    window.dispatchEvent(
-                      new CustomEvent('open-chat', {
-                        detail: {
-                          friendId: u._id,
-                          friendName: u.fullname || u.username,
-                          friendPic: u.profilePic,
-                        },
-                      })
-                    );
-                  }}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-black text-white border-2 border-black font-bold uppercase tracking-widest text-[10px] shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] hover:bg-neutral-800 transition-all"
-                >
-                  <MessageSquare className="w-3 h-3" /> Chat
+                  <Eye className="w-3 h-3" /> View Profile
                 </button>
               </div>
             </div>

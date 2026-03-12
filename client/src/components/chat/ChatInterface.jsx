@@ -1,9 +1,10 @@
 import EmojiPicker from 'emoji-picker-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api'; // Ensure this uses correct axios instance
 import config from '../../config'; // API Base URL
-import { Send, Lock, MoreVertical, Phone, Video, Smile, Search, ArrowLeft } from 'lucide-react';
+import { Send, Lock, Smile, Search, ArrowLeft, Users, ExternalLink, Sparkles, Check, CheckCheck } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 // Helper to format time
@@ -22,6 +23,7 @@ const ChatInterface = ({
   isOverlay,
   initialMessage,
 }) => {
+  const navigate = useNavigate();
   const [socket, setSocket] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMsg, setInputMsg] = useState(initialMessage || '');
@@ -63,17 +65,49 @@ const ChatInterface = ({
 
     newSocket.on('receive_message', (msg) => {
       // Check if message belongs to this conversation
-      const currentUserId = currentUser._id || currentUser.id;
-      if (msg.sender === friendId || msg.sender === currentUserId) {
+      const currentUserId = String(currentUser?._id || currentUser?.id || '');
+      const msgSenderId = String(msg.sender?._id || msg.sender || '');
+      const targetFriendId = String(friendId || '');
+
+      if (msgSenderId === targetFriendId || msgSenderId === currentUserId) {
         setMessages((prev) => [...prev, msg]);
         scrollToBottom();
+
+        // If I received it (and I'm reading it), acknowledge delivery
+        if (msgSenderId === targetFriendId) {
+          newSocket.emit('message_delivered_ack', { messageId: msg._id, senderId: targetFriendId });
+          // If active, also mark read
+          newSocket.emit('mark_read', { friendId: targetFriendId });
+        }
       }
     });
 
-    // Acknowledgement for sent messages (if using ack)
+    // 📩 Handle status updates from my perspective
+    newSocket.on('message_status_update', ({ messageId, status }) => {
+      setMessages(prev => prev.map(m => m._id === messageId ? { ...m, ...status } : m));
+    });
+
+    newSocket.on('message_delivered', ({ messageId }) => {
+      setMessages(prev => prev.map(m => m._id === messageId ? { ...m, delivered: true } : m));
+    });
+
+    newSocket.on('messages_delivered', ({ receiverId }) => {
+      if (String(friendId) === String(receiverId)) {
+        setMessages(prev => prev.map(m => m.sender === (currentUser._id || currentUser.id) ? { ...m, delivered: true } : m));
+      }
+    });
+
+    newSocket.on('messages_read', ({ readerId }) => {
+      if (String(friendId) === String(readerId)) {
+        setMessages(prev => prev.map(m => m.sender === (currentUser._id || currentUser.id) ? { ...m, read: true, delivered: true } : m));
+      }
+    });
+
+    // Acknowledgement for sent messages
     newSocket.on('message_sent', (msg) => {
-      // Update temp message with real ID or just ignore if optimistic UI is good enough
-      // Here we might just replace the temp one if we were tracking tempIds
+      setMessages((prev) => 
+        prev.map(m => (m._id === `temp-${msg.tempId}` || m.tempId === msg.tempId) ? { ...m, ...msg, pending: false } : m)
+      );
     });
 
     newSocket.on('user_online', (uid) => {
@@ -96,6 +130,10 @@ const ChatInterface = ({
         toast.error('Could not load chat history');
       } finally {
         setLoading(false);
+        // Mark as read once history is loaded and chat is open
+        setTimeout(() => {
+          newSocket.emit('mark_read', { friendId });
+        }, 1000);
       }
     };
     loadHistory();
@@ -174,15 +212,7 @@ const ChatInterface = ({
           </div>
 
           <div className="flex items-center gap-2 text-slate-400">
-            <button className="p-2 hover:bg-slate-100 rounded-full transition">
-              <Phone className="w-5 h-5" />
-            </button>
-            <button className="p-2 hover:bg-slate-100 rounded-full transition">
-              <Video className="w-5 h-5" />
-            </button>
-            <button className="p-2 hover:bg-slate-100 rounded-full transition">
-              <MoreVertical className="w-5 h-5" />
-            </button>
+            {/* Options removed as requested */}
           </div>
         </div>
       )}
@@ -203,44 +233,100 @@ const ChatInterface = ({
           </div>
         ) : (
           messages.map((msg, index) => {
-            const currentUserId = currentUser._id || currentUser.id;
-            const isMe = msg.sender === currentUserId;
+            const currentUserId = String(currentUser?._id || currentUser?.id || '');
+            const msgSenderId = String(msg.sender?._id || msg.sender || '');
+            const isMe = msgSenderId === currentUserId;
+            
             return (
               <div
                 key={msg._id || index}
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[75%] md:max-w-[60%] rounded-2xl px-4 py-2.5 shadow-sm text-sm break-words relative group ${
+                  className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-2 shadow-sm text-sm break-words relative group ${
                     isMe
-                      ? 'bg-blue-600 text-white rounded-br-none'
-                      : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none'
-                  }`}
+                      ? 'bg-blue-600 text-white rounded-tr-none'
+                      : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none'
+                  } ${msg.type === 'circle_invite' ? 'p-0 overflow-hidden' : ''}`}
                 >
-                  <p className="whitespace-pre-wrap leading-relaxed">
-                    {msg.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
-                      if (part.match(/https?:\/\/[^\s]+/)) {
-                        return (
-                          <a
-                            key={i}
-                            href={part}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`hover:underline break-all font-medium ${isMe ? 'text-white underline decoration-blue-200' : 'text-blue-600 underline decoration-blue-200'}`}
-                            onClick={(e) => e.stopPropagation()}
+                  {msg.type === 'circle_invite' ? (
+                    <div className="flex flex-col">
+                      <div className={`p-3 flex items-center gap-3 ${isMe ? 'bg-blue-700' : 'bg-slate-100'}`}>
+                        <div className="p-2 bg-black text-white rounded-lg shadow-sm">
+                          <Users className="w-5 h-5 text-yellow-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-[10px] font-black uppercase tracking-widest ${isMe ? 'text-blue-200' : 'text-slate-400'}`}>Circle Invitation</p>
+                          <p className="font-black uppercase tracking-tight truncate">{msg.metadata?.circleName || 'Community Circle'}</p>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-white space-y-3">
+                        <p className="text-slate-600 font-medium leading-relaxed italic text-xs">
+                          "{msg.content}"
+                        </p>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => navigate(`/circles/${msg.metadata?.circleId}`)}
+                            className="flex-1 flex items-center justify-center gap-2 py-2 bg-slate-100 text-black text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all border border-slate-200"
                           >
-                            {part}
-                          </a>
-                        );
-                      }
-                      return part;
-                    })}
-                  </p>
+                            VIEW
+                          </button>
+                          {!isMe && (
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  await api.post(`/api/circles/${msg.metadata?.circleId}/join`);
+                                  toast.success('Joined Circle!');
+                                } catch (e) {
+                                  toast.error(e.response?.data?.error || 'Failed to join');
+                                }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-2 py-2 bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 transition-all border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                            >
+                              JOIN NOW
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap leading-relaxed">
+                      {msg.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+                        if (part.match(/https?:\/\/[^\s]+/)) {
+                          return (
+                            <a
+                              key={i}
+                              href={part}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`hover:underline break-all font-medium ${isMe ? 'text-white underline decoration-blue-200' : 'text-blue-600 underline decoration-blue-200'}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {part}
+                            </a>
+                          );
+                        }
+                        return part;
+                      })}
+                    </p>
+                  )}
                   <div
-                    className={`text-[10px] mt-1 text-right opacity-70 flex items-center justify-end gap-1 ${isMe ? 'text-blue-100' : 'text-slate-400'}`}
+                    className={`text-[10px] mt-1 text-right opacity-70 flex items-center justify-end gap-1 p-2 ${isMe ? 'text-blue-100' : 'text-slate-400'} ${msg.type === 'circle_invite' ? 'absolute bottom-0 right-2' : ''}`}
                   >
                     <span>{formatChatTime(msg.createdAt)}</span>
-                    {isMe && msg.pending && <span className="animate-pulse">◌</span>}
+                    {isMe && (
+                      <div className="flex items-center ml-1">
+                        {msg.pending ? (
+                          <span className="animate-pulse">◌</span>
+                        ) : msg.read ? (
+                          <CheckCheck className="w-3 h-3 text-sky-200" />
+                        ) : msg.delivered ? (
+                          <CheckCheck className="w-3 h-3 text-blue-100/70" />
+                        ) : (
+                          <Check className="w-3 h-3 text-blue-100/50" />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

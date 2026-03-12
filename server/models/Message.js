@@ -8,10 +8,15 @@ const messageSchema = new mongoose.Schema({
   content: { type: String, required: true }, // Hex string
   iv: { type: String, required: true }, // Hex string
 
+  delivered: { type: Boolean, default: false },
+  deliveredAt: { type: Date },
+
   read: { type: Boolean, default: false },
   readAt: { type: Date },
 
-  // Metadata for easy sorting/grouping
+  // Structured Message support (e.g. invites)
+  type: { type: String, default: 'text' }, // 'text' | 'circle_invite'
+  metadata: { type: Object }, // { circleId, circleName, etc }
   createdAt: { type: Date, default: Date.now },
 });
 

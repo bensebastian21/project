@@ -20,7 +20,7 @@ export default function HomePage() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="text-4xl md:text-5xl font-black mt-12 mb-6 text-center text-black tracking-tighter uppercase"
+          className="text-4xl md:text-5xl font-black mt-12 mb-6 text-center text-white tracking-tighter uppercase"
           style={{ textShadow: '4px 4px 0px rgba(0,0,0,0.1)' }}
         >
           Evenite

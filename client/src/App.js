@@ -25,6 +25,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Settings from './pages/Settings';
 import ChatPage from './pages/ChatPage';
+import Circles from './pages/Circles';
+import CircleDetail from './pages/CircleDetail';
 import ChatOverlay from './components/chat/ChatOverlay';
 import SupportChatbot from './components/SupportChatbot';
 import GlobalTrafficTracker from './components/GlobalTrafficTracker';
@@ -164,6 +166,22 @@ export default function App() {
           element={
             <RequireAuth allowedRoles={['student', 'host', 'admin']}>
               <ChatPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/circles"
+          element={
+            <RequireAuth allowedRoles={['student', 'host', 'admin']}>
+              <Circles />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/circles/:id"
+          element={
+            <RequireAuth allowedRoles={['student', 'host', 'admin']}>
+              <CircleDetail />
             </RequireAuth>
           }
         />

@@ -220,4 +220,25 @@ eventSchema.index({ isPublished: 1, isDeleted: 1, date: -1 });
 eventSchema.index({ hostId: 1, isDeleted: 1, date: -1 });
 eventSchema.index({ createdAt: -1 });
 
+// Full-text search index for NLP & Semantic broad retrieval
+eventSchema.index(
+  {
+    title: 'text',
+    description: 'text',
+    shortDescription: 'text',
+    category: 'text',
+    tags: 'text'
+  },
+  {
+    weights: {
+      title: 10,
+      tags: 5,
+      category: 3,
+      shortDescription: 2,
+      description: 1
+    },
+    name: 'SemanticTextIndex'
+  }
+);
+
 module.exports = mongoose.model('Event', eventSchema);

@@ -120,7 +120,7 @@ router.post('/ai', async (req, res) => {
 
         // 2. Fallback to Gemini
         if (geminiKey) {
-          const geminiModel = process.env.SUPPORT_AI_MODEL || 'llama-3.3-70b-versatile'; // Note: prompt shows a llama name being used for gemini endpoint which might be incorrect but keep legacy
+          const geminiModel = process.env.SUPPORT_AI_MODEL || 'gemini-1.5-flash';
           const conv = messages
             .slice(-12)
             .map((m) => `${m.role}: ${m.content}`)

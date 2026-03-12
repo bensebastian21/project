@@ -16,6 +16,7 @@ import {
   Clock,
   MapPin,
   UserCheck,
+  Target,
   Trophy,
   BarChart3,
   Settings,
@@ -44,6 +45,10 @@ import {
   AlertTriangle,
   Send,
   Radio,
+  Terminal,
+  Music,
+  GraduationCap,
+  Coffee,
 } from 'lucide-react';
 
 import api from '../utils/api';
@@ -54,6 +59,7 @@ import CertificateEditor from '../components/CertificateEditor';
 import AiFeedbackDashboard from '../components/AiFeedbackDashboard';
 import GenLoopStudio from '../components/host/GenLoopStudio';
 import MarketingCopywriter from '../components/host/MarketingCopywriter';
+import { EVENT_THEMES } from '../components/GamifiedComponents';
 // Charts
 import {
   ResponsiveContainer,
@@ -72,6 +78,77 @@ const bearer = () => {
   const token = localStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token} ` } : {};
 };
+
+// --- Event Templates ---
+const TEMPLATE_ICONS = {
+  Terminal,
+  Music,
+  GraduationCap,
+  Coffee,
+};
+
+const EVENT_TEMPLATES = [
+  {
+    id: 'hackathon',
+    name: 'Hackathon',
+    icon: 'Terminal',
+    category: 'Technology',
+    description: 'A 48-hour high-intensity coding competition to build innovative solutions.',
+    shortDescription: '48H Coding Challenge',
+    tags: 'Hackathon, Tech, Innovation, Coding, Developers',
+    capacity: 200,
+    isTeamEvent: true,
+    minTeamSize: 2,
+    maxTeamSize: 4,
+    imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-slate-950 text-emerald-400 border-emerald-500 shadow-[4px_4px_0px_0px_#10b981]',
+    iconBg: 'bg-emerald-500 text-black',
+  },
+  {
+    id: 'festival',
+    name: 'Festival',
+    icon: 'Music',
+    category: 'Entertainment',
+    description: 'A vibrant celebration of music, arts, and culture with multiple stages and food stalls.',
+    shortDescription: 'Arts & Music Celebration',
+    tags: 'Festival, Music, Arts, Culture, Food, Fun',
+    capacity: 1000,
+    price: 499,
+    imageUrl: 'https://images.unsplash.com/photo-1459749411177-042180ce673b?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-rose-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-white text-rose-500',
+  },
+  {
+    id: 'workshop',
+    name: 'Workshop',
+    icon: 'GraduationCap',
+    category: 'Education',
+    description: 'An interactive hands-on learning session led by industry experts to master new skills.',
+    shortDescription: 'Skill-Building Workshop',
+    tags: 'Workshop, Learning, Skills, Education, Professional',
+    capacity: 50,
+    price: 199,
+    imageUrl: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-indigo-600 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-indigo-200 text-indigo-800',
+  },
+  {
+    id: 'meetup',
+    name: 'Meetup',
+    icon: 'Coffee',
+    category: 'General',
+    description: 'A casual gathering for networking, sharing ideas, and meeting like-minded individuals.',
+    shortDescription: 'Networking & Community',
+    tags: 'Meetup, Networking, Community, Social, Career',
+    capacity: 30,
+    isOnline: false,
+    imageUrl: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-amber-400 text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-black text-amber-400',
+  },
+];
+
+const CATEGORY_THEMES = null; // Replaced by EVENT_THEMES from GamifiedComponents
 
 // --- Notification Detail Modal ---
 const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
@@ -261,6 +338,10 @@ export default function HostDashboard() {
   const [hostProfileErrors, setHostProfileErrors] = useState({});
   const [hostTouched, setHostTouched] = useState({});
   const [profileJustSavedAt, setProfileJustSavedAt] = useState(0);
+  // Studio Analytics State
+  const [studioData, setStudioData] = useState(null);
+  const [isStudioLoading, setIsStudioLoading] = useState(false);
+  const [selectedStudioEvent, setSelectedStudioEvent] = useState(null); // For individual event analytics
   // Add state for classification loading
   const [classifyingEventId, setClassifyingEventId] = useState(null);
   const [hostSettingsOpen, setHostSettingsOpen] = useState(false);
@@ -1115,6 +1196,25 @@ export default function HostDashboard() {
     }
   };
 
+  const fetchStudioData = async (eventId = null) => {
+    try {
+      setIsStudioLoading(true);
+      const url = eventId ? `/api/analytics/studio?eventId=${eventId}` : '/api/analytics/studio';
+      const res = await api.get(url, { headers: bearer() });
+      setStudioData(res.data);
+    } catch (err) {
+      console.error('Failed to fetch studio analytics:', err);
+    } finally {
+      setIsStudioLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'studio') {
+      fetchStudioData(selectedStudioEvent?._id);
+    }
+  }, [activeTab, selectedStudioEvent]);
+
   const fetchNotifications = async () => {
     try {
       const res = await api.get(`/api/host/notifications`, { headers: bearer() });
@@ -1215,6 +1315,24 @@ export default function HostDashboard() {
     setTouchedFields({});
     setShowForm(true);
     setSameDayEvents([]);
+  };
+
+  const applyTemplate = (template) => {
+    setForm((prev) => ({
+      ...prev,
+      title: template.name,
+      description: template.description || '',
+      shortDescription: template.shortDescription || '',
+      category: template.category || 'General',
+      tags: template.tags || '',
+      capacity: template.capacity || 0,
+      price: template.price || 0,
+      isTeamEvent: !!template.isTeamEvent,
+      minTeamSize: template.minTeamSize || 1,
+      maxTeamSize: template.maxTeamSize || 4,
+      imageUrl: template.imageUrl || '',
+    }));
+    toast.info(`Applied ${template.name} template!`);
   };
 
   const openEdit = (event) => {
@@ -1794,13 +1912,17 @@ export default function HostDashboard() {
                   { id: 'feedbacks', label: 'Feedback', icon: Star },
                   { id: 'discover', label: 'Discover', icon: Search },
                   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+                  { id: 'studio', label: 'Studio', icon: TrendingUp },
                   { id: 'certificates', label: 'Certificates', icon: Award },
                   { id: 'ai-insights', label: 'AI Insights', icon: Brain },
                   { id: 'marketing', label: 'AI Marketing', icon: Send },
                 ].map(({ id, label, icon: Icon }) => (
                   <button
                     key={id}
-                    onClick={() => setActiveTab(id)}
+                    onClick={() => {
+                      setActiveTab(id);
+                      if (id === 'studio') setSelectedStudioEvent(null);
+                    }}
                     className={`w-full flex items-center group relative px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all duration-200 outline-none ${navCollapsed ? 'justify-center' : ''
                       } ${activeTab === id ? 'text-white' : 'text-slate-500 hover:text-black'}`}
                     title={navCollapsed ? label : undefined}
@@ -1833,7 +1955,8 @@ export default function HostDashboard() {
                   {activeTab === 'events' && 'Events Management'}
                   {activeTab === 'discover' && 'Discover Events'}
                   {activeTab === 'profile' && 'Host Profile'}
-                  {activeTab === 'analytics' && 'Analytics Dashboard'}
+                  {activeTab === 'analytics' && 'General Analytics'}
+                  {activeTab === 'studio' && (selectedStudioEvent ? `Performance: ${selectedStudioEvent.title}` : 'Channel Studio')}
                   {activeTab === 'certificates' && 'Custom Certificates'}
                   {activeTab === 'ai-insights' && 'AI Feedback Insights'}
                 </h2>
@@ -1841,7 +1964,8 @@ export default function HostDashboard() {
                   {activeTab === 'events' && 'Create, edit, and manage your events'}
                   {activeTab === 'discover' && 'Explore events from other hosts and colleges'}
                   {activeTab === 'profile' && 'Update your public host page and account details'}
-                  {activeTab === 'analytics' && 'Analyze your event performance and insights'}
+                  {activeTab === 'analytics' && 'High-level overview of your channel stats'}
+                  {activeTab === 'studio' && 'YouTube Studio-style performance tracking and visual analytics'}
                   {activeTab === 'certificates' && 'Design custom certificates for your events'}
                   {activeTab === 'ai-insights' &&
                     'AI-powered feedback analysis, charts, and improvement suggestions'}
@@ -2264,278 +2388,315 @@ export default function HostDashboard() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {filteredEvents.map((event) => (
-                        <div
-                          key={event._id}
-                          className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-8px] hover:translate-y-[-8px] transition-all duration-300 flex flex-col group overflow-hidden"
-                        >
-                          {/* Event Image Header */}
-                          <div className="relative h-48 bg-neutral-100 border-b-2 border-black overflow-hidden">
-                            {event.imageUrl ? (
-                              <img
-                                src={toAbsoluteUrl(event.imageUrl)}
-                                alt={event.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer group-hover:grayscale"
-                                onClick={() =>
-                                  setLightbox({
-                                    open: true,
-                                    images: [
-                                      toAbsoluteUrl(event.imageUrl),
-                                      ...(event.images || []).map(toAbsoluteUrl),
-                                    ],
-                                    index: 0,
-                                  })
-                                }
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-neutral-100 relative overflow-hidden">
-                                <div
-                                  className="absolute inset-0 opacity-10"
-                                  style={{
-                                    backgroundImage:
-                                      'radial-gradient(circle at 1px 1px, black 1px, transparent 0)',
-                                    backgroundSize: '10px 10px',
-                                  }}
-                                ></div>
-                                <ImageIcon className="w-12 h-12 text-neutral-400" />
-                              </div>
-                            )}
+                      {filteredEvents.map((event) => {
+                        const theme = EVENT_THEMES[event.category] || EVENT_THEMES.Default;
+                        const ThemeIcon = theme.icon;
+                        
+                        return (
+                          <motion.div
+                            key={event._id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ 
+                              y: -12, 
+                              x: -4,
+                              scale: 1.02,
+                              transition: { type: "spring", stiffness: 400, damping: 25 }
+                            }}
+                            className={`group flex flex-col ${theme.bg} ${theme.gradient} border-2 ${theme.border} overflow-hidden ${theme.shadow} ${theme.glow} transition-shadow duration-300 relative z-0`}
+                          >
+                            {/* Background patterns based on theme */}
+                            <div className="absolute inset-0 pointer-events-none opacity-5 mix-blend-overlay">
+                              <div className="w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[length:24px_24px]"></div>
+                            </div>
 
-                            {/* Status Badge */}
-                            <div className="absolute top-3 right-3">
-                              {event.isCompleted ? (
-                                <span className="px-3 py-1 bg-green-400 border-2 border-black text-black text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
-                                  <CheckCircle className="w-3 h-3" />
-                                  Completed
-                                </span>
-                              ) : event.isPublished ? (
-                                <span className="px-3 py-1 bg-blue-400 border-2 border-black text-black text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                  Published
-                                </span>
+                            {/* Event Image Header */}
+                            <div className="relative h-48 bg-neutral-900 border-b-2 border-black overflow-hidden">
+                              {event.imageUrl ? (
+                                <img
+                                  src={toAbsoluteUrl(event.imageUrl)}
+                                  alt={event.title}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 cursor-pointer group-hover:grayscale-[0.3]"
+                                  onClick={() =>
+                                    setLightbox({
+                                      open: true,
+                                      images: [
+                                        toAbsoluteUrl(event.imageUrl),
+                                        ...(event.images || []).map(toAbsoluteUrl),
+                                      ],
+                                      index: 0,
+                                    })
+                                  }
+                                />
                               ) : (
-                                <span className="px-3 py-1 bg-neutral-200 border-2 border-black text-black text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                  Draft
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Category Badge */}
-                            {event.category && (
-                              <div className="absolute top-3 left-3">
-                                <span className="px-3 py-1 bg-white border-2 border-black text-black text-xs font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                  {event.category}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Upload Cover Overlay */}
-                            <label className="absolute bottom-3 right-3 px-3 py-1 bg-white hover:bg-neutral-100 border-2 border-black text-black text-xs font-bold uppercase cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex items-center gap-1">
-                              <Upload className="w-3 h-3" />
-                              Change Cover
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => uploadEventCover(event, e.target.files?.[0])}
-                              />
-                            </label>
-                          </div>
-
-                          {/* Event Info */}
-                          <div className="p-6 flex-1 flex flex-col">
-                            <h3 className="text-xl font-black text-black mb-2 line-clamp-2 uppercase leading-tight group-hover:underline decoration-2 underline-offset-2">
-                              {event.title}
-                            </h3>
-                            <p className="text-sm text-slate-600 mb-6 line-clamp-2 font-medium">
-                              {event.shortDescription || event.description || 'No description'}
-                            </p>
-
-                            {/* Event Meta */}
-                            <div className="space-y-3 mb-6 font-mono text-xs font-medium">
-                              <div className="flex items-center gap-3 text-slate-700">
-                                <Clock className="w-4 h-4 text-black" />
-                                <span className="uppercase">
-                                  {new Date(event.date).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-3 text-slate-700">
-                                <MapPin className="w-4 h-4 text-black" />
-                                <span className="line-clamp-1 uppercase">
-                                  {event.location || 'TBA'}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-3 text-slate-700">
-                                <Users className="w-4 h-4 text-black" />
-                                <span className="uppercase">
-                                  {event.registrations?.filter((r) => r.status === 'registered')
-                                    .length || 0}
-                                  {event.capacity > 0 ? ` / ${event.capacity}` : ''} Registered
-                                </span>
-                              </div>
-                              {event.isOnline && (
-                                <div className="flex items-center gap-3 text-blue-700 font-bold uppercase">
-                                  <span className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>{' '}
-                                    Online Event
-                                  </span>
+                                <div className="w-full h-full flex items-center justify-center bg-neutral-100/10 relative overflow-hidden">
+                                  <div
+                                    className="absolute inset-0 opacity-10"
+                                    style={{
+                                      backgroundImage:
+                                        'radial-gradient(circle at 1px 1px, black 1px, transparent 0)',
+                                      backgroundSize: '10px 10px',
+                                    }}
+                                  ></div>
+                                  <ThemeIcon className={`w-12 h-12 ${theme.text}`} />
                                 </div>
                               )}
-                              {event.price > 0 && (
-                                <div className="flex items-center gap-3 text-green-700 font-bold uppercase">
-                                  <span>
-                                    💰 {event.currency} {event.price}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
 
-                            {/* Tags */}
-                            {event.tags && event.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mb-6">
-                                {event.tags.slice(0, 3).map((tag, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="px-2 py-0.5 border-2 border-black bg-neutral-100 text-black text-xs font-bold uppercase"
+                              {/* glassmorphism overlay on image hover */}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500 flex items-center justify-center pointer-events-none">
+                                  <motion.div 
+                                      initial={{ scale: 0, opacity: 0 }}
+                                      whileHover={{ scale: 1, opacity: 1 }}
+                                      className={`${theme.glass} p-4 rounded-full`}
                                   >
-                                    {tag}
-                                  </span>
-                                ))}
-                                {event.tags.length > 3 && (
-                                  <span className="px-2 py-0.5 border-2 border-black bg-white text-black text-xs font-bold uppercase">
-                                    +{event.tags.length - 3}
-                                  </span>
-                                )}
+                                      <ThemeIcon className={`w-8 h-8 ${theme.text}`} />
+                                  </motion.div>
                               </div>
-                            )}
 
-                            {/* Spacer to push actions to bottom */}
-                            <div className="flex-1"></div>
-
-                            {/* Action Buttons */}
-                            <div className="pt-6 mt-auto space-y-3 border-t-2 border-dashed border-black/20">
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={() => openEdit(event)}
-                                  className="flex-1 px-3 py-2 bg-black text-white hover:bg-neutral-800 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all rounded-none text-xs font-bold uppercase flex items-center justify-center gap-2"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => deleteEvent(event)}
-                                  className="p-2 bg-white text-red-600 hover:bg-red-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all rounded-none"
-                                  title="Delete Event"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                {!event.isCompleted && (
-                                  <button
-                                    onClick={() => markCompleted(event)}
-                                    className="flex-1 px-3 py-2 bg-white text-green-700 hover:bg-green-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all rounded-none text-xs font-bold uppercase flex items-center justify-center gap-1"
-                                  >
-                                    <CheckCircle className="w-3 h-3" />
-                                    Complete
-                                  </button>
-                                )}
-                                {event.isCompleted && (
-                                  <button
-                                    onClick={() => generateCertificates(event)}
-                                    className="flex-1 px-3 py-2 bg-purple-100 text-purple-800 hover:bg-purple-200 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all rounded-none text-xs font-bold uppercase flex items-center justify-center gap-1"
-                                  >
-                                    <Trophy className="w-3 h-3" />
-                                    Certificates
-                                  </button>
-                                )}
-                                {/* Live Control Panel Button */}
-                                {!event.isCompleted && (
-                                  <button
-                                    onClick={() => navigate(`/host/live/${event._id}`)}
-                                    className="flex-1 px-3 py-2 bg-red-100 text-red-800 hover:bg-red-200 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all rounded-none text-xs font-bold uppercase flex items-center justify-center gap-1"
-                                  >
-                                    <Radio className="w-3 h-3" />
-                                    Live Mode
-                                  </button>
-                                )}
-                                {/* Classify Event Button */}
-                                <button
-                                  onClick={() => classifyEvent(event._id)}
-                                  disabled={classifyingEventId === event._id}
-                                  className={`flex-1 px-3 py-2 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all rounded-none text-xs font-bold uppercase flex items-center justify-center gap-1 ${classifyingEventId === event._id
-                                    ? 'bg-amber-100 text-amber-700 cursor-not-allowed'
-                                    : 'bg-white hover:bg-amber-50 text-amber-700'
-                                    }`}
-                                  title="Classify Event"
-                                >
-                                  {classifyingEventId === event._id ? (
-                                    <>
-                                      <RefreshCw className="w-3 h-3 animate-spin" />
-                                      Classifying...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Bot className="w-3 h-3" />
-                                      Classify
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Gallery Section */}
-                            {Array.isArray(event.images) && event.images.length > 0 && (
-                              <div className="mt-4 pt-4 border-t-2 border-dashed border-black/20">
-                                <div className="text-xs font-bold uppercase text-black mb-2">
-                                  Gallery ({event.images.length})
-                                </div>
-                                <div className="grid grid-cols-4 gap-2">
-                                  {event.images.slice(0, 4).map((img, i) => (
-                                    <div
-                                      key={i}
-                                      className="relative group aspect-square border-2 border-black overflow-hidden"
+                              {/* Status Badge */}
+                              <div className="absolute top-3 right-3 z-10">
+                                <AnimatePresence>
+                                  {event.isCompleted ? (
+                                    <motion.span 
+                                      initial={{ x: 20, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      className="px-3 py-1 bg-green-400 border-2 border-black text-black text-[10px] font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1"
                                     >
-                                      <img
-                                        src={toAbsoluteUrl(img)}
-                                        alt={`Gallery ${i + 1}`}
-                                        className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform hover:grayscale duration-300"
-                                        onClick={() =>
-                                          setLightbox({
-                                            open: true,
-                                            images: (event.images || []).map(toAbsoluteUrl),
-                                            index: i,
-                                          })
-                                        }
-                                      />
-                                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteEventImage(event, img);
-                                          }}
-                                          className="p-1 bg-red-600 hover:bg-red-700 text-white rounded-none border border-black"
-                                        >
-                                          <X className="w-3 h-3" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                                <label className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-neutral-100 border-2 border-black text-black rounded-none text-xs font-bold uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px]">
-                                  <ImageIcon className="w-3 h-3" /> Add Photos
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    className="hidden"
-                                    onChange={(e) => uploadEventImages(event, e.target.files)}
-                                  />
-                                </label>
+                                      <CheckCircle className="w-3 h-3" />
+                                      Completed
+                                    </motion.span>
+                                  ) : event.isPublished ? (
+                                    <motion.span 
+                                      initial={{ x: 20, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      className="px-3 py-1 bg-blue-400 border-2 border-black text-black text-[10px] font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                    >
+                                      Published
+                                    </motion.span>
+                                  ) : (
+                                    <motion.span 
+                                      initial={{ x: 20, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      className="px-3 py-1 bg-neutral-200 border-2 border-black text-black text-[10px] font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                    >
+                                      Draft
+                                    </motion.span>
+                                  )}
+                                </AnimatePresence>
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+
+                              {/* Category Badge */}
+                              {event.category && (
+                                <div className="absolute top-3 left-3 z-10">
+                                  <span className={`px-3 py-1 border-2 text-[10px] font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-sm ${theme.tag}`}>
+                                    {event.category}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Upload Cover Overlay */}
+                              <label className="absolute bottom-3 right-3 z-10 px-3 py-1 bg-white/90 backdrop-blur-sm border-2 border-black text-black text-[10px] font-black uppercase cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex items-center gap-1 active:shadow-none active:translate-x-[2px] active:translate-y-[2px]">
+                                <Upload className="w-3 h-3" />
+                                Change Cover
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => uploadEventCover(event, e.target.files?.[0])}
+                                />
+                              </label>
+                            </div>
+
+                            {/* Event Info */}
+                            <div className="p-6 flex-1 flex flex-col relative overflow-hidden backdrop-blur-[2px]">
+                              {/* Subtle theme-colored glow */}
+                              <div className={`absolute -bottom-10 -right-10 w-24 h-24 rounded-full blur-3xl opacity-20 ${theme.bg}`}></div>
+                              
+                              <h3 className={`text-xl font-black mb-2 line-clamp-2 uppercase leading-tight group-hover:translate-x-1 transition-transform duration-300 ${theme.text}`}>
+                                {event.title}
+                              </h3>
+                              <p className={`text-sm mb-6 line-clamp-2 font-medium leading-relaxed ${theme.muted}`}>
+                                {event.shortDescription || event.description || 'No description'}
+                              </p>
+
+                              {/* Event Meta */}
+                              <div className="space-y-3 mb-6 font-bold text-[10px] tracking-widest uppercase">
+                                <div className={`flex items-center gap-3 ${theme.muted}`}>
+                                  <Clock className={`w-4 h-4`} />
+                                  <span>
+                                    {new Date(event.date).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <div className={`flex items-center gap-3 ${theme.muted}`}>
+                                  <MapPin className={`w-4 h-4`} />
+                                  <span className="line-clamp-1">
+                                    {event.location || 'TBA'}
+                                  </span>
+                                </div>
+                                <div className={`flex items-center gap-3 ${theme.muted}`}>
+                                  <Users className={`w-4 h-4`} />
+                                  <span>
+                                    {event.registrations?.filter((r) => r.status === 'registered')
+                                      .length || 0}
+                                    {event.capacity > 0 ? ` / ${event.capacity}` : ''} Registered
+                                  </span>
+                                </div>
+                                {event.isOnline && (
+                                  <div className={`flex items-center gap-3 ${theme.text}`}>
+                                    <div className={`w-2 h-2 ${theme.bg} rounded-full animate-pulse border border-black/20`}></div>
+                                    <span>Online Event</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Tags */}
+                              {event.tags && event.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                  {event.tags.slice(0, 3).map((tag, idx) => (
+                                    <span
+                                      key={idx}
+                                      className={`px-2 py-0.5 border-2 text-[9px] font-black uppercase rounded-sm shadow-sm ${theme.tag}`}
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                  {event.tags.length > 3 && (
+                                    <span className={`px-2 py-0.5 border-2 text-[9px] font-black uppercase rounded-sm shadow-sm ${theme.tag}`}>
+                                      +{event.tags.length - 3}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Spacer */}
+                              <div className="flex-1"></div>
+
+                              {/* Action Buttons */}
+                              <div className="pt-6 mt-auto space-y-3 border-t-2 border-dashed border-black/10 relative z-10">
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => openEdit(event)}
+                                    className={`flex-1 px-3 py-2 border-2 rounded-none text-[10px] font-black uppercase flex items-center justify-center gap-2 transition-all active:scale-95 ${theme.button}`}
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                    Edit Event
+                                  </button>
+                                  <button
+                                    onClick={() => deleteEvent(event)}
+                                    className="p-2 bg-white text-red-600 hover:bg-red-50 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+                                    title="Delete Event"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {!event.isCompleted && (
+                                    <button
+                                      onClick={() => markCompleted(event)}
+                                      className={`flex-1 min-w-[100px] px-3 py-2 bg-white border-2 border-black text-black hover:bg-neutral-100 text-[9px] font-black uppercase flex items-center justify-center gap-1 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]`}
+                                    >
+                                      <CheckCircle className="w-3 h-3" />
+                                      Complete
+                                    </button>
+                                  )}
+                                  {event.isCompleted && (
+                                    <button
+                                      onClick={() => generateCertificates(event)}
+                                      className="flex-1 min-w-[100px] px-3 py-2 bg-purple-600 text-white border-2 border-black hover:bg-purple-700 text-[9px] font-black uppercase flex items-center justify-center gap-1 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+                                    >
+                                      <Trophy className="w-3 h-3" />
+                                      Certificates
+                                    </button>
+                                  )}
+                                  
+                                  {!event.isCompleted && (
+                                    <button
+                                      onClick={() => navigate(`/host/live/${event._id}`)}
+                                      className="flex-1 min-w-[100px] px-3 py-2 bg-red-600 text-white border-2 border-black hover:bg-red-700 text-[9px] font-black uppercase flex items-center justify-center gap-1 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
+                                    >
+                                      <Radio className="w-3 h-3 animate-pulse" />
+                                      Live Control
+                                    </button>
+                                  )}
+                                  
+                                  <button
+                                    onClick={() => classifyEvent(event._id)}
+                                    disabled={classifyingEventId === event._id}
+                                    className={`flex-1 min-w-[100px] px-3 py-2 border-2 text-[9px] font-black uppercase flex items-center justify-center gap-1 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] ${classifyingEventId === event._id
+                                      ? 'bg-amber-100 text-amber-700 cursor-not-allowed grayscale'
+                                      : 'bg-white hover:bg-amber-50 text-amber-900 border-black'
+                                      }`}
+                                    title="Classify Event"
+                                  >
+                                    {classifyingEventId === event._id ? (
+                                      <>
+                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                        Wait...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Bot className="w-3 h-3" />
+                                        Re-Classify
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Gallery Section */}
+                              {Array.isArray(event.images) && event.images.length > 0 && (
+                                <div className="mt-4 pt-4 border-t-2 border-dashed border-black/10">
+                                  <div className={`text-[9px] font-black uppercase mb-2 ${theme.text}`}>
+                                    Event Gallery ({event.images.length})
+                                  </div>
+                                  <div className="grid grid-cols-4 gap-2">
+                                    {event.images.slice(0, 4).map((img, i) => (
+                                      <div
+                                        key={i}
+                                        className="relative group aspect-square border-2 border-black overflow-hidden bg-black/5"
+                                      >
+                                        <img
+                                          src={toAbsoluteUrl(img)}
+                                          alt={`Gallery ${i + 1}`}
+                                          className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform hover:grayscale duration-300"
+                                          onClick={() =>
+                                            setLightbox({
+                                              open: true,
+                                              images: (event.images || []).map(toAbsoluteUrl),
+                                              index: i,
+                                            })
+                                          }
+                                        />
+                                        <div className="absolute inset-x-0 bottom-0 bg-black/80 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex justify-center">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteEventImage(event, img);
+                                            }}
+                                            className="text-white hover:text-red-400"
+                                          >
+                                            <Trash2 className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <label className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-neutral-100 border-2 border-black text-black text-[9px] font-black uppercase cursor-pointer transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]">
+                                    <ImageIcon className="w-3 h-3" /> Add More
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      className="hidden"
+                                      onChange={(e) => uploadEventImages(event, e.target.files)}
+                                    />
+                                  </label>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   )}
                 </>
@@ -3365,277 +3526,259 @@ export default function HostDashboard() {
                 </div>
               )}
 
-              {/* Analytics Tab */}
+              {/* Analytics Tab - General Overview */}
               {activeTab === 'analytics' && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-black uppercase text-black">Analytics</h2>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="date"
-                        value={dateStart}
-                        onChange={(e) => setDateStart(e.target.value)}
-                        className="px-3 py-2 bg-white border-2 border-black text-sm font-bold uppercase outline-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all"
-                      />
-                      <span className="text-black font-black">TO</span>
-                      <input
-                        type="date"
-                        value={dateEnd}
-                        onChange={(e) => setDateEnd(e.target.value)}
-                        className="px-3 py-2 bg-white border-2 border-black text-sm font-bold uppercase outline-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Pill tabs */}
-                  <div className="flex items-center gap-3">
-                    {['Overview', 'By Event', 'By Day'].map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => setAnalyticsTab(t)}
-                        className={`px-4 py-2 border-2 border-black text-sm font-bold uppercase transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${t === analyticsTab ? 'bg-black text-white hover:bg-neutral-800' : 'bg-white text-black hover:bg-neutral-100 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}`}
-                      >
-                        {t}
-                      </button>
+                <div className="space-y-8 animate-fadeIn">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {[
+                      { label: 'Total Events', value: statsOverRange.total, icon: Calendar, bg: 'bg-blue-50' },
+                      { label: 'Registrations', value: statsOverRange.totalRegistrations, icon: UserCheck, bg: 'bg-purple-50' },
+                      { label: 'Avg Rating', value: statsOverRange.avgRating, icon: Star, bg: 'bg-yellow-50' },
+                      { label: 'Latest Notifs', value: notificationsOverRange.length, icon: BellRing, bg: 'bg-rose-50' },
+                    ].map(({ label, value, icon: Icon, bg }) => (
+                      <div key={label} className={`${bg} border-2 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="text-black text-[10px] font-black uppercase tracking-widest">{label}</p>
+                          <Icon className="w-5 h-5 text-black" />
+                        </div>
+                        <p className="text-4xl font-black text-black">{value}</p>
+                      </div>
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-amber-50 border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                      <h3 className="text-lg font-black uppercase mb-6 flex items-center text-black border-b-2 border-black pb-2">
-                        <BarChart3 className="w-5 h-5 mr-2 text-black" />
-                        {analyticsTab === 'Overview' ? 'Event Statistics' : analyticsTab}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Registrations over time */}
+                    <div className="bg-white border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                      <h3 className="text-sm font-black uppercase mb-6 flex items-center border-b-2 border-black pb-2">
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Registrations Trend
                       </h3>
-
-                      {analyticsTab === 'Overview' && (
-                        <>
-                          <div className="space-y-0 mb-6 border-2 border-black">
-                            {[
-                              { label: 'Total Events', value: statsOverRange.total },
-                              { label: 'Completed Events', value: statsOverRange.completed },
-                              { label: 'Upcoming Events', value: statsOverRange.upcoming },
-                              {
-                                label: 'Total Registrations',
-                                value: statsOverRange.totalRegistrations,
-                              },
-                              { label: 'Average Rating', value: statsOverRange.avgRating },
-                            ].map(({ label, value }, idx) => (
-                              <div
-                                key={label}
-                                className={`flex justify-between items-center p-3 ${idx !== 4 ? 'border-b-2 border-black' : ''} hover:bg-neutral-50`}
-                              >
-                                <span className="text-black font-bold uppercase text-xs tracking-wider">
-                                  {label}
-                                </span>
-                                <span className="font-black text-black text-lg">{value}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="h-64 border-2 border-black p-2 bg-amber-100">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart
-                                data={registrationsSeries}
-                                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#000"
-                                  strokeOpacity={0.1}
-                                />
-                                <XAxis
-                                  dataKey="date"
-                                  tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                  stroke="#000"
-                                />
-                                <YAxis
-                                  allowDecimals={false}
-                                  tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                  stroke="#000"
-                                />
-                                <Tooltip
-                                  contentStyle={{
-                                    border: '2px solid black',
-                                    borderRadius: '0px',
-                                    boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)',
-                                  }}
-                                  itemStyle={{ fontWeight: 'bold', color: 'black' }}
-                                />
-                                <Legend wrapperStyle={{ paddingTop: '10px', fontWeight: 'bold' }} />
-                                <Line
-                                  type="step"
-                                  dataKey="count"
-                                  stroke="#000"
-                                  strokeWidth={3}
-                                  dot={{ r: 4, strokeWidth: 2, fill: 'white', stroke: 'black' }}
-                                  activeDot={{ r: 6, strokeWidth: 2, fill: 'black' }}
-                                  name="Registrations"
-                                />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </>
-                      )}
-
-                      {analyticsTab === 'By Event' && (
-                        <div className="h-80 border-2 border-black p-2 bg-neutral-50">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                              data={registrationsByEvent}
-                              margin={{ top: 10, right: 20, left: 0, bottom: 40 }}
-                            >
-                              <CartesianGrid
-                                strokeDasharray="3 3"
-                                stroke="#000"
-                                strokeOpacity={0.1}
-                              />
-                              <XAxis
-                                dataKey="name"
-                                tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                interval={0}
-                                angle={-25}
-                                textAnchor="end"
-                                height={60}
-                                stroke="#000"
-                              />
-                              <YAxis
-                                allowDecimals={false}
-                                tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                stroke="#000"
-                              />
-                              <Tooltip
-                                contentStyle={{
-                                  border: '2px solid black',
-                                  borderRadius: '0px',
-                                  boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)',
-                                }}
-                              />
-                              <Legend wrapperStyle={{ paddingTop: '10px', fontWeight: 'bold' }} />
-                              <Bar
-                                dataKey="value"
-                                fill="#000"
-                                name="Registrations"
-                                radius={[0, 0, 0, 0]}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                      )}
-
-                      {analyticsTab === 'By Day' && (
-                        <div className="h-64 border-2 border-black p-2 bg-neutral-50">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <LineChart
-                              data={eventsByDay}
-                              margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                            >
-                              <CartesianGrid
-                                strokeDasharray="3 3"
-                                stroke="#000"
-                                strokeOpacity={0.1}
-                              />
-                              <XAxis
-                                dataKey="date"
-                                tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                stroke="#000"
-                              />
-                              <YAxis
-                                allowDecimals={false}
-                                tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                stroke="#000"
-                              />
-                              <Tooltip
-                                contentStyle={{
-                                  border: '2px solid black',
-                                  borderRadius: '0px',
-                                  boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)',
-                                }}
-                              />
-                              <Legend wrapperStyle={{ paddingTop: '10px', fontWeight: 'bold' }} />
-                              <Line
-                                type="step"
-                                dataKey="count"
-                                stroke="#000"
-                                strokeWidth={3}
-                                dot={{ r: 4, strokeWidth: 2, fill: 'white', stroke: 'black' }}
-                                name="Events"
-                              />
-                            </LineChart>
-                          </ResponsiveContainer>
-                        </div>
-                      )}
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={registrationsSeries}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                            <XAxis dataKey="date" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <YAxis tick={{fontSize: 10, fontWeight: 'bold'}} />
+                            <Tooltip contentStyle={{border: '2px solid black', borderRadius: '0px'}} />
+                            <Line type="monotone" dataKey="count" stroke="#a855f7" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
 
+                    {/* Registrations by event */}
                     <div className="bg-white border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                      <h3 className="text-lg font-black uppercase mb-6 flex items-center text-black border-b-2 border-black pb-2">
-                        <BellRing className="w-5 h-5 mr-2 text-black" />
-                        Recent Notifications
+                      <h3 className="text-sm font-black uppercase mb-6 flex items-center border-b-2 border-black pb-2">
+                        <BarChart3 className="w-4 h-4 mr-2" />
+                        Top Events by Registrations
                       </h3>
-                      <div className="space-y-3 max-h-80 overflow-y-auto mb-6 pr-2 custom-scrollbar">
-                        {notificationsOverRange.slice(0, 5).map((notification, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-start space-x-3 p-3 bg-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
-                          >
-                            <BellRing className="w-4 h-4 text-black shrink-0 mt-1" />
-                            <div className="flex-1">
-                              <p className="text-sm text-black font-bold uppercase leading-tight">
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-slate-500 font-mono mt-1">
-                                {new Date(notification.at).toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                        {notifications.length === 0 && (
-                          <div className="text-center py-8 border-2 border-dashed border-black/20">
-                            <BellRing className="w-10 h-10 text-black/20 mx-auto mb-2" />
-                            <p className="text-slate-500 font-bold uppercase">No notifications</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Events by Status */}
-                      <div className="h-64 mt-4 border-t-2 border-black pt-6">
-                        <h4 className="text-xs font-black uppercase text-black mb-4">
-                          Events Status Distribution
-                        </h4>
-                        <div className="h-full border-2 border-black p-2 bg-neutral-50">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                              data={eventsByStatus}
-                              margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-                            >
-                              <CartesianGrid
-                                strokeDasharray="3 3"
-                                stroke="#000"
-                                strokeOpacity={0.1}
-                              />
-                              <XAxis
-                                dataKey="name"
-                                tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                stroke="#000"
-                              />
-                              <YAxis
-                                allowDecimals={false}
-                                tick={{ fontSize: 10, fontWeight: 'bold' }}
-                                stroke="#000"
-                              />
-                              <Tooltip
-                                contentStyle={{
-                                  border: '2px solid black',
-                                  borderRadius: '0px',
-                                  boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)',
-                                }}
-                              />
-                              <Legend wrapperStyle={{ paddingTop: '10px', fontWeight: 'bold' }} />
-                              <Bar dataKey="value" fill="#000" name="Count" radius={[0, 0, 0, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={registrationsByEvent} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 8, fontWeight: 'bold'}} />
+                            <Tooltip contentStyle={{border: '2px solid black', borderRadius: '0px'}} />
+                            <Bar dataKey="value" fill="#3b82f6" border="2px solid black" />
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Studio Tab - YouTube Style Deep Analytics */}
+              {activeTab === 'studio' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <h2 className="text-3xl font-black uppercase text-black italic">
+                        {selectedStudioEvent ? 'Event Analytics' : 'Channel Studio'}
+                      </h2>
+                      <div className="h-8 w-[2px] bg-black/10 hidden md:block" />
+                      <select
+                        value={selectedStudioEvent?._id || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (!val) {
+                            setSelectedStudioEvent(null);
+                          } else {
+                            const ev = events.find(event => event._id === val);
+                            setSelectedStudioEvent(ev);
+                          }
+                        }}
+                        className="px-4 py-2 bg-white border-2 border-black text-xs font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        <option value="">ALL EVENTS (CHANNEL OVERVIEW)</option>
+                        {events.map(ev => (
+                          <option key={ev._id} value={ev._id}>{ev.title.toUpperCase()}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <button 
+                        onClick={() => fetchStudioData(selectedStudioEvent?._id)}
+                        className="p-2 border-2 border-black bg-white hover:bg-neutral-100 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        title="Refresh Data"
+                       >
+                         <RefreshCw className={`w-4 h-4 ${isStudioLoading ? 'animate-spin' : ''}`} />
+                       </button>
+                    </div>
+                  </div>
+
+                  {/* Top Level Metric Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {[
+                      { label: 'Impressions', value: studioData?.summary?.impressions || 0, icon: Eye, color: 'bg-blue-50' },
+                      { label: 'Clicks', value: studioData?.summary?.clicks || 0, icon: TrendingUp, color: 'bg-emerald-50' },
+                      { label: 'Registrations', value: studioData?.summary?.registrations || 0, icon: UserCheck, color: 'bg-purple-50' },
+                      { label: 'CTR', value: `${(studioData?.summary?.ctr || 0).toFixed(2)}%`, icon: Zap, color: 'bg-amber-50' },
+                      { label: 'Conversion', value: `${(studioData?.summary?.conversionRate || 0).toFixed(2)}%`, icon: Target, color: 'bg-rose-50' },
+                    ].map((stat) => (
+                      <div key={stat.label} className={`p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${stat.color}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <stat.icon className="w-4 h-4 text-black" />
+                          <span className="text-[10px] font-black uppercase tracking-tighter text-black opacity-40">Direct</span>
+                        </div>
+                        <div className="text-2xl font-black text-black">{stat.value}</div>
+                        <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-1">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Charts Section */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                       <h3 className="text-sm font-black uppercase mb-6 flex items-center text-black border-b-2 border-black pb-2">
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Performance over time
+                      </h3>
+                      <div className="h-80 w-full">
+                        {studioData?.timeSeries && studioData.timeSeries.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={
+                              Object.values(studioData.timeSeries.reduce((acc, curr) => {
+                                const date = curr._id.date;
+                                if (!acc[date]) acc[date] = { date };
+                                acc[date][curr._id.type] = curr.count;
+                                return acc;
+                              }, {}))
+                            }>
+                              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                              <XAxis dataKey="date" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                              <YAxis tick={{fontSize: 10, fontWeight: 'bold'}} />
+                              <Tooltip contentStyle={{border: '2px solid black', borderRadius: '0px', boxShadow: '4px 4px 0px 0px rgba(0,0,0,1)'}} />
+                              <Legend iconType="rect" />
+                              <Line type="monotone" dataKey="impression" name="Impressions" stroke="#3b82f6" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                              <Line type="monotone" dataKey="click" name="Clicks" stroke="#10b981" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                              <Line type="monotone" dataKey="registration" name="Registrations" stroke="#a855f7" strokeWidth={3} dot={{r: 4, strokeWidth: 2, fill: '#fff'}} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-neutral-400 font-bold uppercase tracking-widest text-sm italic">
+                            No data available for the period
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-white border-2 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col">
+                       <h3 className="text-sm font-black uppercase mb-6 flex items-center text-black border-b-2 border-black pb-2">
+                        <Target className="w-4 h-4 mr-2" />
+                        Conversion Funnel
+                      </h3>
+                      <div className="flex-1 flex flex-col justify-center space-y-4">
+                        {[
+                          { label: 'Impressions', val: studioData?.summary?.impressions || 0, color: 'bg-blue-500', pct: 100 },
+                          { label: 'Clicks', val: studioData?.summary?.clicks || 0, color: 'bg-emerald-500', pct: studioData?.summary?.impressions > 0 ? (studioData?.summary?.clicks / studioData?.summary?.impressions) * 100 : 0 },
+                          { label: 'Registrations', val: studioData?.summary?.registrations || 0, color: 'bg-purple-500', pct: studioData?.summary?.clicks > 0 ? (studioData?.summary?.registrations / studioData?.summary?.clicks) * 100 : 0 },
+                        ].map((step, i) => (
+                           <div key={step.label} className="space-y-1">
+                              <div className="flex justify-between text-[10px] font-black uppercase">
+                                <span>{step.label}</span>
+                                <span>{step.val}</span>
+                              </div>
+                              <div className="h-6 bg-neutral-100 border-2 border-black relative overflow-hidden">
+                                <motion.div 
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${step.pct}%` }}
+                                  transition={{ duration: 1, delay: i * 0.2 }}
+                                  className={`h-full ${step.color}`}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center text-[8px] font-black text-white mix-blend-difference">
+                                  {step.pct.toFixed(1)}%
+                                </div>
+                              </div>
+                              {i < 2 && (
+                                <div className="flex justify-center py-1">
+                                  <ChevronDown className="w-4 h-4 text-neutral-300" />
+                                </div>
+                              )}
+                           </div>
+                        ))}
+                      </div>
+                      <p className="mt-4 text-[9px] font-bold text-neutral-400 uppercase leading-tight italic">
+                        Conversion rate from clicks to registrations is {(studioData?.summary?.conversionRate || 0).toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Top Content Row - Only visible in channel view */}
+                  {!selectedStudioEvent && (
+                    <div className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+                       <h3 className="text-sm font-black uppercase p-6 flex items-center text-black border-b-2 border-black bg-neutral-50">
+                          <BarChart3 className="w-4 h-4 mr-2" />
+                          Top Performing Content (Last 28 Days)
+                        </h3>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse">
+                            <thead className="bg-neutral-100 border-b-2 border-black">
+                              <tr>
+                                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-black">Event</th>
+                                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-black">Views</th>
+                                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-black">Clicks</th>
+                                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-black">CTR</th>
+                                <th className="p-4 text-[10px] font-black uppercase tracking-widest text-black">Regs</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y-2 divide-black/5">
+                              {studioData?.topEvents?.length > 0 ? (
+                                studioData.topEvents.map((evt) => (
+                                  <tr key={evt.id} className="hover:bg-neutral-50 transition-colors">
+                                    <td className="p-4">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-black border-2 border-black shrink-0 flex items-center justify-center font-black text-white text-xs">
+                                          {evt.title.charAt(0)}
+                                        </div>
+                                        <span className="text-xs font-black uppercase tracking-tight line-clamp-1">{evt.title}</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-4 font-black text-xs">{evt.impressions}</td>
+                                    <td className="p-4 font-black text-xs">{evt.clicks}</td>
+                                    <td className="p-4">
+                                      <div className="flex flex-col">
+                                        <span className="text-xs font-black">{evt.ctr.toFixed(1)}%</span>
+                                        <div className="w-16 h-1 bg-neutral-200 border border-black mt-1">
+                                          <div className="h-full bg-blue-500" style={{ width: `${Math.min(100, evt.ctr * 5)}%` }} />
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="p-4 font-black text-xs text-purple-600">{evt.registrations}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan="5" className="p-8 text-center text-neutral-400 font-bold uppercase tracking-widest italic">
+                                    No performance data recorded yet
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -3773,6 +3916,40 @@ export default function HostDashboard() {
               <h2 className="text-3xl font-black uppercase mb-8 text-black border-b-4 border-black pb-4">
                 {editingEvent ? 'Edit Event' : 'Create Event'}
               </h2>
+
+              {!editingEvent && (
+                <div className="mb-8 p-6 bg-amber-50 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <h3 className="text-lg font-black uppercase mb-4 flex items-center gap-2">
+                    <Zap className="w-5 h-5 text-amber-500" />
+                    Quick Templates
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {EVENT_TEMPLATES.map((temp) => {
+                      const Icon = TEMPLATE_ICONS[temp.icon];
+                      return (
+                        <div
+                          key={temp.id}
+                          className={`border-2 border-black p-4 flex flex-col items-center text-center group cursor-pointer transition-all hover:scale-105 active:scale-95 ${temp.theme}`}
+                          onClick={() => applyTemplate(temp)}
+                        >
+                          <div
+                            className={`w-12 h-12 flex items-center justify-center mb-3 group-hover:rotate-12 transition-transform border-2 border-black ${temp.iconBg}`}
+                          >
+                            {Icon && <Icon className="w-6 h-6" />}
+                          </div>
+                          <span className="font-black uppercase text-xs mb-1 tracking-tighter">
+                            {temp.name}
+                          </span>
+                          <span className="text-[10px] font-bold leading-tight line-clamp-2 opacity-80 uppercase">
+                            {temp.shortDescription}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={submitForm} className="space-y-8">
                 {/* Basic Information */}
                 <div className="bg-neutral-50 border-2 border-black p-6">

@@ -85,39 +85,35 @@ const TicketWallet = ({ user }) => {
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="flex flex-col"
                     >
-                        {/* Ticket Stack */}
-                        <div className="relative w-full max-w-[280px] h-[340px] mt-8">
+                        {/* Tickets Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 w-full">
                             {tickets.map((ticket, index) => {
-                                const isTop = index === tickets.length - 1;
-                                const offset = (tickets.length - 1 - index) * 40;
-
                                 return (
                                     <motion.div
                                         key={ticket.eventId}
                                         layoutId={`ticket-${ticket.eventId}`}
-                                        initial={{ y: 300, opacity: 0 }}
+                                        initial={{ y: 50, opacity: 0 }}
                                         animate={{
-                                            y: offset,
+                                            y: 0,
                                             opacity: 1,
-                                            scale: 1 - (tickets.length - 1 - index) * 0.05,
-                                            zIndex: index
+                                            transition: { delay: index * 0.1 }
                                         }}
                                         whileHover={{
-                                            y: offset - 20,
+                                            y: -10,
                                             transition: { duration: 0.2 }
                                         }}
                                         onClick={() => setSelectedTicket(ticket)}
-                                        className="absolute top-0 w-full cursor-pointer group"
+                                        className="relative w-full max-w-[320px] mx-auto cursor-pointer group h-[280px]"
                                     >
-                                        <div className="bg-black border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+                                        <div className="bg-black border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden h-full flex flex-col">
                                             {/* Card Header - Colored Strip */}
-                                            <div className={`h-8 w-full ${index % 4 === 0 ? 'bg-blue-500' :
+                                            <div className={`h-8 w-full shrink-0 border-b-4 border-black ${index % 4 === 0 ? 'bg-blue-500' :
                                                 index % 4 === 1 ? 'bg-purple-500' :
                                                     index % 4 === 2 ? 'bg-pink-500' : 'bg-orange-500'
-                                                } border-b-4 border-black`} />
+                                                }`} />
 
-                                            <div className="bg-white p-4">
-                                                <div className="flex justify-between items-start mb-4">
+                                            <div className="bg-white p-4 flex-1 flex flex-col">
+                                                <div className="flex justify-between items-start mb-2">
                                                     <div className="flex-1">
                                                         <p className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1">Official Pass</p>
                                                         <h4 className="text-base font-black text-black uppercase tracking-tight group-hover:text-blue-600 transition-colors truncate">
@@ -129,16 +125,18 @@ const TicketWallet = ({ user }) => {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-3 text-[9px] font-bold text-neutral-600 mb-3">
-                                                    <div className="flex items-center gap-1">
+                                                <div className="flex items-center gap-3 text-[9px] font-bold text-neutral-600 mb-2">
+                                                    <div className="flex items-center gap-1 shrink-0">
                                                         <Calendar className="w-3 h-3" />
                                                         {new Date(ticket.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                                     </div>
-                                                    <div className="flex items-center gap-1 truncate">
-                                                        <MapPin className="w-3 h-3" />
-                                                        {ticket.location}
+                                                    <div className="flex items-center gap-1 min-w-0">
+                                                        <MapPin className="w-3 h-3 shrink-0" />
+                                                        <span className="truncate">{ticket.location}</span>
                                                     </div>
                                                 </div>
+
+                                                <div className="flex-1" />
 
                                                 {/* Cut-out Divider Simulation */}
                                                 <div className="relative h-4 my-4 flex items-center">
@@ -163,7 +161,7 @@ const TicketWallet = ({ user }) => {
                             })}
                         </div>
 
-                        <p className="mt-12 text-sm font-bold text-neutral-500 uppercase tracking-widest animate-pulse">
+                        <p className="mt-8 text-sm font-bold text-neutral-500 uppercase tracking-widest animate-pulse">
                             Select a ticket to reveal QR code
                         </p>
                     </motion.div>
@@ -172,70 +170,76 @@ const TicketWallet = ({ user }) => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-2 bg-white/20 backdrop-blur-md overflow-y-auto"
+                        // Fix 1: Use p-4 for safe area, ensure strict flex-col to allow scrolling
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-start sm:justify-center p-4 bg-white/40 backdrop-blur-md overflow-y-auto"
                     >
-                        <div className="absolute inset-0" onClick={() => setSelectedTicket(null)} />
+                        <div className="fixed inset-0" onClick={() => setSelectedTicket(null)} />
 
                         <motion.div
                             layoutId={`ticket-${selectedTicket.eventId}`}
-                            className="relative w-full max-w-sm bg-white border-4 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] overflow-hidden z-10 my-4"
+                            // Fix 2: Remove absolute height constraints, add pb-4 for bottom spacing, relative context
+                            className="relative w-full max-w-sm bg-white border-4 border-black shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] z-10 my-auto shrink-0 flex flex-col"
+                            style={{ maxHeight: '90vh' }}
                         >
-                            <button
-                                onClick={() => setSelectedTicket(null)}
-                                className="absolute top-4 left-4 p-1.5 bg-black text-white hover:bg-neutral-800 transition-all border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none z-20"
-                            >
-                                <ArrowLeft className="w-4 h-4" />
-                            </button>
+                            {/* Header / Nav */}
+                            <div className="flex items-center justify-between p-4 border-b-4 border-black bg-white sticky top-0 z-20">
+                                <button
+                                    onClick={() => setSelectedTicket(null)}
+                                    className="p-1.5 bg-black text-white hover:bg-neutral-800 transition-all border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                </button>
+                                <span className="text-[9px] font-black bg-black text-white px-2 py-0.5 uppercase tracking-widest">
+                                    Verified Digital ID
+                                </span>
+                            </div>
 
-                            <div className="mt-12 p-4">
-                                <div className="text-center mb-4">
-                                    <span className="text-[9px] font-black bg-black text-white px-2 py-0.5 uppercase tracking-widest mb-2 inline-block">
-                                        Verified Digital ID
-                                    </span>
-                                    <h3 className="text-xl font-black text-black uppercase tracking-tighter mb-1 leading-tight">
+                            {/* Scrollable Content Area */}
+                            <div className="p-4 overflow-y-auto scrollbar-hide flex-1">
+                                <div className="text-center mb-6">
+                                    <h3 className="text-xl font-black text-black uppercase tracking-tighter mb-2 leading-tight break-words">
                                         {selectedTicket.title}
                                     </h3>
-                                    <p className="text-neutral-500 font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-1.5">
-                                        <MapPin className="w-3 h-3" /> {selectedTicket.location}
+                                    <p className="text-neutral-500 font-bold uppercase tracking-widest text-[9px] flex items-center justify-center gap-1.5 break-words">
+                                        <MapPin className="w-4 h-4 shrink-0" /> <span className="text-left">{selectedTicket.location}</span>
                                     </p>
                                 </div>
 
                                 {/* QR Code Section */}
-                                <div className="bg-white border-2 border-black p-3 mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative">
+                                <div className="bg-white border-2 border-black p-4 mb-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center">
                                     <img
                                         src={selectedTicket.qrCodeUrl}
                                         alt="Ticket QR Code"
-                                        className="w-full aspect-square object-contain mx-auto max-w-[160px]"
+                                        className="w-full max-w-[180px] aspect-square object-contain mb-3"
                                     />
-                                    <div className="mt-2 text-center border-t-2 border-black pt-2">
-                                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">Pass ID</p>
-                                        <p className="font-mono font-black text-sm">{selectedTicket.eventId.slice(-8).toUpperCase()}</p>
+                                    <div className="w-full text-center border-t-2 border-black pt-3">
+                                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-1">Pass ID</p>
+                                        <p className="font-mono font-black text-lg tracking-widest">{selectedTicket.eventId.slice(-8).toUpperCase()}</p>
                                     </div>
                                 </div>
 
                                 {/* Details Grid */}
-                                <div className="grid grid-cols-2 gap-2 mb-2">
-                                    <div className="bg-neutral-50 border-2 border-black p-2">
-                                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">Pass Holder</p>
-                                        <p className="font-black uppercase text-[10px] truncate">{selectedTicket.studentName}</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                                    <div className="bg-neutral-50 border-2 border-black p-3 flex flex-col justify-center">
+                                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-1">Pass Holder</p>
+                                        <p className="font-black uppercase text-xs break-words">{selectedTicket.studentName}</p>
                                     </div>
-                                    <div className="bg-neutral-50 border-2 border-black p-2">
-                                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-0.5">Date & Time</p>
-                                        <p className="font-black uppercase text-[10px]">
+                                    <div className="bg-neutral-50 border-2 border-black p-3 flex flex-col justify-center">
+                                        <p className="text-[8px] font-black text-neutral-400 uppercase tracking-widest mb-1">Date & Time</p>
+                                        <p className="font-black uppercase text-xs break-words">
                                             {new Date(selectedTicket.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </p>
                                     </div>
                                     {selectedTicket.squadName && (
-                                        <div className="col-span-2 bg-blue-50 border-2 border-blue-900 p-2 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-[8px] font-black text-blue-900/50 uppercase tracking-widest mb-0.5">Squad Access</p>
-                                                <p className="font-black uppercase text-[10px] text-blue-900">{selectedTicket.squadName}</p>
+                                        <div className="col-span-1 sm:col-span-2 bg-blue-50 border-2 border-blue-900 p-3 flex items-center justify-between gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[8px] font-black text-blue-900/50 uppercase tracking-widest mb-1">Squad Access</p>
+                                                <p className="font-black uppercase text-xs text-blue-900 truncate">{selectedTicket.squadName}</p>
                                             </div>
-                                            <Users className="w-3.5 h-3.5 text-blue-900" />
+                                            <Users className="w-5 h-5 text-blue-900 shrink-0" />
                                         </div>
                                     )}
                                 </div>
-
                             </div>
                         </motion.div>
                     </motion.div>

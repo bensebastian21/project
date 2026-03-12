@@ -27,22 +27,163 @@ import {
   Ticket,
   ArrowRight,
   MoreHorizontal,
+  Briefcase,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import TicketModal from './TicketModal';
+import { logEvent } from '../utils/analytics';
+
+export const EVENT_THEMES = {
+  Technology: {
+    bg: 'bg-slate-950',
+    gradient: 'bg-gradient-to-br from-emerald-600/20 via-slate-950 to-slate-950',
+    border: 'border-emerald-500/50',
+    text: 'text-emerald-400',
+    muted: 'text-emerald-600',
+    accent: 'emerald',
+    tag: 'bg-emerald-900/50 text-emerald-400 border-emerald-500/30',
+    icon: Zap,
+    shadow: 'shadow-[8px_8px_0px_0px_#10b981]',
+    glow: 'group-hover:shadow-[0_0_40px_rgba(16,185,129,0.25)]',
+    glass: 'bg-emerald-500/10 backdrop-blur-md border-emerald-500/20',
+    button: 'bg-emerald-500 text-black hover:bg-emerald-400 shadow-[4px_4px_0px_0px_#065f46]',
+  },
+  Entertainment: {
+    bg: 'bg-rose-600',
+    gradient: 'bg-gradient-to-br from-rose-500 via-rose-600 to-rose-700',
+    border: 'border-black',
+    text: 'text-white',
+    muted: 'text-rose-100',
+    accent: 'rose',
+    tag: 'bg-white/20 text-white border-white/30',
+    icon: Sparkles,
+    shadow: 'shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+    glow: 'group-hover:shadow-[0_0_40px_rgba(225,29,72,0.35)]',
+    glass: 'bg-white/10 backdrop-blur-md border-white/20',
+    button: 'bg-black text-white hover:bg-neutral-800 shadow-[4px_4px_0px_0px_#4c0519]',
+  },
+  Education: {
+    bg: 'bg-indigo-600',
+    gradient: 'bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-700',
+    border: 'border-black',
+    text: 'text-white',
+    muted: 'text-indigo-100',
+    accent: 'indigo',
+    tag: 'bg-white/20 text-white border-white/30',
+    icon: Brain,
+    shadow: 'shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+    glow: 'group-hover:shadow-[0_0_40px_rgba(79,70,229,0.35)]',
+    glass: 'bg-white/10 backdrop-blur-md border-white/20',
+    button: 'bg-black text-white hover:bg-neutral-800 shadow-[4px_4px_0px_0px_#1e1b4b]',
+  },
+  Business: {
+    bg: 'bg-blue-700',
+    gradient: 'bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800',
+    border: 'border-black',
+    text: 'text-white',
+    muted: 'text-blue-100',
+    accent: 'blue',
+    tag: 'bg-white/20 text-white border-white/30',
+    icon: Briefcase,
+    shadow: 'shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+    glow: 'group-hover:shadow-[0_0_40px_rgba(29,78,216,0.35)]',
+    glass: 'bg-white/10 backdrop-blur-md border-white/20',
+    button: 'bg-black text-white hover:bg-neutral-800 shadow-[4px_4px_0px_0px_#172554]',
+  },
+  Health: {
+    bg: 'bg-cyan-500',
+    gradient: 'bg-gradient-to-br from-cyan-400 via-cyan-500 to-cyan-600',
+    border: 'border-black',
+    text: 'text-black',
+    muted: 'text-cyan-900',
+    accent: 'cyan',
+    tag: 'bg-black/10 text-black border-black/20',
+    icon: Heart,
+    shadow: 'shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+    glow: 'group-hover:shadow-[0_0_40px_rgba(6,182,212,0.35)]',
+    glass: 'bg-black/10 backdrop-blur-md border-black/20',
+    button: 'bg-black text-white hover:bg-neutral-800 shadow-[4px_4px_0px_0px_#164e63]',
+  },
+  Sports: {
+    bg: 'bg-orange-500',
+    gradient: 'bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600',
+    border: 'border-black',
+    text: 'text-black',
+    muted: 'text-orange-900',
+    accent: 'orange',
+    tag: 'bg-black/10 text-black border-black/20',
+    icon: Trophy,
+    shadow: 'shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+    glow: 'group-hover:shadow-[0_0_40px_rgba(249,115,22,0.35)]',
+    glass: 'bg-black/10 backdrop-blur-md border-black/20',
+    button: 'bg-black text-white hover:bg-neutral-800 shadow-[4px_4px_0px_0px_#7c2d12]',
+  },
+  Default: {
+    bg: 'bg-white',
+    gradient: 'bg-gradient-to-br from-white via-slate-50 to-slate-100',
+    border: 'border-black',
+    text: 'text-black',
+    muted: 'text-slate-600',
+    accent: 'slate',
+    tag: 'bg-neutral-100 text-black border-black',
+    icon: Calendar,
+    shadow: 'shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+    glow: 'group-hover:shadow-[0_0_40px_rgba(0,0,0,0.1)]',
+    glass: 'bg-black/5 backdrop-blur-md border-black/10',
+    button: 'bg-black text-white hover:bg-neutral-800 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+  }
+};
 
 // Professional Event Card Component
 // Professional Event Card Component - Refactored to match Landing Page Design
 export const GamifiedEventCard = ({
   event,
   onRegister,
-  onBookmark,
   onViewMore,
+  onBookmark,
   isRegistered,
   isBookmarked,
   userStats,
   awardPoints,
   disabledActions = false,
+  analyticsSource = 'dashboard',
 }) => {
+  const cardRef = React.useRef(null);
+  const [hasLoggedImpression, setHasLoggedImpression] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!event?._id || hasLoggedImpression) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          logEvent({
+            eventId: event._id,
+            type: 'impression',
+            source: analyticsSource,
+          });
+          setHasLoggedImpression(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [event?._id, hasLoggedImpression, analyticsSource]);
+
+  const handleCardClick = () => {
+    if (event?._id) {
+      logEvent({
+        eventId: event._id,
+        type: 'click',
+        source: analyticsSource,
+      });
+    }
+    onViewMore(event);
+  };
+
   const toAbsoluteUrl = (u) => {
     const s = String(u || '');
     if (!s) return s;
@@ -57,22 +198,37 @@ export const GamifiedEventCard = ({
   const regClosed =
     regDeadline && !isNaN(regDeadline.getTime()) && Date.now() > regDeadline.getTime();
 
-  // Animations from Landing Page
-  const { motion } = require('framer-motion'); // Inline require for motion to avoid top-level import issues if not already there, but usually it is. Assuming framer-motion is available as it was in LandingPage.
+  // Theming Logic
+  const theme = EVENT_THEMES[event.category] || EVENT_THEMES.Default;
+  const ThemeIcon = theme.icon;
 
   return (
-    <div
-      className="group h-full w-full flex flex-col bg-white border-2 border-black overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-4px] hover:translate-y-[-4px] transition-all duration-300 cursor-pointer"
-      onClick={() => onViewMore(event)}
+    <motion.div
+      ref={cardRef}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ 
+        y: -12, 
+        x: -4,
+        scale: 1.02,
+        transition: { type: "spring", stiffness: 400, damping: 25 }
+      }}
+      className={`group h-full w-full flex flex-col ${theme.bg} ${theme.gradient} border-2 ${theme.border} overflow-hidden ${theme.shadow} ${theme.glow} transition-shadow duration-300 cursor-pointer relative z-0`}
+      onClick={handleCardClick}
     >
+      {/* Background patterns based on theme */}
+      <div className="absolute inset-0 pointer-events-none opacity-5 mix-blend-overlay">
+        <div className="w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.2)_1px,transparent_1px)] bg-[length:24px_24px]"></div>
+      </div>
+
       {/* Image Container - Square */}
       <div className="w-full aspect-square relative overflow-hidden bg-neutral-900">
         <div className="w-full h-full transform transition-transform duration-700 ease-out group-hover:scale-110">
-          {(event.ai?.posterUrl || event.imageUrl) ? (
+          {event.ai?.posterUrl || event.imageUrl ? (
             <img
               src={event.ai?.posterUrl || toAbsoluteUrl(event.imageUrl)}
               alt={event.title}
-              className="object-cover w-full h-full grayscale-0 group-hover:grayscale transition-all duration-700"
+              className="object-cover w-full h-full grayscale-0 group-hover:grayscale-[0.3] transition-all duration-700"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = 'https://via.placeholder.com/400x400/000000/FFFFFF?text=EVENT';
@@ -85,12 +241,25 @@ export const GamifiedEventCard = ({
           )}
         </div>
 
+        {/* glassmorphism overlay on image hover */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500 flex items-center justify-center">
+            <motion.div 
+                initial={{ scale: 0, opacity: 0 }}
+                whileHover={{ scale: 1, opacity: 1 }}
+                className={`${theme.glass} p-4 rounded-full`}
+            >
+                <ThemeIcon className={`w-8 h-8 ${theme.text}`} />
+            </motion.div>
+        </div>
+
         {/* GenLoop AI Badge */}
         {event.ai?.engagementScore > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2 py-1 bg-black/80 backdrop-blur-sm">
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2 py-1 bg-black/80 backdrop-blur-md border-t border-white/10">
             <div className="flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-blue-400 animate-pulse" />
-              <span className="text-[8px] font-black uppercase tracking-widest text-blue-300">GenLoop AI</span>
+              <span className="text-[8px] font-black uppercase tracking-widest text-blue-300">
+                GenLoop AI
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[9px] font-black text-white">{event.ai.engagementScore}</span>
@@ -101,64 +270,85 @@ export const GamifiedEventCard = ({
 
         {/* Status Tags Overlay */}
         <div className="absolute top-0 left-0 flex flex-col gap-1 p-2 z-10">
-          {event.isTeamEvent && (
-            <span className="bg-purple-600 text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
-              <Users className="w-3 h-3" /> Team ({event.minTeamSize}-{event.maxTeamSize})
-            </span>
-          )}
-          {isCompleted && (
-            <span className="bg-black text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest">
-              Completed
-            </span>
-          )}
-          {isRegistered && !isCompleted && (
-            <span className="bg-blue-600 text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest">
-              Registered
-            </span>
-          )}
-          {regClosed && !isCompleted && !isRegistered && (
-            <span className="bg-red-600 text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest">
-              Closed
-            </span>
-          )}
-          {isOnline && (
-            <span className="bg-green-600 text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest">
-              Online
-            </span>
-          )}
+          <AnimatePresence>
+            {event.isTeamEvent && (
+              <motion.span 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="bg-purple-600 text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 shadow-md"
+              >
+                <Users className="w-3 h-3" /> Team ({event.minTeamSize}-{event.maxTeamSize})
+              </motion.span>
+            )}
+            {isCompleted && (
+              <motion.span 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="bg-black text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest shadow-md"
+              >
+                Completed
+              </motion.span>
+            )}
+            {isRegistered && !isCompleted && (
+              <motion.span 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="bg-blue-600 text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest shadow-md"
+              >
+                Registered
+              </motion.span>
+            )}
+            {regClosed && !isCompleted && !isRegistered && (
+              <motion.span 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="bg-red-600 text-white px-2 py-1 text-[9px] font-bold uppercase tracking-widest shadow-md"
+              >
+                Closed
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Price Tag */}
-        <div className="absolute top-0 right-0 bg-white text-black px-3 py-1 text-[9px] font-bold uppercase tracking-widest z-10 border-b-2 border-l-2 border-black">
+        <div className={`absolute top-0 right-0 ${theme.bg === 'bg-white' ? 'bg-black text-white' : 'bg-white text-black'} px-3 py-1 text-[9px] font-bold uppercase tracking-widest z-10 border-b-2 border-l-2 border-black shadow-sm`}>
           {event.price > 0 ? `₹${event.price}` : 'Free'}
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-3 flex flex-col gap-2 flex-1 justify-between bg-white relative">
-        <div className="space-y-1">
+      <div className={`p-4 flex flex-col gap-3 flex-1 justify-between relative overflow-hidden backdrop-blur-sm`}>
+        {/* Subtle theme-colored glow at the bottom */}
+        <div className={`absolute -bottom-10 -right-10 w-24 h-24 rounded-full blur-3xl opacity-20 ${theme.bg}`}></div>
+        
+        <div className="space-y-2 relative z-10">
           <div className="flex items-center justify-between">
-            <span className="text-[8px] font-bold uppercase tracking-widest text-neutral-400">
+            <span className={`px-2 py-0.5 text-[7px] font-black uppercase tracking-[2px] ${theme.tag} rounded-sm`}>
               {event.category || 'Event'}
             </span>
-            <span className="text-[8px] font-bold uppercase tracking-widest text-neutral-400">
+            <span className={`text-[8px] font-bold uppercase tracking-widest ${theme.muted}`}>
               {new Date(event.date).toLocaleDateString(undefined, {
                 month: 'short',
                 day: 'numeric',
               })}
             </span>
           </div>
-          <h3 className="text-[13px] font-bold uppercase tracking-tight text-neutral-900 leading-tight group-hover:text-neutral-500 transition-colors line-clamp-2">
+          <h3 className={`text-[14px] font-black uppercase tracking-tight ${theme.text} leading-tight group-hover:translate-x-1 transition-transform duration-300 line-clamp-2`}>
             {event.title}
           </h3>
-          <span className="text-[8px] font-bold uppercase tracking-widest text-neutral-400 truncate block">
+          <div className={`flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest ${theme.muted} truncate block`}>
+            <MapPin className="w-2.5 h-2.5" />
             {isOnline ? 'Online' : event.location || 'Campus'}
-          </span>
+          </div>
+          
           {/* GenLoop rewards tags */}
           {event.gamificationRewards && event.gamificationRewards.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">
               {event.gamificationRewards.slice(0, 2).map((r, i) => (
-                <span key={i} className="text-[7px] font-bold uppercase tracking-widest bg-blue-100 text-blue-800 border border-blue-300 px-1.5 py-0.5 flex items-center gap-1">
+                <span
+                  key={i}
+                  className={`text-[7px] font-bold uppercase tracking-widest ${theme.tag} px-1.5 py-0.5 flex items-center gap-1 shadow-sm`}
+                >
                   <Trophy className="w-2.5 h-2.5" /> {r}
                 </span>
               ))}
@@ -167,16 +357,16 @@ export const GamifiedEventCard = ({
         </div>
 
         {/* Actions (Buttons) */}
-        <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
+        <div className="flex gap-2 relative z-10">
           {isRegistered && !isCompleted && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowTicket(true);
               }}
-              className="flex-1 py-1 bg-black text-white text-[8px] font-bold uppercase tracking-widest hover:bg-neutral-800 transition-colors border border-black"
+              className={`flex-1 py-1.5 ${theme.button} text-[8px] font-black uppercase tracking-widest transition-all active:scale-95`}
             >
-              Ticket
+              Get Ticket
             </button>
           )}
           {!isRegistered && !isCompleted && !regClosed && (
@@ -189,10 +379,12 @@ export const GamifiedEventCard = ({
                   onRegister();
                 }
               }}
-              className={`flex-1 py-1 border border-black text-black text-[8px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors ${disabledActions ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex-1 py-1.5 ${theme.button} text-[8px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                disabledActions ? 'opacity-50 cursor-not-allowed grayscale' : ''
+              }`}
               disabled={disabledActions}
             >
-              {event.isTeamEvent ? 'Register Squad' : 'Register'}
+              {event.isTeamEvent ? 'Register Squad' : 'Join Event'}
             </button>
           )}
           <button
@@ -200,14 +392,18 @@ export const GamifiedEventCard = ({
               e.stopPropagation();
               onBookmark();
             }}
-            className={`p-1 border ${isBookmarked ? 'bg-black text-white border-black' : 'border-black text-black hover:bg-black hover:text-white'} transition-colors`}
+            className={`p-2 border-2 ${
+              isBookmarked
+                ? `${theme.button} border-black`
+                : `border-black ${theme.bg === 'bg-white' ? 'bg-slate-50' : 'bg-white/10'} hover:bg-black hover:text-white`
+            } transition-all active:scale-90`}
           >
-            <Bookmark className="w-3 h-3" />
+            <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-current' : ''}`} />
           </button>
         </div>
       </div>
       <TicketModal isOpen={showTicket} onClose={() => setShowTicket(false)} eventId={event._id} />
-    </div>
+    </motion.div>
   );
 };
 

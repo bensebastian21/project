@@ -15,9 +15,30 @@ export default function ChatPage() {
 
   // Load User from LocalStorage or API
   useEffect(() => {
-    const u = localStorage.getItem('user');
-    if (u) setCurrentUser(JSON.parse(u));
-    // Ideally verify with /me if crucial
+    const loadUser = () => {
+      const u = localStorage.getItem('user');
+      if (u) {
+        try {
+          setCurrentUser(JSON.parse(u));
+        } catch (e) {
+          console.error('Failed to parse user', e);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    };
+
+    loadUser();
+
+    // Sync across tabs/windows
+    const handleStorage = (e) => {
+      if (e.key === 'user' || e.key === 'token') {
+        loadUser();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   // Fetch Conversations

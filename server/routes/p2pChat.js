@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
 const User = require('../models/User');
+const mongoose = require('mongoose');
 const { decryptMessage } = require('../utils/encryption');
-const { authenticateToken } = require('../utils/auth'); // Assuming this utility exists or inline it
+const { authenticateToken } = require('../utils/auth');
 
 // Auth Middleware (Reusing snippet from other files if utils/auth is not centralized)
 // For robustness, let's use the one from index.js or recreate it here if not exported.
@@ -75,13 +76,15 @@ router.get('/conversations', verifyToken, async (req, res) => {
     // 1. Get recent messages involving user
     // 2. Group by "other" person
 
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
     // Aggregation pipeline
     const conversations = await Message.aggregate([
       {
         $match: {
           $or: [
-            { sender: require('mongoose').Types.ObjectId(userId) },
-            { receiver: require('mongoose').Types.ObjectId(userId) },
+            { sender: userObjectId },
+            { receiver: userObjectId },
           ],
         },
       },
@@ -92,7 +95,7 @@ router.get('/conversations', verifyToken, async (req, res) => {
         $group: {
           _id: {
             $cond: [
-              { $eq: ['$sender', require('mongoose').Types.ObjectId(userId)] },
+              { $eq: ['$sender', userObjectId] },
               '$receiver',
               '$sender',
             ],
@@ -103,7 +106,7 @@ router.get('/conversations', verifyToken, async (req, res) => {
               $cond: [
                 {
                   $and: [
-                    { $eq: ['$receiver', require('mongoose').Types.ObjectId(userId)] },
+                    { $eq: ['$receiver', userObjectId] },
                     { $eq: ['$read', false] },
                   ],
                 },

@@ -11,20 +11,45 @@ export default function ChatOverlay() {
   const overlayRef = useRef(null);
 
   useEffect(() => {
-    // Load currentUser once
-    const u = localStorage.getItem('user');
-    if (u) setCurrentUser(JSON.parse(u));
+    const loadUser = () => {
+      const u = localStorage.getItem('user');
+      if (u) {
+        try {
+          setCurrentUser(JSON.parse(u));
+        } catch (e) {
+          console.error('Failed to parse user from localStorage', e);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    };
+
+    // Load currentUser once on mount
+    loadUser();
 
     // Listen for global open event
     const handleOpen = (e) => {
+      // Re-load user on open to prevent stale state from previous sessions/tabs
+      loadUser();
       const { friendId, friendName, friendPic, initialMessage } = e.detail;
       setActiveFriend({ friendId, friendName, friendPic, initialMessage });
       setIsOpen(true);
       setIsMinimized(false);
     };
 
+    // Listen for storage changes (e.g. login/logout in another tab)
+    const handleStorageChange = (e) => {
+      if (e.key === 'user' || e.key === 'token') {
+        loadUser();
+      }
+    };
+
     window.addEventListener('open-chat', handleOpen);
-    return () => window.removeEventListener('open-chat', handleOpen);
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('open-chat', handleOpen);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Click outside listener

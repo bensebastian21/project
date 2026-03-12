@@ -125,22 +125,22 @@ export default function Login({ onSwitchToRegister }) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.4, ease: 'backOut' }}
-        className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-8 relative z-10"
+        className="bg-neutral-950/80 backdrop-blur-xl border-2 border-neutral-800 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)] p-8 relative z-10"
       >
-        <h2 className="text-3xl font-black uppercase tracking-tighter mb-8 text-center text-black">
+        <h2 className="text-3xl font-black uppercase tracking-tighter mb-8 text-center text-white">
           Student Login
         </h2>
 
         <form className="space-y-6" onSubmit={handleLogin}>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2 text-neutral-500">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-2 text-neutral-400">
               Email Address
             </label>
             <input
               name="email"
               type="email"
               placeholder="YOUR@EMAIL.COM"
-              className="w-full bg-neutral-50 border-2 border-black p-4 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-4 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 focus:shadow-[4px_4px_0px_0px_rgba(168,85,247,0.4)] transition-all"
               value={formData.email}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -160,14 +160,14 @@ export default function Login({ onSwitchToRegister }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-2 text-neutral-500">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-2 text-neutral-400">
               Password
             </label>
             <input
               name="password"
               type="password"
               placeholder="••••••••"
-              className="w-full bg-neutral-50 border-2 border-black p-4 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-4 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 focus:shadow-[4px_4px_0px_0px_rgba(168,85,247,0.4)] transition-all"
               value={formData.password}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -190,14 +190,14 @@ export default function Login({ onSwitchToRegister }) {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="submit"
-            className="w-full py-4 bg-black text-white font-black uppercase tracking-widest border-2 border-transparent hover:bg-neutral-800 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+            className="w-full py-4 bg-white text-black font-black uppercase tracking-widest border-2 border-transparent hover:bg-neutral-100 hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] transition-all"
           >
             Enter Dashboard
           </motion.button>
 
           <button
             type="button"
-            className="block w-full text-center text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-black hover:underline mt-4"
+            className="block w-full text-center text-xs font-bold uppercase tracking-widest text-neutral-400 hover:text-white hover:underline mt-4"
             onClick={handleForgotPassword}
           >
             Forgot Password?
@@ -206,10 +206,10 @@ export default function Login({ onSwitchToRegister }) {
 
         <div className="relative py-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t-2 border-black opacity-20"></div>
+            <div className="w-full border-t-2 border-neutral-800"></div>
           </div>
           <div className="relative flex justify-center">
-            <span className="px-4 bg-white text-xs font-bold uppercase tracking-widest text-neutral-400">
+            <span className="px-4 bg-neutral-950 text-xs font-bold uppercase tracking-widest text-neutral-500">
               Or continue with
             </span>
           </div>
@@ -220,7 +220,7 @@ export default function Login({ onSwitchToRegister }) {
           whileTap={{ scale: 0.98 }}
           type="button"
           onClick={handleGoogleAuth}
-          className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest border-2 border-black flex items-center justify-center gap-3 hover:bg-neutral-50 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+          className="w-full py-3 bg-neutral-900 text-white font-bold uppercase tracking-widest border-2 border-neutral-800 flex items-center justify-center gap-3 hover:bg-neutral-800 hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -243,14 +243,14 @@ export default function Login({ onSwitchToRegister }) {
           Google
         </motion.button>
 
-        <div className="mt-8 pt-6 border-t-2 border-dashed border-neutral-200">
+        <div className="mt-8 pt-6 border-t-2 border-dashed border-neutral-800">
           <p className="text-center text-xs font-bold uppercase tracking-wide text-neutral-500 mb-2">
             New here?
           </p>
           <button
             type="button"
             onClick={onSwitchToRegister}
-            className="w-full py-2 text-black font-black uppercase tracking-widest border-2 border-transparent hover:border-black hover:bg-neutral-50 transition-all"
+            className="w-full py-2 text-white font-black uppercase tracking-widest border-2 border-transparent hover:border-white hover:bg-neutral-900 transition-all"
           >
             Create Student Account
           </button>
@@ -259,7 +259,7 @@ export default function Login({ onSwitchToRegister }) {
             <button
               type="button"
               onClick={() => navigate('/register-host')}
-              className="text-xs font-bold text-neutral-400 hover:text-black uppercase tracking-widest hover:underline"
+              className="text-xs font-bold text-neutral-500 hover:text-white uppercase tracking-widest hover:underline"
             >
               Are you a Host? Register here
             </button>

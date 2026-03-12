@@ -3,6 +3,8 @@ const router = express.Router();
 const ChatThread = require('../models/ChatThread');
 const User = require('../models/User');
 
+const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
+
 // auth helper (local copy)
 function authenticateToken(req, res, next) {
   try {
@@ -124,6 +126,97 @@ router.post('/:id/message', authenticateToken, async (req, res) => {
     await t.save();
 
     res.json({ reply });
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Escalate thread to human agent
+router.post('/:id/escalate', authenticateToken, async (req, res) => {
+  try {
+    const ownerType = roleToOwnerType(req.user.role);
+    const t = await ChatThread.findOne({ _id: req.params.id, ownerType, ownerId: req.user.id });
+    if (!t) {
+      console.warn(`[chat.escalate] NOT FOUND. ID: ${req.params.id}, Owner: ${req.user.id}, Role: ${req.user.role}`);
+      return res.status(404).json({ error: 'Thread not found' });
+    }
+    if (t.isEscalated) return res.json({ message: 'Already escalated' });
+
+    // Use AI to summarize and detect frustration
+    const groqKey = process.env.GROQ_API_KEY;
+    let summary = 'User requested human assistance.';
+    let level = 'Medium';
+
+    if (groqKey) {
+      try {
+        const history = t.messages.slice(-10).map(m => `${m.role}: ${m.content}`).join('\n');
+        const prompt = `Analyze this support chat and provide:
+1. A 1-sentence summary of the core issue.
+2. Frustration level (Low, Medium, High).
+Format exactly like this:
+SUMMARY: [text]
+LEVEL: [level]
+
+Chat History:
+${history}`;
+
+        const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [{ role: 'system', content: 'You are a support supervisor.' }, { role: 'user', content: prompt }],
+            temperature: 0.1
+          })
+        });
+        const data = await resp.json();
+        const raw = data?.choices?.[0]?.message?.content || '';
+        const sMatch = raw.match(/SUMMARY:\s*(.*)/i);
+        const lMatch = raw.match(/LEVEL:\s*(Low|Medium|High)/i);
+        if (sMatch) summary = sMatch[1].trim();
+        if (lMatch) level = lMatch[1].trim();
+      } catch (e) {
+        console.error('Escalation AI error:', e);
+      }
+    }
+
+    t.isEscalated = true;
+    t.escalationStatus = 'Open';
+    t.frustrationLevel = level;
+    t.escalationSummary = summary;
+    t.escalatedAt = new Date();
+    await t.save();
+
+    res.json({ success: true, summary, frustrationLevel: level });
+  } catch (e) {
+    res.status(500).json({ error: 'Escalation failed' });
+  }
+});
+
+// Admin view for escalated threads
+router.get('/admin/list/escalated', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const items = await ChatThread.find({ isEscalated: true })
+      .populate('ownerId', 'fullname username email profilePic phone institute')
+      .sort({ escalatedAt: -1 })
+      .lean();
+    res.json(items);
+  } catch (e) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Admin resolve thread
+router.post('/:id/resolve', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+    const t = await ChatThread.findById(req.params.id);
+    if (!t) return res.status(404).json({ error: 'Thread not found' });
+    t.escalationStatus = 'Closed';
+    t.isEscalated = false;
+    await t.save();
+    res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Server error' });
   }

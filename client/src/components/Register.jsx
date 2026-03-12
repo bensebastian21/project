@@ -135,7 +135,7 @@ export default function Register({ onSwitchToLogin }) {
         setErrors((prev) => ({ ...prev, [field]: msg }));
         toast.error(`❌ ${msg}`);
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handleChange = (e) => {
@@ -334,22 +334,22 @@ export default function Register({ onSwitchToLogin }) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.4, ease: 'backOut' }}
-      className="bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-6 md:p-8 relative z-10 max-h-[80vh] overflow-y-auto no-scrollbar"
+      className="bg-neutral-950/80 backdrop-blur-xl border-2 border-neutral-800 shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)] p-6 md:p-8 relative z-10 max-h-[80vh] overflow-y-auto no-scrollbar"
     >
-      <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-center text-black">
+      <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 text-center text-white">
         Student Registration
       </h2>
 
       <form className="space-y-4" onSubmit={handleRegister} encType="multipart/form-data">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-500">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-400">
               Username
             </label>
             <input
               name="username"
               placeholder="USERNAME"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
               value={formData.username}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -360,13 +360,13 @@ export default function Register({ onSwitchToLogin }) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-500">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-400">
               Full Name
             </label>
             <input
               name="fullname"
               placeholder="FULL NAME"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
               value={formData.fullname}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -378,13 +378,13 @@ export default function Register({ onSwitchToLogin }) {
         </div>
 
         <div className="relative">
-          <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-500">
+          <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-400">
             Institute
           </label>
           <input
             name="institute"
             placeholder="Search Institute..."
-            className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+            className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
             value={formData.institute}
             onChange={(e) => {
               const q = e.target.value;
@@ -400,7 +400,7 @@ export default function Register({ onSwitchToLogin }) {
             autoComplete="off"
           />
           {instOpen && (
-            <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto no-scrollbar bg-white text-black border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto no-scrollbar bg-neutral-900 text-white border-2 border-neutral-800 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)]">
               {INSTITUTES.filter((i) =>
                 (instQuery || formData.institute || '')
                   .toLowerCase()
@@ -412,7 +412,7 @@ export default function Register({ onSwitchToLogin }) {
                   <button
                     type="button"
                     key={i.name}
-                    className="w-full text-left px-3 py-2 hover:bg-neutral-100 font-bold text-sm border-b border-neutral-100 last:border-0"
+                    className="w-full text-left px-3 py-2 hover:bg-neutral-800 font-bold text-sm border-b border-neutral-800 last:border-0"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       setFormData((prev) => ({ ...prev, institute: i.name }));
@@ -422,13 +422,13 @@ export default function Register({ onSwitchToLogin }) {
                     title={`${i.address}${i.phone ? ` • ${i.phone}` : ''}`}
                   >
                     <div className="truncate">{i.name}</div>
-                    <div className="text-xs text-neutral-500 truncate">{i.address}</div>
+                    <div className="text-xs text-neutral-400 truncate">{i.address}</div>
                   </button>
                 ))}
-              <div className="border-t-2 border-black my-0"></div>
+              <div className="border-t-2 border-neutral-800 my-0"></div>
               <button
                 type="button"
-                className="w-full text-left px-3 py-2 text-neutral-600 hover:bg-neutral-100 font-bold text-sm"
+                className="w-full text-left px-3 py-2 text-neutral-400 hover:bg-neutral-800 font-bold text-sm"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setInstOpen(false)}
               >
@@ -442,14 +442,14 @@ export default function Register({ onSwitchToLogin }) {
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-500">
+          <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-400">
             Address
           </label>
           <div className="grid grid-cols-3 gap-2">
             <input
               name="street"
               placeholder="Street"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
               value={formData.street}
               onChange={handleChange}
               onFocus={handleFocus}
@@ -458,7 +458,7 @@ export default function Register({ onSwitchToLogin }) {
             <input
               name="city"
               placeholder="City"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
               value={formData.city}
               onChange={handleChange}
               onFocus={handleFocus}
@@ -467,7 +467,7 @@ export default function Register({ onSwitchToLogin }) {
             <input
               name="pincode"
               placeholder="PIN"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
               value={formData.pincode}
               onChange={handleChange}
               onFocus={handleFocus}
@@ -482,7 +482,7 @@ export default function Register({ onSwitchToLogin }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <select
             name="country"
-            className="w-full bg-neutral-50 border-2 border-black p-3 font-bold focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+            className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white focus:outline-none transition-all"
             value={formData.country || ''}
             onChange={(e) => {
               const val = e.target.value;
@@ -498,7 +498,7 @@ export default function Register({ onSwitchToLogin }) {
           </select>
           <select
             name="state"
-            className="w-full bg-neutral-50 border-2 border-black p-3 font-bold focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+            className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white focus:outline-none transition-all"
             value={formData.state || ''}
             onChange={(e) => {
               const val = e.target.value;
@@ -515,7 +515,7 @@ export default function Register({ onSwitchToLogin }) {
           </select>
           <select
             name="district"
-            className="w-full bg-neutral-50 border-2 border-black p-3 font-bold focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+            className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white focus:outline-none transition-all"
             value={formData.district || ''}
             onChange={handleChange}
             disabled={!formData.state}
@@ -531,26 +531,26 @@ export default function Register({ onSwitchToLogin }) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-500">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-400">
               Age
             </label>
             <input
               name="age"
               type="number"
               placeholder="AGE"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
               value={formData.age}
               onChange={handleChange}
               onBlur={handleBlur}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-500">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-400">
               Course
             </label>
             <select
               name="course"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white focus:outline-none transition-all"
               value={formData.course}
               onChange={handleChange}
             >
@@ -564,7 +564,7 @@ export default function Register({ onSwitchToLogin }) {
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-500">
+          <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-neutral-400">
             Contact
           </label>
           <div className="space-y-2">
@@ -572,7 +572,7 @@ export default function Register({ onSwitchToLogin }) {
               name="email"
               type="email"
               placeholder="EMAIL"
-              className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+              className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
               value={formData.email}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -580,7 +580,7 @@ export default function Register({ onSwitchToLogin }) {
             <div className="flex gap-2">
               <select
                 name="countryCode"
-                className="bg-neutral-50 border-2 border-black p-3 font-bold focus:outline-none"
+                className="bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white focus:outline-none"
                 value={formData.countryCode}
                 onChange={handleChange}
               >
@@ -591,7 +591,7 @@ export default function Register({ onSwitchToLogin }) {
                 name="phone"
                 type="tel"
                 placeholder="PHONE"
-                className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+                className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
                 value={formData.phone}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -605,9 +605,9 @@ export default function Register({ onSwitchToLogin }) {
           )}
         </div>
 
-        <div className="space-y-3 p-4 border-2 border-dashed border-neutral-300 bg-neutral-50">
+        <div className="space-y-3 p-4 border-2 border-dashed border-neutral-800 bg-neutral-900/50">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-black">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-white">
               Student ID Card (Image)
             </label>
             <input
@@ -619,7 +619,7 @@ export default function Register({ onSwitchToLogin }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-black">
+            <label className="block text-xs font-bold uppercase tracking-widest mb-1 text-white">
               Bonafide/Fee Receipt (Optional)
             </label>
             <input
@@ -642,7 +642,7 @@ export default function Register({ onSwitchToLogin }) {
             name="password"
             type="password"
             placeholder="PASSWORD"
-            className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+            className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
             value={formData.password}
             onChange={handleChange}
           />
@@ -650,7 +650,7 @@ export default function Register({ onSwitchToLogin }) {
             name="confirmPassword"
             type="password"
             placeholder="CONFIRM"
-            className="w-full bg-neutral-50 border-2 border-black p-3 font-bold placeholder:text-neutral-400 focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+            className="w-full bg-neutral-900 border-2 border-neutral-800 p-3 font-bold text-white placeholder:text-neutral-600 focus:outline-none focus:border-purple-500 transition-all"
             value={formData.confirmPassword}
             onChange={handleChange}
           />
@@ -662,14 +662,14 @@ export default function Register({ onSwitchToLogin }) {
               id="agreeVerification"
               name="agreeVerification"
               type="checkbox"
-              className="w-4 h-4 border-2 border-black rounded-none focus:ring-0 text-black"
+              className="w-4 h-4 border-2 border-neutral-700 rounded-none focus:ring-0 bg-neutral-900 text-purple-500"
               checked={!!formData.agreeVerification}
               onChange={handleChange}
             />
           </div>
           <label
             htmlFor="agreeVerification"
-            className="text-xs font-bold text-neutral-600 leading-tight"
+            className="text-xs font-bold text-neutral-400 leading-tight"
           >
             I confirm that the uploaded document is mine.
           </label>
@@ -678,7 +678,7 @@ export default function Register({ onSwitchToLogin }) {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-4 bg-black text-white font-black uppercase tracking-widest border-2 border-transparent hover:bg-neutral-800 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50"
+          className="w-full py-4 bg-white text-black font-black uppercase tracking-widest border-2 border-transparent hover:bg-neutral-100 hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] transition-all disabled:opacity-50"
         >
           {isLoading ? 'creating...' : 'Register Now'}
         </button>
@@ -686,10 +686,10 @@ export default function Register({ onSwitchToLogin }) {
 
       <div className="relative py-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t-2 border-black opacity-10"></div>
+          <div className="w-full border-t-2 border-neutral-800"></div>
         </div>
         <div className="relative flex justify-center">
-          <span className="px-4 bg-white text-xs font-bold uppercase tracking-widest text-neutral-400">
+          <span className="px-4 bg-neutral-950 text-xs font-bold uppercase tracking-widest text-neutral-500">
             Or
           </span>
         </div>
@@ -699,7 +699,7 @@ export default function Register({ onSwitchToLogin }) {
         type="button"
         onClick={handleGoogleAuth}
         disabled={isGoogleLoading}
-        className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest border-2 border-black flex items-center justify-center gap-3 hover:bg-neutral-50 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
+        className="w-full py-3 bg-neutral-900 text-white font-bold uppercase tracking-widest border-2 border-neutral-800 flex items-center justify-center gap-3 hover:bg-neutral-800 hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.1)] transition-all"
       >
         {isGoogleLoading ? (
           'Processing...'
@@ -723,7 +723,7 @@ export default function Register({ onSwitchToLogin }) {
         <button
           type="button"
           onClick={onSwitchToLogin}
-          className="text-black font-black uppercase tracking-widest border-b-2 border-black hover:bg-black hover:text-white transition-colors"
+          className="text-white font-black uppercase tracking-widest border-b-2 border-white hover:bg-white hover:text-black transition-colors"
         >
           Log In Here
         </button>

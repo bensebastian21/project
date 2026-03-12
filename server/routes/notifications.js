@@ -21,7 +21,7 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id })
       .sort({ createdAt: -1 })
-      .limit(50); // Limit to last 50 to avoid overload
+      .limit(200); // Increased limit for history
     res.json(notifications);
   } catch (err) {
     console.error('Fetch notifications error:', err);
@@ -61,6 +61,24 @@ router.put('/:id/read', authenticateToken, async (req, res) => {
     res.json(notification);
   } catch (err) {
     console.error('Mark read error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PATCH /:id/status - Update notification status (active -> processed)
+router.patch('/:id/status', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const notification = await Notification.findOneAndUpdate(
+      { _id: id, userId: req.user.id },
+      { status },
+      { new: true },
+    );
+    if (!notification) return res.status(404).json({ error: 'Notification not found' });
+    res.json(notification);
+  } catch (err) {
+    console.error('Update status error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

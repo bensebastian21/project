@@ -9,12 +9,13 @@ import { payForEvent } from "../utils/openRazorpay";
 import {
   Search, Calendar, MapPin, Bookmark, BellRing, Trophy,
   LogOut, UserCircle2, CheckCircle, MessageSquare, FileText,
-  UserPen, ShieldCheck, Shield, Award, Crown, Users, Gamepad2, UserPlus,
+  UserPen, ShieldCheck, Shield, Award, Crown, Users, UsersRound, Gamepad2, UserPlus,
   ChevronLeft, ChevronRight, Menu, X, Home, Play, Settings,
   MoreVertical, Filter, Grid3X3, List, Flame, Brain, Trash2,
   Heart, Share2, Flag, Star, Target, Zap, History, TrendingUp, ArrowLeft, Sparkles, Wallet
 } from "lucide-react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { logEvent } from "../utils/analytics";
 
 // --- Notification Detail Modal ---
 const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
@@ -101,6 +102,7 @@ import TicketWallet from "../components/TicketWallet";
 import EventMap from "../components/EventMap";
 import LiveSentimentFeed from "../components/dashboard/LiveSentimentFeed";
 import BucketListGoals from "../components/dashboard/BucketListGoals";
+import DashboardChat from "../components/chat/DashboardChat";
 
 const GAMIFICATION = {
   points: { register: 50, bookmark: 5, subscribe: 20, feedback: 30, review: 15, certificate: 100, streak: 5, firstEvent: 100, social: 10 },
@@ -188,6 +190,7 @@ export default function Dashboard() {
   const [exploreSubTab, setExploreSubTab] = useState('All'); // 'All' | 'For You' | 'Trending' | 'Completed'
   const [aiRecs, setAiRecs] = useState([]);
   const [aiRecsLoading, setAiRecsLoading] = useState(false);
+  const [liveSubTab, setLiveSubTab] = useState('Vibes'); // 'Vibes' | 'Chat'
 
   const getSearchKey = () => user?.email ? `student.recentSearches:${user.email}` : "student.recentSearches";
 
@@ -203,8 +206,7 @@ export default function Dashboard() {
   const handleSearchSubmit = (query) => {
     if (!query.trim()) return;
     setSearchQuery(query);
-    setSearchFocused(false);
-    setIsSearchActive(true);
+    setSearchFocused(true);
 
     // Manage history per-user or global if guest
     setRecentSearches(prev => {
@@ -217,6 +219,8 @@ export default function Dashboard() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [hostFilterId, setHostFilterId] = useState("");
   const [certIds, setCertIds] = useState({}); // eventId -> certificateId
+  const [myCircles, setMyCircles] = useState([]); // New state for circles
+  const [friendsSubTab, setFriendsSubTab] = useState("Friends"); // Sub-tab for Social hub
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const [profilePreview, setProfilePreview] = useState(null); // friend profile modal
@@ -237,8 +241,15 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
-      const { data } = await api.get('/api/notifications', { headers: { Authorization: `Bearer ${token}` } });
+      const headers = { headers: { Authorization: `Bearer ${token}` } };
+      const { data } = await api.get('/api/notifications', headers);
       setNotifications(data || []);
+
+      const shRes = await api.get('/api/subscriptions', headers);
+      setSubscribedHosts(shRes.data?.subscribedHosts || []);
+      
+      const circlesRes = await api.get('/api/circles/joined', headers);
+      setMyCircles(circlesRes.data || []);
     } catch (e) {
       console.error("Failed to fetch notifications", e);
     }
@@ -251,33 +262,6 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Polling for NEW Friend Requests (Client-side trigger for now)
-  useEffect(() => {
-    const checkNewRequests = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        const { data } = await api.get('/api/friends/requests', { headers: { Authorization: `Bearer ${token}` } });
-        const inbound = Array.isArray(data?.inbound) ? data.inbound : [];
-
-        if (inbound.length > prevReqCount.current) {
-          const newReq = inbound[inbound.length - 1];
-          // Create persistent notification
-          addNotification({
-            type: 'Friend Request',
-            title: 'New Friend Request',
-            message: `You have a new friend request from ${newReq.from?.fullname || 'someone'}.`,
-            data: { requestId: newReq._id, username: newReq.from?.username }
-          });
-        }
-        prevReqCount.current = inbound.length;
-      } catch (e) {
-        // ignore auth errors
-      }
-    };
-    const interval = setInterval(checkNewRequests, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   const addNotification = async (notif) => {
     try {
@@ -328,18 +312,56 @@ export default function Dashboard() {
     setNotifModalOpen(true);
   };
 
+  const handleFriendRequest = async (e, n, action) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      await api.put(`/api/friends/requests/${n.data.requestId}/${action}`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(`Friend request ${action === 'accept' ? 'accepted' : 'declined'}`);
+      
+      // Update notification status to processed instead of deleting
+      await api.patch(`/api/notifications/${n._id}/status`, { status: 'processed' }, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifications(prev => prev.map(x => x._id === n._id ? { ...x, status: 'processed', read: true } : x));
+    } catch (err) {
+      toast.error(err?.response?.data?.error || `Failed to ${action} request`);
+    }
+  };
+
   const handleSquadNotification = async (e, n, action) => {
     e.stopPropagation();
     try {
       const token = localStorage.getItem('token');
       await api.post(`/api/squads/${n.data.squadId}/respond`, { action }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(`Squad invite ${action}ed`);
-      // Delete notification after action
-      await api.delete(`/api/notifications/${n._id}`, { headers: { Authorization: `Bearer ${token}` } });
-      setNotifications(prev => prev.filter(x => x._id !== n._id));
+      
+      // Update notification status to processed instead of deleting
+      await api.patch(`/api/notifications/${n._id}/status`, { status: 'processed' }, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifications(prev => prev.map(x => x._id === n._id ? { ...x, status: 'processed', read: true } : x));
+      
       if (action === 'accept') {
-        // Switch to Squads tab so they can see their new squad
         setActiveTab("Squads");
+        setNotifOpen(false);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.error || `Failed to ${action} invite`);
+    }
+  };
+
+  const handleCircleNotification = async (e, n, action) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem('token');
+      await api.post(`/api/circles/${n.data.circleId}/respond-invite`, { action }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(`Circle invite ${action === 'accept' ? 'accepted' : 'declined'}`);
+      
+      // Update notification status to processed instead of deleting
+      await api.patch(`/api/notifications/${n._id}/status`, { status: 'processed' }, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifications(prev => prev.map(x => x._id === n._id ? { ...x, status: 'processed', read: true } : x));
+      
+      if (action === 'accept') {
+        setActiveTab("Friends");
+        setFriendsSubTab("Circles");
         setNotifOpen(false);
       }
     } catch (err) {
@@ -504,6 +526,14 @@ export default function Dashboard() {
     const tab = qs.get('tab');
     if (tab && ["Explore", "MyRegs", "Calendar", "Bookmarks", "SubscribedHosts", "Friends", "Leaderboard", "Achievements", "Notifications"].includes(tab)) {
       setActiveTab(tab);
+      
+      // Also handle sub-tabs for specific tabs like Friends
+      if (tab === "Friends") {
+        const sub = qs.get('subTab');
+        if (sub && ["Friends", "Squads", "Circles"].includes(sub)) {
+          setFriendsSubTab(sub);
+        }
+      }
     }
   }, [location.search]);
 
@@ -516,9 +546,8 @@ export default function Dashboard() {
       return;
     }
 
-    // Only trigger AI search if the query seems like natural language (e.g., > 2 words or specific keywords)
-    const words = query.split(/\s+/).length;
-    if (words < 3) {
+    // Only trigger AI search if the query is not empty
+    if (!query) {
       setAiEvents(null);
       setIsSearchingAI(false);
       return;
@@ -549,10 +578,6 @@ export default function Dashboard() {
   }, [searchQuery]);
 
   const filteredEvents = useMemo(() => {
-    // If we have AI search results active, use them directly
-    if (aiEvents) return aiEvents;
-
-    const q = searchQuery.trim().toLowerCase();
     let base = events || [];
 
     // Exclude completed/past events in Explore/Home
@@ -583,19 +608,9 @@ export default function Dashboard() {
     if (hostFilterId) {
       base = base.filter(e => String(e.hostId?._id || e.hostId) === String(hostFilterId));
     }
-    if (!q) return base;
-    return base.filter(e => {
-      const haystack = [
-        e.title,
-        e.location,
-        e.category,
-        ...(Array.isArray(e.tags) ? e.tags : [])
-      ]
-        .filter(Boolean)
-        .map(x => String(x).toLowerCase());
-      return haystack.some(txt => txt.includes(q));
-    });
-  }, [events, searchQuery, hostFilterId]);
+    
+    return base;
+  }, [events, hostFilterId]);
 
   // Explore sections heuristics
   const trendingEvents = useMemo(() => {
@@ -903,6 +918,7 @@ export default function Dashboard() {
         await payForEvent({ event, user, squadId });
         // payForEvent already registers on success; refresh local state
         setRegistrations(prev => prev.some(r => r.eventId === event._id) ? prev : [{ eventId: event._id, status: 'registered', at: Date.now() }, ...prev]);
+        logEvent({ eventId: event._id, type: 'registration', source: 'paid_registration' });
         toast.success("Payment successful and registered");
       } else {
         await registerForEvent(event, squadId);
@@ -947,6 +963,7 @@ export default function Dashboard() {
       const res = await api.post(`/api/host/public/events/${event._id}/register`, { squadId }, headers);
       // Update local registrations store
       setRegistrations(prev => [{ eventId: event._id, status: 'registered', at: Date.now() }, ...prev]);
+      logEvent({ eventId: event._id, type: 'registration', source: 'dashboard' });
       toast.success(res?.data?.message || "Registered successfully");
       return true;
     } catch (error) {
@@ -1437,69 +1454,132 @@ export default function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute top-[calc(100%+0.5rem)] left-0 w-full min-w-[300px] bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden z-50 flex flex-col"
+                        className="absolute top-[calc(100%+0.5rem)] left-0 w-full min-w-[300px] max-h-[70vh] bg-white border border-slate-200 shadow-xl rounded-xl overflow-y-auto z-50 flex flex-col"
                       >
-                        {recentSearches.length > 0 && (
-                          <div className="p-3 border-b border-slate-100 bg-slate-50">
-                            <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest pl-2 mb-2">
-                              <History className="w-4 h-4" /> Recent Searches
-                            </h4>
-                            <div className="flex flex-col gap-1">
-                              {recentSearches.map((term, i) => (
-                                <div
-                                  key={i}
-                                  className="flex items-center w-full hover:bg-slate-200/50 rounded-lg group/historyitem transition-colors"
-                                >
-                                  <button
-                                    onClick={() => {
-                                      setSearchText(term);
-                                      handleSearchSubmit(term);
-                                    }}
-                                    className="text-left flex-1 px-2 py-1.5 text-sm font-medium text-slate-700 flex justify-between items-center"
-                                  >
-                                    <span>{term}</span>
-                                    <span className="text-slate-400 opacity-0 group-hover/historyitem:opacity-100 transition-opacity mr-2">
-                                      <Search className="w-3 h-3" />
-                                    </span>
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setRecentSearches(prev => {
-                                        const newHistory = prev.filter(t => t !== term);
-                                        localStorage.setItem(getSearchKey(), JSON.stringify(newHistory));
-                                        return newHistory;
-                                      });
-                                    }}
-                                    className="p-1.5 text-slate-400 hover:text-red-500 opacity-0 group-hover/historyitem:opacity-100 transition-opacity rounded-md mr-1"
-                                    title="Remove from history"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
+                        {searchText.trim().length > 0 ? (
+                          <div className="p-2 flex flex-col gap-1">
+                            {isSearchingAI ? (
+                              <div className="p-8 flex justify-center items-center flex-col gap-3">
+                                <div className="flex gap-1 items-end h-4">
+                                  <motion.div className="w-1.5 bg-gradient-to-t from-blue-500 to-purple-500 rounded-full" animate={{ height: ["4px", "16px", "4px"] }} transition={{ duration: 1, repeat: Infinity, delay: 0 }} />
+                                  <motion.div className="w-1.5 bg-gradient-to-t from-purple-500 to-pink-500 rounded-full" animate={{ height: ["4px", "16px", "4px"] }} transition={{ duration: 1, repeat: Infinity, delay: 0.2 }} />
+                                  <motion.div className="w-1.5 bg-gradient-to-t from-pink-500 to-orange-500 rounded-full" animate={{ height: ["4px", "16px", "4px"] }} transition={{ duration: 1, repeat: Infinity, delay: 0.4 }} />
                                 </div>
-                              ))}
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Analyzing semantics...</span>
+                              </div>
+                            ) : (
+                              (aiEvents || []).length === 0 ? (
+                                <div className="p-8 text-center text-slate-500 font-bold uppercase tracking-widest text-sm">
+                                  No events found
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-1">
+                                  {parsedSearchParams && !parsedSearchParams.fallback && (
+                                    <div className="px-2 py-1 flex flex-wrap gap-1 border-b border-slate-100 mb-2">
+                                      <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">AI Match</span>
+                                      {parsedSearchParams.keywords?.map((kw, i) => (
+                                        <span key={i} className="text-[9px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded uppercase">#{kw}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {(aiEvents || []).map(event => (
+                                    <div 
+                                      key={event._id} 
+                                      onClick={() => { setSearchFocused(false); openEventDetails(event); }} 
+                                      className="flex gap-3 items-center p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group border border-transparent hover:border-slate-200"
+                                    >
+                                      <img src={event.imageUrl || event.images?.[0] || 'https://via.placeholder.com/150'} alt={event.title} className="w-14 h-14 object-cover rounded shadow-sm border border-slate-200 shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start gap-2">
+                                          <h4 className="text-sm font-bold text-slate-900 truncate uppercase tracking-tight group-hover:text-blue-600 transition-colors">{event.title}</h4>
+                                          {event.similarity_score && (
+                                            <span className="text-[9px] font-bold text-blue-700 bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap shrink-0 mt-0.5">
+                                              {Math.round(event.similarity_score * 100)}% Match
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider font-semibold truncate">
+                                          {new Date(event.date).toLocaleDateString()} • {event.location || event.city || 'Online'}
+                                        </p>
+                                        <div className="flex gap-1 mt-1 overflow-hidden truncate">
+                                          {(event.tags || []).slice(0, 3).map((tag, i) => (
+                                            <span key={i} className="text-[8px] font-bold text-slate-400 bg-slate-100 px-1 py-0.5 rounded uppercase tracking-wider shrink-0">
+                                              {tag}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            {recentSearches.length > 0 && (
+                              <div className="p-3 border-b border-slate-100 bg-slate-50">
+                                <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest pl-2 mb-2">
+                                  <History className="w-4 h-4" /> Recent Searches
+                                </h4>
+                                <div className="flex flex-col gap-1">
+                                  {recentSearches.map((term, i) => (
+                                    <div
+                                      key={i}
+                                      className="flex items-center w-full hover:bg-slate-200/50 rounded-lg group/historyitem transition-colors"
+                                    >
+                                      <button
+                                        onClick={() => {
+                                          setSearchText(term);
+                                          handleSearchSubmit(term);
+                                        }}
+                                        className="text-left flex-1 px-2 py-1.5 text-sm font-medium text-slate-700 flex justify-between items-center"
+                                      >
+                                        <span>{term}</span>
+                                        <span className="text-slate-400 opacity-0 group-hover/historyitem:opacity-100 transition-opacity mr-2">
+                                          <Search className="w-3 h-3" />
+                                        </span>
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setRecentSearches(prev => {
+                                            const newHistory = prev.filter(t => t !== term);
+                                            localStorage.setItem(getSearchKey(), JSON.stringify(newHistory));
+                                            return newHistory;
+                                          });
+                                        }}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 opacity-0 group-hover/historyitem:opacity-100 transition-opacity rounded-md mr-1"
+                                        title="Remove from history"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <div className="p-4 bg-white">
+                              <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-3">
+                                <TrendingUp className="w-4 h-4" /> Popular Searches
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {["Tech Workshops", "Music Festivals", "Free Bootcamps", "Startup Pitches in Bangalore"].map((tag, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => {
+                                      setSearchText(tag);
+                                      handleSearchSubmit(tag);
+                                    }}
+                                    className="px-3 py-1.5 bg-slate-100 hover:bg-black hover:text-white rounded-full text-xs font-medium transition-colors border border-slate-200"
+                                  >
+                                    {tag}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          </>
                         )}
-                        <div className="p-4 bg-white">
-                          <h4 className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest pl-1 mb-3">
-                            <TrendingUp className="w-4 h-4" /> Popular Searches
-                          </h4>
-                          <div className="flex flex-wrap gap-2">
-                            {["Tech Workshops", "Music Festivals", "Free Bootcamps", "Startup Pitches in Bangalore"].map((tag, i) => (
-                              <button
-                                key={i}
-                                onClick={() => {
-                                  setSearchText(tag);
-                                  handleSearchSubmit(tag);
-                                }}
-                                className="px-3 py-1.5 bg-slate-100 hover:bg-black hover:text-white rounded-full text-xs font-medium transition-colors border border-slate-200"
-                              >
-                                {tag}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
                       </motion.div>
                     </>
                   )}
@@ -1631,61 +1711,7 @@ export default function Dashboard() {
           </div>
         </motion.header>
 
-        {/* Search Results Overlay */}
-        <AnimatePresence>
-          {isSearchActive && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className={`fixed inset-0 top-[73px] bg-white z-30 overflow-y-auto pb-20 transition-all duration-300 ${navCollapsed ? 'left-20' : 'left-0 md:left-64'}`}
-            >
-              <div className="max-w-[1920px] mx-auto px-8 lg:px-12 py-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                  <h3 className="text-2xl md:text-3xl font-black text-slate-900 uppercase tracking-wide">
-                    Results for "{searchQuery}"
-                  </h3>
-                  {parsedSearchParams && !parsedSearchParams.fallback && (
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-100 px-2 py-1 border border-blue-200">AI Match</span>
-                      {parsedSearchParams.keywords?.map((kw, i) => (
-                        <span key={i} className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-300 px-2 py-1">#{kw}</span>
-                      ))}
-                      {parsedSearchParams.category && (
-                        <span className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-300 px-2 py-1">Cat: {parsedSearchParams.category}</span>
-                      )}
-                      {parsedSearchParams.location && (
-                        <span className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-300 px-2 py-1">Loc: {parsedSearchParams.location}</span>
-                      )}
-                      {parsedSearchParams.dateFilter && (
-                        <span className="text-xs font-bold text-slate-700 bg-slate-100 border border-slate-300 px-2 py-1">Date: {parsedSearchParams.dateFilter.replace('_', ' ')}</span>
-                      )}
-                      {parsedSearchParams.isFree === true && (
-                        <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-300 px-2 py-1">Free</span>
-                      )}
-                      {parsedSearchParams.isFree === false && (
-                        <span className="text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-1">Paid</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {filteredEvents.length === 0 ? (
-                  <div className="text-center py-20 border-2 border-dashed border-slate-300">
-                    <Calendar className="w-16 h-16 mx-auto mb-6 text-slate-300" />
-                    <h3 className="text-3xl font-bold text-slate-900 mb-2 uppercase tracking-tight">No Events Found</h3>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                    {filteredEvents.map(event => (
-                      <GamifiedEventCard key={event._id} event={event} onRegister={() => registerForEvent(event)} onBookmark={() => handleBookmarkToggle(event)} onViewMore={() => openEventDetails(event)} isRegistered={registrations.some(r => r.eventId === event._id)} isBookmarked={bookmarks.includes(event._id)} userStats={userStats} awardPoints={awardPoints} disabledActions={!isVerified} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Search Results Overlay Removed */}
 
         {/* Main Content Layout */}
         <div className="flex max-w-[1920px] mx-auto relative">
@@ -1703,8 +1729,7 @@ export default function Dashboard() {
                   { id: "Bookmarks", label: "Saved", icon: Bookmark },
                   { id: "SubscribedHosts", label: "Following", icon: ShieldCheck },
                   ...(user?.role === 'student' ? [
-                    { id: "Friends", label: "Friends", icon: UserPlus },
-                    { id: "Squads", label: "Squads", icon: Shield }
+                    { id: "Friends", label: "Friends", icon: UserPlus }
                   ] : []),
                   { id: "Leaderboard", label: "Leaderboard", icon: Crown },
                   { id: "Achievements", label: "Achievements", icon: Trophy },
@@ -1758,7 +1783,7 @@ export default function Dashboard() {
                     {activeTab === "Calendar" && "Schedule"}
                     {activeTab === "Bookmarks" && "Saved"}
                     {activeTab === "SubscribedHosts" && "Following"}
-                    {activeTab === "Friends" && "Friends"}
+                    {activeTab === "Friends" && "Social Hub"}
                     {activeTab === "Achievements" && "Trophies"}
                     {activeTab === "Notifications" && "Updates"}
                   </motion.h2>
@@ -1769,7 +1794,7 @@ export default function Dashboard() {
                     {activeTab === "Calendar" && "Plan efficiently with your monthly overview."}
                     {activeTab === "Bookmarks" && "Curate your personal wishlist."}
                     {activeTab === "SubscribedHosts" && "Stay connected with your favorite organizers."}
-                    {activeTab === "Friends" && "Connect and compete with peers."}
+                    {activeTab === "Friends" && "Connect with peers, squads, and interest circles."}
                     {activeTab === "Achievements" && "Showcase your milestones."}
                     {activeTab === "Notifications" && "Never miss a beat."}
                   </p>
@@ -1924,32 +1949,55 @@ export default function Dashboard() {
 
               {activeTab === "Live" && (
                 <div className="space-y-8">
-                  <LiveSentimentFeed onEventClick={(eventId) => {
-                    const found = events.find(e => e._id === eventId);
-                    if (found) openEventDetails(found);
-                  }} />
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-                    {events.filter(e => {
-                      const now = new Date();
-                      const start = new Date(e.date);
-                      const end = e.endDate ? new Date(e.endDate) : new Date(start.getTime() + 3 * 60 * 60 * 1000);
-                      return now >= start && (e.endDate ? now <= end : (now.getTime() - start.getTime() < 3 * 3600000)) && !e.isCompleted;
-                    }).map(event => (
-                      <GamifiedEventCard
-                        key={event._id}
-                        event={event}
-                        onRegister={() => registerForEvent(event)}
-                        onBookmark={() => handleBookmarkToggle(event)}
-                        onViewMore={() => openEventDetails(event)}
-                        isRegistered={registrations.some(r => r.eventId === event._id)}
-                        isBookmarked={bookmarks.includes(event._id)}
-                        userStats={userStats}
-                        awardPoints={awardPoints}
-                        disabledActions={!isVerified}
-                      />
+                  {/* Sub-navigation for Live Tab */}
+                  <div className="flex border-b-2 border-black gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {[
+                      { id: "Vibes", label: "Live Vibes", icon: Zap },
+                      { id: "Chat", label: "Messages", icon: MessageSquare }
+                    ].map(sub => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setLiveSubTab(sub.id)}
+                        className={`px-6 py-3 font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${liveSubTab === sub.id ? 'bg-black text-white' : 'hover:bg-neutral-100'}`}
+                      >
+                        <sub.icon className="w-4 h-4" />
+                        {sub.label}
+                      </button>
                     ))}
                   </div>
+
+                  {liveSubTab === 'Vibes' ? (
+                    <div className="space-y-8">
+                      <LiveSentimentFeed onEventClick={(eventId) => {
+                        const found = events.find(e => e._id === eventId);
+                        if (found) openEventDetails(found);
+                      }} />
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                        {events.filter(e => {
+                          const now = new Date();
+                          const start = new Date(e.date);
+                          const end = e.endDate ? new Date(e.endDate) : new Date(start.getTime() + 3 * 60 * 60 * 1000);
+                          return now >= start && (e.endDate ? now <= end : (now.getTime() - start.getTime() < 3 * 3600000)) && !e.isCompleted;
+                        }).map(event => (
+                          <GamifiedEventCard
+                            key={event._id}
+                            event={event}
+                            onRegister={() => registerForEvent(event)}
+                            onBookmark={() => handleBookmarkToggle(event)}
+                            onViewMore={() => openEventDetails(event)}
+                            isRegistered={registrations.some(r => r.eventId === event._id)}
+                            isBookmarked={bookmarks.includes(event._id)}
+                            userStats={userStats}
+                            awardPoints={awardPoints}
+                            disabledActions={!isVerified}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <DashboardChat currentUser={user} />
+                  )}
                 </div>
               )}
 
@@ -2274,32 +2322,127 @@ export default function Dashboard() {
               )}
 
               {activeTab === "Friends" && (
-                <div className="space-y-6">
-                  <div className="bg-pink-50 p-6 border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">Your Friends</h3>
-                    <FriendsList onViewProfile={(u) => setProfilePreview(u)} />
+                <div className="space-y-8">
+                  {/* Sub-navigation for Friends Tab */}
+                  <div className="flex border-b-2 border-black gap-2 overflow-x-auto no-scrollbar pb-1">
+                    {[
+                      { id: "Friends", label: "Friends", icon: UserPlus },
+                      { id: "Squads", label: "Squads", icon: Shield },
+                      { id: "Circles", label: "Circles", icon: UsersRound }
+                    ].map(sub => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setFriendsSubTab(sub.id)}
+                        className={`px-6 py-3 font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${friendsSubTab === sub.id ? 'bg-black text-white' : 'hover:bg-neutral-100'}`}
+                      >
+                        <sub.icon className="w-4 h-4" />
+                        {sub.label}
+                      </button>
+                    ))}
                   </div>
 
-                  <FriendRequests />
-
-                  <div className="bg-indigo-50 p-6 border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                    <h3 className="text-lg font-bold text-slate-900 mb-4">Find People</h3>
-                    <UserSearch
-                      onViewProfile={(u) => setProfilePreview(u)}
-                      fallback={
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wide">Suggested for You</h4>
-                          <FriendsSuggestions onViewProfile={(u) => setProfilePreview(u)} />
+                  <AnimatePresence mode="wait">
+                    {friendsSubTab === "Friends" && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-6"
+                      >
+                        <div className="bg-pink-50 p-6 border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                          <h3 className="text-lg font-bold text-slate-900 mb-4 uppercase tracking-tighter flex items-center gap-2">
+                             <UserPlus className="w-5 h-5" /> Your Friends
+                          </h3>
+                          <FriendsList onViewProfile={(u) => setProfilePreview(u)} />
                         </div>
-                      }
-                    />
-                  </div>
-                </div>
-              )}
 
-              {activeTab === "Squads" && user?.role === 'student' && (
-                <div className="max-w-6xl mx-auto py-6">
-                  <SquadManager currentUser={user} />
+                        <FriendRequests />
+
+                        <div className="bg-indigo-50 p-6 border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                          <h3 className="text-lg font-bold text-slate-900 mb-4 uppercase tracking-tighter flex items-center gap-2">
+                             <Search className="w-5 h-5" /> Find People
+                          </h3>
+                          <UserSearch
+                            onViewProfile={(u) => setProfilePreview(u)}
+                            fallback={
+                              <div>
+                                <h4 className="text-sm font-bold text-slate-500 mb-4 uppercase tracking-wide">Suggested for You</h4>
+                                <FriendsSuggestions onViewProfile={(u) => setProfilePreview(u)} />
+                              </div>
+                            }
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {friendsSubTab === "Squads" && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="max-w-6xl mx-auto"
+                      >
+                        <SquadManager currentUser={user} />
+                      </motion.div>
+                    )}
+
+                    {friendsSubTab === "Circles" && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-8"
+                      >
+                        <div className="flex items-center justify-between border-b-2 border-black pb-4">
+                          <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
+                             <UsersRound className="w-5 h-5" /> Your Circles
+                          </h3>
+                          <button 
+                            onClick={() => navigate('/circles')}
+                            className="px-4 py-2 bg-black text-white text-xs font-black uppercase tracking-widest hover:bg-neutral-800 transition-all border-2 border-black"
+                          >
+                            Explore More Circles
+                          </button>
+                        </div>
+                        
+                        {myCircles.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {myCircles.map(circle => (
+                              <div 
+                                key={circle._id} 
+                                onClick={() => navigate(`/circles/${circle._id}`)}
+                                className="group bg-white border-2 border-black p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all cursor-pointer flex items-center gap-4"
+                              >
+                                <div className="w-12 h-12 border-2 border-black shrink-0 flex items-center justify-center overflow-hidden" style={{ backgroundColor: circle.iconColor + '20' }}>
+                                  {circle.bannerUrl ? (
+                                    <img src={circle.bannerUrl} alt="" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <UsersRound className="w-6 h-6" style={{ color: circle.iconColor }} />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="font-black uppercase text-sm truncate">{circle.name}</h4>
+                                  <p className="text-[10px] font-bold text-neutral-400 uppercase">{circle.members?.length || 0} Members</p>
+                                </div>
+                                <ChevronRight className="w-5 h-5 opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-20 text-center border-4 border-dashed border-neutral-200 uppercase font-black text-neutral-300">
+                            You haven't joined any circles yet.
+                            <br />
+                            <button 
+                              onClick={() => navigate('/circles')}
+                              className="mt-4 px-6 py-2 border-2 border-black text-black bg-white hover:bg-black hover:text-white transition-all text-xs"
+                            >
+                              Join Your First Circle
+                            </button>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
@@ -2581,12 +2724,47 @@ export default function Dashboard() {
                                     {new Date(n.createdAt || n.at || Date.now()).toLocaleDateString()}
                                   </span>
                                 </div>
-                                <h4 className={`text-sm font-bold mb-1 truncate ${n.read ? 'text-neutral-600' : 'text-black'}`}>
-                                  {n.title || n.message}
-                                </h4>
+                                <div className="flex items-center gap-2">
+                                  <h4 className={`text-sm font-black uppercase tracking-tight ${!n.read ? 'text-black' : 'text-neutral-500'}`}>
+                                    {n.title || n.message}
+                                  </h4>
+                                  {n.status === 'processed' && (
+                                    <span className="text-[8px] font-black px-1.5 py-0.5 bg-neutral-200 text-neutral-600 border border-neutral-300 uppercase tracking-widest">
+                                      HANDLED
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-xs text-neutral-500 line-clamp-2">
                                   {n.message}
                                 </p>
+                                {n.type === 'Friend Request' && n.status !== 'processed' && (
+                                  <div className="flex gap-2 mt-3">
+                                    <button onClick={(e) => handleFriendRequest(e, n, 'accept')} className="px-4 py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-neutral-800 transition-all border-2 border-black">ACCEPT</button>
+                                    <button onClick={(e) => handleFriendRequest(e, n, 'decline')} className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-neutral-100 transition-all border-2 border-black">DECLINE</button>
+                                  </div>
+                                )}
+                                {n.type === 'Squad' && n.status !== 'processed' && (
+                                  <div className="flex gap-2 mt-3">
+                                    <button onClick={(e) => handleSquadNotification(e, n, 'accept')} className="px-4 py-2 bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-neutral-800 transition-all border-2 border-black">ACCEPT</button>
+                                    <button onClick={(e) => handleSquadNotification(e, n, 'decline')} className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-neutral-100 transition-all border-2 border-black">DECLINE</button>
+                                  </div>
+                                )}
+                                {n.type === 'Circle Invite' && n.status !== 'processed' && (
+                                  <div className="flex gap-2 mt-3 text-black">
+                                    <button 
+                                      onClick={(e) => handleCircleNotification(e, n, 'accept')} 
+                                      className="px-4 py-2 bg-yellow-400 text-black text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500 transition-all border-2 border-black"
+                                    >
+                                      JOIN CIRCLE
+                                    </button>
+                                    <button 
+                                      onClick={(e) => handleCircleNotification(e, n, 'decline')} 
+                                      className="px-4 py-2 bg-white text-black text-[10px] font-black uppercase tracking-widest hover:bg-neutral-100 transition-all border-2 border-black"
+                                    >
+                                      DECLINE
+                                    </button>
+                                  </div>
+                                )}
                               </div>
 
                               <div className="flex flex-col items-center justify-center self-center gap-2">

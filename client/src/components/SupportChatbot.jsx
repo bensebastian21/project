@@ -128,7 +128,7 @@ export default function SupportChatbot() {
                 className={`max-w-[85%] ${m.role === 'user' ? 'ml-auto text-right' : ''}`}
               >
                 <div
-                  className={`${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-100 border border-slate-700'} inline-block px-4 py-2.5 rounded-xl text-sm`}
+                  className={`${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-100 border border-slate-700'} inline-block px-4 py-2.5 rounded-xl text-sm whitespace-pre-wrap text-left`}
                 >
                   {m.content}
                 </div>
@@ -140,6 +140,30 @@ export default function SupportChatbot() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Typing…
                 </div>
+              </div>
+            )}
+            {!loading && messages.length > 3 && (
+              <div className="flex justify-center py-2">
+                <button
+                  onClick={async () => {
+                    if (!threadId) return;
+                    setLoading(true);
+                    try {
+                      await api.post(`/api/chat/${threadId}/escalate`, {}, headers);
+                      setMessages(m => [...m, {
+                        role: 'assistant',
+                        content: 'I have escalated this conversation to a human support agent. They will review the summary of our chat and get back to you shortly.'
+                      }]);
+                    } catch (e) {
+                      setMessages(m => [...m, { role: 'assistant', content: 'Escalation failed. Please try again later.' }]);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border-2 border-orange-500/50 text-orange-400 hover:bg-orange-500 hover:text-white transition-all flex items-center gap-1.5 bg-orange-500/5 shadow-sm"
+                >
+                  <MessageSquare className="w-3 h-3" /> Talk to a Human Agent
+                </button>
               </div>
             )}
           </div>
@@ -174,7 +198,7 @@ export default function SupportChatbot() {
               </button>
             </div>
             <div className="text-[10px] text-slate-400 mt-2">
-              AI answers may be experimental. Do not share sensitive info.
+              AI answers may be experimental. You can escalate to an agent anytime.
             </div>
           </div>
         </div>
