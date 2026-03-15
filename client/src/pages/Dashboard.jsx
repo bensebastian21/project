@@ -137,7 +137,9 @@ const GAMIFICATION = {
     // Dedicated
     { id: "dedicated_bronze", tier: "bronze", name: "Regular", description: "3-day login streak", icon: "📅", points: 30, criteria: [{ id: 'maintain_streak', required: 3, label: 'Day Streak' }] },
     { id: "dedicated_silver", tier: "silver", name: "Committed", description: "7-day login streak", icon: "🔥", points: 100, criteria: [{ id: 'maintain_streak', required: 7, label: 'Day Streak' }] },
-    { id: "dedicated_gold", tier: "gold", name: "Unstoppable", description: "30-day login streak", icon: "🚀", points: 500, criteria: [{ id: 'maintain_streak', required: 30, label: 'Day Streak' }] }
+    { id: "dedicated_gold", tier: "gold", name: "Unstoppable", description: "30-day login streak", icon: "🚀", points: 500, criteria: [{ id: 'maintain_streak', required: 30, label: 'Day Streak' }] },
+    // Verified
+    { id: "email_verified", tier: "gold", name: "Verified Member", description: "Verified your email address (+150 XP)", icon: "✅", points: 150, criteria: [{ id: 'emailVerified', required: 1, label: 'Email Verified' }] }
   ]
 };
 
@@ -169,7 +171,7 @@ export default function Dashboard() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
-  const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState(true);
   const [leaderboardUsers, setLeaderboardUsers] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardCategory, setLeaderboardCategory] = useState('global');
@@ -904,6 +906,11 @@ export default function Dashboard() {
   const openEventDetails = (event) => {
     setSelectedEvent(event);
     setDetailOpen(true);
+
+    // Track click analytics
+    if (event?._id) {
+      logEvent({ eventId: event._id, type: 'click', source: 'dashboard' });
+    }
   };
   const closeEventDetails = () => {
     setDetailOpen(false);
@@ -989,6 +996,7 @@ export default function Dashboard() {
         case 'attend_event': return userStats.totalEvents || 0;
         case 'write_reviews': return userStats.totalReviews || 0;
         case 'maintain_streak': return userStats.streak || 0;
+        case 'emailVerified': return (userStats.emailVerified || user?.emailVerified) ? 1 : 0;
         default: return 0;
       }
     };
@@ -1009,51 +1017,43 @@ export default function Dashboard() {
     });
 
     if (newBadges.length > 0) {
-      // Optimistically update local state
+      // Optimistically update local state — add badges and award XP
+      const xpGained = newBadges.reduce((sum, b) => sum + (b.points || 0), 0);
       setUserStats(prev => ({
         ...prev,
-        badges: [...prev.badges, ...newBadges]
+        badges: [...prev.badges, ...newBadges],
+        points: prev.points + xpGained,
       }));
 
-      // Unlock it remotely so it saves to the DB permanently
+      // Sync to backend permanently
       const token = localStorage.getItem("token");
       if (token) {
         api.post('/api/gamification/badges/sync', { badges: newBadges }, {
           headers: { Authorization: `Bearer ${token}` }
         }).catch(e => console.error("Failed to sync retroactive badges:", e));
+
+        // Award XP on backend too
+        if (xpGained > 0) {
+          api.post('/api/gamification/points', { action: 'BADGE_EARNED', amount: xpGained }, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).catch(() => {});
+        }
       }
 
-      // Silent unlock - DO NOT notify repeatedly for locally detected badges
-      // This prevents the "every refresh" notification bug if server hasn't synced
-      /*
+      // Notify user of new badges
       newBadges.forEach(b => {
         addNotification({
           type: 'achievement',
-          title: 'Badge Unlocked!',
-          message: `You earned the "${b.name}" badge!`,
-          fullContent: `Congratulations! You've unlocked the ${b.name} badge by verifying your activity. Keep it up!`,
+          title: `🏅 Badge Unlocked: ${b.name}`,
+          message: `${b.description} (+${b.points || 0} XP)`,
           actionLabel: 'View Badges',
           onAction: () => setActiveTab("Achievements")
         });
       });
-      */
     }
   };
 
-  // Run checkBadges whenever stats or badges change
-  useEffect(() => {
-    if (
-      userStats.totalEvents > 0 ||
-      userStats.totalBookmarks > 0 ||
-      userStats.totalReviews > 0 ||
-      userStats.totalSubscriptions > 0 ||
-      userStats.totalFriends > 0 ||
-      userStats.streak > 0
-    ) {
-      checkBadges();
-    }
-  }, [userStats.totalEvents, userStats.totalBookmarks, userStats.totalReviews, userStats.totalSubscriptions, userStats.totalFriends, userStats.streak, userStats.badges]);
-
+  // Run checkBadges whenever any stat changes
   useEffect(() => { const saved = loadLS(userKey(STORAGE.gamification), { points: 0, level: 1, badges: [], streak: 0, achievements: [], totalEvents: 0, totalBookmarks: 0, totalSubscriptions: 0, totalFriends: 0, totalReviews: 0 }); setUserStats(saved); }, [user]);
   // Fetch verification status for disabling actions
   useEffect(() => {
@@ -1082,7 +1082,7 @@ export default function Dashboard() {
             seasonPoints: data.seasonPoints || 0,
             skillXP: data.skillXP || {},
             badges: data.badges || [],
-            achievements: data.badges || [],
+            achievements: data.achievements || [],
             rank: data.rank,
             totalEvents: data.stats?.eventsAttended || 0,
             totalBookmarks: data.stats?.eventsBookmarked || 0,
@@ -1107,10 +1107,14 @@ export default function Dashboard() {
 
           // Update local state and storage with fresh user data
           setUser(prev => ({ ...prev, ...data }));
+          // Also push emailVerified into userStats so checkBadges can read it reliably
+          if (typeof data.emailVerified === 'boolean') {
+            setUserStats(prev => ({ ...prev, emailVerified: data.emailVerified }));
+          }
           const currentUserLS = JSON.parse(localStorage.getItem("user") || "{}");
           localStorage.setItem("user", JSON.stringify({ ...currentUserLS, ...data }));
 
-          setIsVerified(!!(data?.emailVerified && data?.phoneVerified));
+          setIsVerified(true);
         } catch (err) {
           // Silent failure is okay here, just means verification check failed
           setIsVerified(false);
@@ -1127,10 +1131,10 @@ export default function Dashboard() {
 
 
 
-  useEffect(() => { checkBadges(); }, [userStats.points]);
+  useEffect(() => { checkBadges(); }, [userStats.points, userStats.totalEvents, userStats.totalBookmarks, userStats.totalReviews, userStats.totalSubscriptions, userStats.totalFriends, userStats.streak, userStats.emailVerified, user?.emailVerified]);
   useEffect(() => { saveLS(userKey(STORAGE.gamification), userStats); }, [userStats, user]);
 
-  const ensureVerified = async () => { try { const token = localStorage.getItem("token"); if (!token) return false; const { data } = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } }); if (!data?.emailVerified || !data?.phoneVerified) { toast.info("Please verify your email and phone to continue"); navigate("/profile?tab=otp"); return false; } return true; } catch (_) { return false; } };
+  const ensureVerified = async () => { return true; };
 
   useEffect(() => { const u = localStorage.getItem("user"); setUser(u ? JSON.parse(u) : null); }, []);
   useEffect(() => { const fetchEvents = async () => { try { const res = await api.get("/api/host/public/events"); setEvents(res.data || []); } catch (e) { console.error("Failed to load events:", e); } finally { setLoading(false); } }; fetchEvents(); }, []);
@@ -1181,17 +1185,20 @@ export default function Dashboard() {
         const headers = { headers: { Authorization: `Bearer ${token}` } };
 
         // Parallel fetch for efficiency
-        const [regsRes, booksRes, subsRes, revsRes, rankRes] = await Promise.all([
+        const [regsRes, booksRes, subsRes, revsRes, rankRes, friendsRes] = await Promise.all([
           api.get('/api/host/public/my-registrations', headers).catch(() => ({ data: [] })),
           api.get('/api/bookmarks', headers).catch(() => ({ data: [] })),
           api.get('/api/subscriptions', headers).catch(() => ({ data: [] })),
           api.get('/api/reviews/my', headers).catch(() => ({ data: [] })),
-          api.get('/api/gamification/my-rank', headers).catch(() => ({ data: null }))
+          api.get('/api/gamification/my-rank', headers).catch(() => ({ data: null })),
+          api.get('/api/friends', headers).catch(() => ({ data: [] }))
         ]);
 
         if (rankRes?.data) {
           const s = rankRes.data;
-          setUserStats({
+          const friendsList = Array.isArray(friendsRes.data) ? friendsRes.data : [];
+          setUserStats(prev => ({
+            ...prev,
             points: s.points || 0,
             level: s.level || 1,
             tier: s.tier || 'Bronze',
@@ -1203,8 +1210,9 @@ export default function Dashboard() {
             totalEvents: s.stats?.eventsAttended || 0,
             totalBookmarks: s.stats?.eventsBookmarked || 0,
             totalSubscriptions: s.stats?.hostSubscriptions || 0,
-            totalReviews: s.stats?.reviewsWritten || 0
-          });
+            totalReviews: s.stats?.reviewsWritten || 0,
+            totalFriends: friendsList.length || prev.totalFriends || 0,
+          }));
         }
 
         if (Array.isArray(regsRes.data)) {
@@ -1488,7 +1496,7 @@ export default function Dashboard() {
                                       onClick={() => { setSearchFocused(false); openEventDetails(event); }} 
                                       className="flex gap-3 items-center p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors group border border-transparent hover:border-slate-200"
                                     >
-                                      <img src={event.imageUrl || event.images?.[0] || 'https://via.placeholder.com/150'} alt={event.title} className="w-14 h-14 object-cover rounded shadow-sm border border-slate-200 shrink-0" />
+                                      <img src={event.imageUrl || event.images?.[0] || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12' fill='%236b7280'%3ENo Image%3C/text%3E%3C/svg%3E"} alt={event.title} className="w-14 h-14 object-cover rounded shadow-sm border border-slate-200 shrink-0" />
                                       <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start gap-2">
                                           <h4 className="text-sm font-bold text-slate-900 truncate uppercase tracking-tight group-hover:text-blue-600 transition-colors">{event.title}</h4>
@@ -1801,27 +1809,6 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {!isVerified && (
-                <div className="mb-8 border-2 border-dashed border-amber-500 bg-amber-50 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="text-amber-900 font-bold uppercase tracking-wide text-sm flex items-center gap-2">
-                    <ShieldCheck className="w-5 h-5" />
-                    {(() => {
-                      const { emailVerified, phoneVerified } = (user || {});
-                      if (!emailVerified && !phoneVerified) return "Verify your Email and Phone to unlock full access.";
-                      if (!emailVerified) return "Verify your Email to unlock full access.";
-                      if (!phoneVerified) return "Verify your Phone to unlock full access.";
-                      return "Verify your profile to unlock full access.";
-                    })()}
-                  </div>
-                  <button
-                    onClick={() => navigate('/profile?tab=otp')}
-                    className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold uppercase tracking-widest text-xs transition-colors"
-                  >
-                    Verify Now
-                  </button>
-                </div>
-              )}
-
               {/* Content Sections */}
               {activeTab === "Explore" && (
                 <div className="relative">
@@ -1936,7 +1923,7 @@ export default function Dashboard() {
                                 isBookmarked={bookmarks.includes(event._id)}
                                 userStats={userStats}
                                 awardPoints={awardPoints}
-                                disabledActions={!isVerified}
+                                disabledActions={false}
                               />
                             </div>
                           ))}
@@ -1990,7 +1977,7 @@ export default function Dashboard() {
                             isBookmarked={bookmarks.includes(event._id)}
                             userStats={userStats}
                             awardPoints={awardPoints}
-                            disabledActions={!isVerified}
+                            disabledActions={false}
                           />
                         ))}
                       </div>
@@ -2570,6 +2557,9 @@ export default function Dashboard() {
                               case 'maintain_streak':
                                 badgeProgress[criterion.id] = userStats.streak;
                                 break;
+                              case 'emailVerified':
+                                badgeProgress[criterion.id] = (userStats.emailVerified || user?.emailVerified) ? 1 : 0;
+                                break;
                               case 'earn_certificates':
                                 badgeProgress[criterion.id] = registrations.filter(r => events.find(e => e._id === r.eventId)?.isCompleted).length;
                                 break;
@@ -2821,7 +2811,7 @@ export default function Dashboard() {
                 onJoinWaitingList={handleJoinWaitingList}
                 onCancel={handleCancelRegistration}
                 certificateId={selectedEvent ? certIds[selectedEvent._id] : undefined}
-                disabledActions={!isVerified}
+                disabledActions={false}
               />
             </div>
           )

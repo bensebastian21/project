@@ -182,8 +182,21 @@ eventSchema.methods.getTopCategories = function (n = 3) {
 
 // Static method to train the classifier
 eventSchema.statics.trainClassifier = function (events) {
-  // Reset classifier
+  // Start fresh with the app's category set
   const classifier = new BayesianClassifier();
+  classifier.categories = [
+    'Hackathon', 'Workshop', 'Seminar', 'Competition', 'Networking',
+    'Cultural', 'Sports', 'Tech Talk', 'Career Fair',
+    'Education', 'Health', 'Entertainment', 'Social', 'Other',
+  ];
+  classifier.categoryWordCounts = {};
+  classifier.categoryDocumentCounts = {};
+  classifier.wordCounts = {};
+  classifier.totalDocuments = 0;
+  classifier.categories.forEach((cat) => {
+    classifier.categoryWordCounts[cat] = {};
+    classifier.categoryDocumentCounts[cat] = 0;
+  });
 
   events.forEach((event) => {
     const text = event.getClassificationText();
@@ -195,13 +208,14 @@ eventSchema.statics.trainClassifier = function (events) {
   // Save the trained model
   try {
     const modelPath = path.join(__dirname, '..', 'data', 'eventClassifierModel.json');
-    // Ensure data directory exists
     const fs = require('fs');
     const dataDir = path.join(__dirname, '..', 'data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     classifier.saveModel(modelPath);
+    // Hot-reload the global classifier so the running server uses the new model
+    eventClassifier.loadModel(modelPath);
   } catch (err) {
     console.error('Error saving classifier model:', err);
   }

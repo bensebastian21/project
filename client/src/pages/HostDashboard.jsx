@@ -49,6 +49,12 @@ import {
   Music,
   GraduationCap,
   Coffee,
+  Swords,
+  Rocket,
+  Briefcase,
+  Globe,
+  Mic,
+  Heart,
 } from 'lucide-react';
 
 import api from '../utils/api';
@@ -85,6 +91,14 @@ const TEMPLATE_ICONS = {
   Music,
   GraduationCap,
   Coffee,
+  Swords,
+  Rocket,
+  Briefcase,
+  Globe,
+  Mic,
+  Trophy,
+  Users,
+  Heart,
 };
 
 const EVENT_TEMPLATES = [
@@ -92,8 +106,8 @@ const EVENT_TEMPLATES = [
     id: 'hackathon',
     name: 'Hackathon',
     icon: 'Terminal',
-    category: 'Technology',
-    description: 'A 48-hour high-intensity coding competition to build innovative solutions.',
+    category: 'Hackathon',
+    description: 'A 24–48 hour coding marathon to build innovative solutions and compete for prizes.',
     shortDescription: '48H Coding Challenge',
     tags: 'Hackathon, Tech, Innovation, Coding, Developers',
     capacity: 200,
@@ -105,24 +119,10 @@ const EVENT_TEMPLATES = [
     iconBg: 'bg-emerald-500 text-black',
   },
   {
-    id: 'festival',
-    name: 'Festival',
-    icon: 'Music',
-    category: 'Entertainment',
-    description: 'A vibrant celebration of music, arts, and culture with multiple stages and food stalls.',
-    shortDescription: 'Arts & Music Celebration',
-    tags: 'Festival, Music, Arts, Culture, Food, Fun',
-    capacity: 1000,
-    price: 499,
-    imageUrl: 'https://images.unsplash.com/photo-1459749411177-042180ce673b?auto=format&fit=crop&q=80&w=1200',
-    theme: 'bg-rose-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
-    iconBg: 'bg-white text-rose-500',
-  },
-  {
     id: 'workshop',
     name: 'Workshop',
     icon: 'GraduationCap',
-    category: 'Education',
+    category: 'Workshop',
     description: 'An interactive hands-on learning session led by industry experts to master new skills.',
     shortDescription: 'Skill-Building Workshop',
     tags: 'Workshop, Learning, Skills, Education, Professional',
@@ -133,22 +133,118 @@ const EVENT_TEMPLATES = [
     iconBg: 'bg-indigo-200 text-indigo-800',
   },
   {
-    id: 'meetup',
-    name: 'Meetup',
-    icon: 'Coffee',
-    category: 'General',
-    description: 'A casual gathering for networking, sharing ideas, and meeting like-minded individuals.',
-    shortDescription: 'Networking & Community',
-    tags: 'Meetup, Networking, Community, Social, Career',
-    capacity: 30,
-    isOnline: false,
+    id: 'seminar',
+    name: 'Seminar',
+    icon: 'Mic',
+    category: 'Seminar',
+    description: 'A knowledge-sharing session with expert speakers, panel discussions, and Q&A.',
+    shortDescription: 'Expert Talk & Q&A',
+    tags: 'Seminar, Talk, Knowledge, Expert, Discussion',
+    capacity: 150,
+    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-blue-700 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-blue-200 text-blue-800',
+  },
+  {
+    id: 'competition',
+    name: 'Competition',
+    icon: 'Swords',
+    category: 'Competition',
+    description: 'A competitive event where participants battle for prizes, certificates, and glory.',
+    shortDescription: 'Compete & Win',
+    tags: 'Competition, Contest, Prize, Challenge, Win',
+    capacity: 100,
+    imageUrl: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-yellow-400 text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-black text-yellow-400',
+  },
+  {
+    id: 'networking',
+    name: 'Networking',
+    icon: 'Users',
+    category: 'Networking',
+    description: 'A professional gathering to connect, exchange ideas, and build lasting relationships.',
+    shortDescription: 'Connect & Grow',
+    tags: 'Networking, Connect, Professionals, Community, Career',
+    capacity: 80,
     imageUrl: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&q=80&w=1200',
-    theme: 'bg-amber-400 text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
-    iconBg: 'bg-black text-amber-400',
+    theme: 'bg-violet-600 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-violet-200 text-violet-800',
+  },
+  {
+    id: 'cultural',
+    name: 'Cultural',
+    icon: 'Music',
+    category: 'Cultural',
+    description: 'A vibrant celebration of arts, music, dance, and cultural heritage.',
+    shortDescription: 'Arts & Culture Fest',
+    tags: 'Cultural, Arts, Music, Dance, Heritage, Festival',
+    capacity: 500,
+    imageUrl: 'https://images.unsplash.com/photo-1459749411177-042180ce673b?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-rose-500 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-white text-rose-500',
+  },
+  {
+    id: 'sports',
+    name: 'Sports',
+    icon: 'Trophy',
+    category: 'Sports',
+    description: 'An athletic competition or fitness event open to all skill levels.',
+    shortDescription: 'Athletic Tournament',
+    tags: 'Sports, Tournament, Fitness, Athletics, Championship',
+    capacity: 200,
+    isTeamEvent: true,
+    minTeamSize: 2,
+    maxTeamSize: 11,
+    imageUrl: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-orange-500 text-black border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-black text-orange-400',
+  },
+  {
+    id: 'techtalk',
+    name: 'Tech Talk',
+    icon: 'Rocket',
+    category: 'Tech Talk',
+    description: 'A focused technical talk by engineers or founders sharing real-world insights.',
+    shortDescription: 'Dev Insights & Demos',
+    tags: 'Tech Talk, Engineering, Developer, Insights, Demo',
+    capacity: 60,
+    imageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-slate-800 text-cyan-300 border-cyan-400 shadow-[4px_4px_0px_0px_#06b6d4]',
+    iconBg: 'bg-cyan-500 text-black',
+  },
+  {
+    id: 'careerfair',
+    name: 'Career Fair',
+    icon: 'Briefcase',
+    category: 'Career Fair',
+    description: 'A campus recruitment event connecting students with top companies and internships.',
+    shortDescription: 'Jobs & Internships',
+    tags: 'Career Fair, Placement, Jobs, Internship, Recruitment',
+    capacity: 300,
+    imageUrl: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&q=80&w=1200',
+    theme: 'bg-teal-600 text-white border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+    iconBg: 'bg-teal-200 text-teal-800',
   },
 ];
 
-const CATEGORY_THEMES = null; // Replaced by EVENT_THEMES from GamifiedComponents
+const CATEGORY_THEMES = {
+  Hackathon:    { accent: '#10b981', bg: 'bg-emerald-50',  border: 'border-emerald-500', badge: 'bg-emerald-500 text-black',   label: 'text-emerald-700' },
+  Workshop:     { accent: '#4f46e5', bg: 'bg-indigo-50',   border: 'border-indigo-500',  badge: 'bg-indigo-600 text-white',    label: 'text-indigo-700' },
+  Seminar:      { accent: '#1d4ed8', bg: 'bg-blue-50',     border: 'border-blue-500',    badge: 'bg-blue-700 text-white',      label: 'text-blue-700' },
+  Competition:  { accent: '#eab308', bg: 'bg-yellow-50',   border: 'border-yellow-400',  badge: 'bg-yellow-400 text-black',    label: 'text-yellow-700' },
+  Networking:   { accent: '#7c3aed', bg: 'bg-violet-50',   border: 'border-violet-500',  badge: 'bg-violet-600 text-white',    label: 'text-violet-700' },
+  Cultural:     { accent: '#f43f5e', bg: 'bg-rose-50',     border: 'border-rose-500',    badge: 'bg-rose-500 text-white',      label: 'text-rose-700' },
+  Sports:       { accent: '#f97316', bg: 'bg-orange-50',   border: 'border-orange-500',  badge: 'bg-orange-500 text-black',    label: 'text-orange-700' },
+  'Tech Talk':  { accent: '#06b6d4', bg: 'bg-cyan-50',     border: 'border-cyan-500',    badge: 'bg-cyan-500 text-black',      label: 'text-cyan-700' },
+  'Career Fair':{ accent: '#0d9488', bg: 'bg-teal-50',     border: 'border-teal-500',    badge: 'bg-teal-600 text-white',      label: 'text-teal-700' },
+  Education:    { accent: '#4f46e5', bg: 'bg-indigo-50',   border: 'border-indigo-400',  badge: 'bg-indigo-500 text-white',    label: 'text-indigo-700' },
+  Health:       { accent: '#06b6d4', bg: 'bg-cyan-50',     border: 'border-cyan-400',    badge: 'bg-cyan-500 text-black',      label: 'text-cyan-700' },
+  Entertainment:{ accent: '#f43f5e', bg: 'bg-rose-50',     border: 'border-rose-400',    badge: 'bg-rose-600 text-white',      label: 'text-rose-700' },
+  Social:       { accent: '#7c3aed', bg: 'bg-violet-50',   border: 'border-violet-400',  badge: 'bg-violet-500 text-white',    label: 'text-violet-700' },
+  Other:        { accent: '#64748b', bg: 'bg-slate-50',    border: 'border-slate-400',   badge: 'bg-slate-500 text-white',     label: 'text-slate-700' },
+  General:      { accent: '#64748b', bg: 'bg-slate-50',    border: 'border-slate-400',   badge: 'bg-slate-500 text-white',     label: 'text-slate-700' },
+};
 
 // --- Notification Detail Modal ---
 const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
@@ -347,7 +443,6 @@ export default function HostDashboard() {
   const [hostSettingsOpen, setHostSettingsOpen] = useState(false);
 
   // GenLoop AI Studio
-  const [showGenLoop, setShowGenLoop] = useState(false);
 
   // Scanner State
   const [showScanner, setShowScanner] = useState(false);
@@ -1212,6 +1307,9 @@ export default function HostDashboard() {
   useEffect(() => {
     if (activeTab === 'studio') {
       fetchStudioData(selectedStudioEvent?._id);
+      // Auto-refresh every 60s while on studio tab
+      const interval = setInterval(() => fetchStudioData(selectedStudioEvent?._id), 60000);
+      return () => clearInterval(interval);
     }
   }, [activeTab, selectedStudioEvent]);
 
@@ -1670,19 +1768,19 @@ export default function HostDashboard() {
   }, [otherCollegeEvents, discoverSearch]);
 
   const stats = useMemo(() => {
-    const total = events.length;
-    const completed = events.filter((e) => e.isCompleted).length;
-    const upcoming = events.filter((e) => !e.isCompleted && new Date(e.date) > new Date()).length;
-    const totalRegistrations = events.reduce((sum, e) => sum + (e.registrations?.length || 0), 0);
+    const total = events?.length || 0;
+    const completed = (events || []).filter((e) => e.isCompleted).length;
+    const upcoming = (events || []).filter((e) => !e.isCompleted && new Date(e.date) > new Date()).length;
+    const totalRegistrations = (events || []).reduce((sum, e) => sum + (e.registrations?.length || 0), 0);
     const avgRating =
-      events.reduce((sum, e) => {
+      (events || []).reduce((sum, e) => {
         const eventFeedbacks = e.feedbacks || [];
         const avgEventRating =
           eventFeedbacks.length > 0
             ? eventFeedbacks.reduce((s, f) => s + f.rating, 0) / eventFeedbacks.length
             : 0;
         return sum + avgEventRating;
-      }, 0) / (events.length || 1);
+      }, 0) / (events?.length || 1);
 
     return { total, completed, upcoming, totalRegistrations, avgRating: avgRating.toFixed(1) };
   }, [events]);
@@ -1723,7 +1821,7 @@ export default function HostDashboard() {
                   className="p-2 hover:bg-black/5 transition-colors relative group"
                 >
                   <BellRing className="w-6 h-6 text-black group-hover:rotate-12 transition-transform" />
-                  {(notifications || []).some((n) => !n.read) && (
+                  {(notifications || []).some((n) => n && !n.read) && (
                     <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></span>
                   )}
                 </button>
@@ -1914,6 +2012,7 @@ export default function HostDashboard() {
                   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
                   { id: 'studio', label: 'Studio', icon: TrendingUp },
                   { id: 'certificates', label: 'Certificates', icon: Award },
+                  { id: 'genloop', label: 'AI Event Studio', icon: Sparkles },
                   { id: 'ai-insights', label: 'AI Insights', icon: Brain },
                   { id: 'marketing', label: 'AI Marketing', icon: Send },
                 ].map(({ id, label, icon: Icon }) => (
@@ -2269,13 +2368,6 @@ export default function HostDashboard() {
                     </div>
                     <div className="flex items-center gap-4">
                       <button
-                        onClick={() => setShowGenLoop(true)}
-                        className="flex items-center space-x-2 px-6 py-3 bg-blue-600 border-2 border-black text-white hover:bg-blue-700 uppercase font-bold text-sm transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
-                      >
-                        <Sparkles className="w-5 h-5" />
-                        <span>GenLoop AI</span>
-                      </button>
-                      <button
                         onClick={openCreate}
                         className="flex items-center space-x-2 px-6 py-3 bg-black border-2 border-black text-white uppercase font-bold text-sm transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px]"
                       >
@@ -2294,24 +2386,32 @@ export default function HostDashboard() {
                 </div>
               )}
 
-              {/* Search/Filter and Events Grid - only on Events tab */}
-              {activeTab === 'events' && showGenLoop ? (
-                <div className="h-[calc(100vh-16rem)] min-h-[600px]">
+              {/* GenLoop AI Tab */}
+              {activeTab === 'genloop' && (
+                <div className="animate-fadeIn">
                   <GenLoopStudio
                     onPublish={(eventPayload) => {
-                      // Trigger normal creation but with pre-filled payload
-                      // For simplicity, we open the existing create/edit form, 
-                      // injecting the generated data
-                      setShowGenLoop(false);
+                      // Convert ISO/date strings to datetime-local format (YYYY-MM-DDTHH:MM)
+                      const toLocalDT = (val) => {
+                        if (!val) return '';
+                        try {
+                          const d = new Date(val);
+                          if (isNaN(d.getTime())) return '';
+                          // Use local time to avoid UTC offset shifting the date
+                          const pad = (n) => String(n).padStart(2, '0');
+                          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                        } catch { return ''; }
+                      };
+                      // Pre-fill create form and switch to events tab
                       setEditingEvent(null);
                       setForm({
-                        title: eventPayload.title,
-                        description: eventPayload.description,
-                        shortDescription: eventPayload.shortDescription || eventPayload.description.substring(0, 100),
+                        title: eventPayload.title || '',
+                        description: eventPayload.description || '',
+                        shortDescription: eventPayload.shortDescription || eventPayload.description?.substring(0, 100) || '',
                         category: eventPayload.category || 'General',
-                        date: eventPayload.date,
+                        date: toLocalDT(eventPayload.date),
                         endDate: '',
-                        registrationDeadline: '',
+                        registrationDeadline: toLocalDT(eventPayload.registrationDeadline),
                         location: eventPayload.location || '',
                         address: '',
                         city: '',
@@ -2321,12 +2421,12 @@ export default function HostDashboard() {
                         isOnline: false,
                         platform: 'Google Meet',
                         meetingLink: '',
-                        capacity: eventPayload.capacity || 0,
+                        capacity: eventPayload.capacity || 100,
                         price: 0,
                         currency: 'INR',
-                        isTeamEvent: false,
-                        minTeamSize: 1,
-                        maxTeamSize: 4,
+                        isTeamEvent: eventPayload.eventType === 'team',
+                        minTeamSize: eventPayload.eventType === 'team' ? 2 : 1,
+                        maxTeamSize: eventPayload.teamSize || (eventPayload.eventType === 'team' ? 4 : 1),
                         requirements: '',
                         agenda: '',
                         contactEmail: user?.email || '',
@@ -2337,13 +2437,16 @@ export default function HostDashboard() {
                         ai: eventPayload.ai,
                         gamificationRewards: eventPayload.gamificationRewards
                       });
+                      setActiveTab('events');
                       setShowForm(true);
                       window.scrollTo(0, 0);
                     }}
-                    onCancel={() => setShowGenLoop(false)}
+                    onCancel={() => setActiveTab('events')}
                   />
                 </div>
-              ) : activeTab === 'events' && (
+              )}
+              {/* Events Content */}
+              {activeTab === 'events' && (
                 <>
                   {/* Search and Filter */}
                   <div className="flex items-center space-x-4">
@@ -3534,7 +3637,7 @@ export default function HostDashboard() {
                       { label: 'Total Events', value: statsOverRange.total, icon: Calendar, bg: 'bg-blue-50' },
                       { label: 'Registrations', value: statsOverRange.totalRegistrations, icon: UserCheck, bg: 'bg-purple-50' },
                       { label: 'Avg Rating', value: statsOverRange.avgRating, icon: Star, bg: 'bg-yellow-50' },
-                      { label: 'Latest Notifs', value: notificationsOverRange.length, icon: BellRing, bg: 'bg-rose-50' },
+                      { label: 'Latest Notifs', value: notificationsOverRange?.length || 0, icon: BellRing, bg: 'bg-rose-50' },
                     ].map(({ label, value, icon: Icon, bg }) => (
                       <div key={label} className={`${bg} border-2 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
                         <div className="flex items-center justify-between mb-4">
@@ -3554,7 +3657,7 @@ export default function HostDashboard() {
                         Registrations Trend
                       </h3>
                       <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                           <LineChart data={registrationsSeries}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                             <XAxis dataKey="date" tick={{fontSize: 10, fontWeight: 'bold'}} />
@@ -3573,7 +3676,7 @@ export default function HostDashboard() {
                         Top Events by Registrations
                       </h3>
                       <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                           <BarChart data={registrationsByEvent} layout="vertical">
                             <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                             <XAxis type="number" hide />
@@ -3656,7 +3759,7 @@ export default function HostDashboard() {
                       </h3>
                       <div className="h-80 w-full">
                         {studioData?.timeSeries && studioData.timeSeries.length > 0 ? (
-                          <ResponsiveContainer width="100%" height="100%">
+                          <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                             <LineChart data={
                               Object.values(studioData.timeSeries.reduce((acc, curr) => {
                                 const date = curr._id.date;
@@ -3912,10 +4015,20 @@ export default function HostDashboard() {
         {/* Event Form Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white border-2 border-black p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-scaleIn">
-              <h2 className="text-3xl font-black uppercase mb-8 text-black border-b-4 border-black pb-4">
-                {editingEvent ? 'Edit Event' : 'Create Event'}
-              </h2>
+            {(() => {
+              const ct = CATEGORY_THEMES[form.category] || CATEGORY_THEMES.General;
+              return (
+            <div className={`bg-white border-2 border-black p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] animate-scaleIn`}>
+              <div className={`-mx-8 -mt-8 px-8 pt-6 pb-4 mb-6 ${ct.bg} border-b-4 ${ct.border}`}>
+                <div className="flex items-center gap-3">
+                  <span className={`px-3 py-1 text-xs font-black uppercase tracking-widest ${ct.badge}`}>
+                    {form.category || 'General'}
+                  </span>
+                  <h2 className="text-3xl font-black uppercase text-black">
+                    {editingEvent ? 'Edit Event' : 'Create Event'}
+                  </h2>
+                </div>
+              </div>
 
               {!editingEvent && (
                 <div className="mb-8 p-6 bg-amber-50 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -3985,18 +4098,24 @@ export default function HostDashboard() {
                         <select
                           value={form.category}
                           onChange={(e) => handleFieldChange('category', e.target.value)}
-                          className="w-full p-3 bg-white border-2 border-black appearance-none transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[-1px] focus:translate-y-[-1px] outline-none font-medium"
+                          className={`w-full p-3 bg-white border-2 appearance-none transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[-1px] focus:translate-y-[-1px] outline-none font-bold ${(CATEGORY_THEMES[form.category] || CATEGORY_THEMES.General).border}`}
                         >
-                          <option value="General">General</option>
-                          <option value="Technology">Technology</option>
-                          <option value="Business">Business</option>
+                          <option value="Hackathon">Hackathon</option>
+                          <option value="Workshop">Workshop</option>
+                          <option value="Seminar">Seminar</option>
+                          <option value="Competition">Competition</option>
+                          <option value="Networking">Networking</option>
+                          <option value="Cultural">Cultural</option>
+                          <option value="Sports">Sports</option>
+                          <option value="Tech Talk">Tech Talk</option>
+                          <option value="Career Fair">Career Fair</option>
                           <option value="Education">Education</option>
                           <option value="Health">Health</option>
                           <option value="Entertainment">Entertainment</option>
-                          <option value="Sports">Sports</option>
+                          <option value="Social">Social</option>
                           <option value="Other">Other</option>
                         </select>
-                        <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 rotate-90 w-4 h-4 pointer-events-none" />
+                        <ChevronRight className={`absolute right-4 top-1/2 transform -translate-y-1/2 rotate-90 w-4 h-4 pointer-events-none ${(CATEGORY_THEMES[form.category] || CATEGORY_THEMES.General).label}`} />
                       </div>
                     </div>
                   </div>
@@ -4021,7 +4140,7 @@ export default function HostDashboard() {
                           <span className="text-red-600">{formErrors.shortDescription}</span>
                         )}
                       </span>
-                      <span>{form.shortDescription.length}/150</span>
+                      <span>{form.shortDescription?.length || 0}/150</span>
                     </div>
                   </div>
                   <div className="mt-6">
@@ -4124,7 +4243,7 @@ export default function HostDashboard() {
                       )}
                     </div>
                   </div>
-                  {sameDayEvents.length > 0 && (
+                  {sameDayEvents?.length > 0 && (
                     <div className="mt-6 p-4 bg-yellow-100 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                       <div className="text-black font-black uppercase text-sm mb-2 flex items-center gap-2">
                         <AlertTriangle className="w-4 h-4" /> Heads up: Other events on this day
@@ -4657,7 +4776,7 @@ export default function HostDashboard() {
                           </div>
                         </div>
 
-                        {hostSearchResults.length > 0 && (
+                        {hostSearchResults?.length > 0 && (
                           <div className="absolute z-10 w-full mt-2 bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-h-60 overflow-y-auto">
                             {hostSearchResults.map((u) => (
                               <button
@@ -4688,9 +4807,9 @@ export default function HostDashboard() {
                             ))}
                           </div>
                         )}
-                        {hostSearchQuery.length >= 2 &&
+                        {hostSearchQuery?.length >= 2 &&
                           !isSearchingHosts &&
-                          hostSearchResults.length === 0 && (
+                          hostSearchResults?.length === 0 && (
                             <div className="absolute z-10 w-full mt-2 bg-white border-2 border-black p-4 text-center font-bold uppercase text-xs">
                               No hosts found
                             </div>
@@ -4698,7 +4817,7 @@ export default function HostDashboard() {
                       </div>
                     </div>
 
-                    {form.coHosts.length > 0 && (
+                    {form.coHosts?.length > 0 && (
                       <div className="space-y-3">
                         <label className="block text-xs font-bold uppercase text-black">
                           Selected Co-hosts
@@ -4746,7 +4865,7 @@ export default function HostDashboard() {
                 <div className="flex space-x-6 pt-6 border-t-2 border-black">
                   <button
                     type="submit"
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-black border-2 border-black py-4 font-black uppercase text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all"
+                    className={`flex-1 text-black border-2 border-black py-4 font-black uppercase text-lg shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all ${(CATEGORY_THEMES[form.category] || CATEGORY_THEMES.General).badge}`}
                   >
                     {editingEvent ? 'Update Event' : 'Create Event'}
                   </button>
@@ -4760,6 +4879,8 @@ export default function HostDashboard() {
                 </div>
               </form>
             </div>
+              );
+            })()}
           </div>
         )}
         <SupportChatbot />

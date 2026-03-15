@@ -2051,6 +2051,8 @@ export default function AdminPanel() {
                         const id = u._id || u.id;
                         const toUrl = (p) => {
                           if (!p) return '';
+                          // Already an absolute URL (Cloudinary, S3, etc.) — use as-is
+                          if (/^https?:\/\//i.test(String(p))) return String(p);
                           const idx = String(p).lastIndexOf('uploads');
                           const rel =
                             idx >= 0
@@ -2363,7 +2365,7 @@ export default function AdminPanel() {
                                 Supporting Document
                               </label>
                               <a
-                                href={`${config.apiBaseUrl}/api/${application.documentPath}`}
+                                href={application.documentPath && application.documentPath.startsWith('http') ? application.documentPath : `${config.apiBaseUrl}/api/${application.documentPath}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black border-2 border-black hover:bg-neutral-100 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all font-bold uppercase tracking-wider text-sm"
@@ -3432,13 +3434,19 @@ export default function AdminPanel() {
                             onChange={(e) => handleEventFieldChange('category', e.target.value)}
                             className="w-full p-3 bg-white border-2 border-black appearance-none transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[-1px] focus:translate-y-[-1px] outline-none font-medium"
                           >
-                            <option value="General">General</option>
-                            <option value="Technology">Technology</option>
-                            <option value="Business">Business</option>
+                            <option value="Hackathon">Hackathon</option>
+                            <option value="Workshop">Workshop</option>
+                            <option value="Seminar">Seminar</option>
+                            <option value="Competition">Competition</option>
+                            <option value="Networking">Networking</option>
+                            <option value="Cultural">Cultural</option>
+                            <option value="Sports">Sports</option>
+                            <option value="Tech Talk">Tech Talk</option>
+                            <option value="Career Fair">Career Fair</option>
                             <option value="Education">Education</option>
                             <option value="Health">Health</option>
                             <option value="Entertainment">Entertainment</option>
-                            <option value="Sports">Sports</option>
+                            <option value="Social">Social</option>
                             <option value="Other">Other</option>
                           </select>
                           <ChevronRight className="absolute right-4 top-1/2 transform -translate-y-1/2 rotate-90 w-4 h-4 pointer-events-none" />

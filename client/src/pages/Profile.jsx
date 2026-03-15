@@ -299,6 +299,7 @@ export default function Profile() {
       const token = localStorage.getItem("token");
       const { data } = await api.post("/api/auth/verify-email-otp", { code }, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(data.message || "Email verified");
+      if (data.xpAwarded) toast.success(`🎉 +${data.xpAwarded} XP earned! Verified Member badge unlocked!`);
       const meRes = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
       setMe(meRes.data);
       setEmailCode("");
@@ -392,6 +393,7 @@ export default function Profile() {
 
         {/* ── Banner + Avatar ── */}
         <div className="mb-8 border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          {/* Banner */}
           <div className="relative h-48 w-full bg-neutral-200 overflow-hidden">
             {form.bannerUrl ? (
               <img src={getBannerUrl(form.bannerUrl)} alt="Banner" className="w-full h-full object-cover" />
@@ -410,8 +412,11 @@ export default function Profile() {
                 </button>
               )}
             </div>
-            {/* Avatar */}
-            <div className="absolute -bottom-10 left-6 w-20 h-20 border-4 border-black overflow-hidden bg-neutral-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          </div>
+          {/* Avatar row — outside overflow-hidden so it's never clipped */}
+          <div className="relative bg-white px-6 pb-3" style={{ minHeight: '3.5rem' }}>
+            {/* Avatar sits half above this row */}
+            <div className="absolute -top-10 left-6 w-20 h-20 border-4 border-black overflow-hidden bg-neutral-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               {form.profilePic ? (
                 <img src={getProfilePictureUrl(form.profilePic)} alt="Profile" className="w-full h-full object-cover" />
               ) : (
@@ -421,7 +426,7 @@ export default function Profile() {
               )}
             </div>
             {/* Photo controls */}
-            <div className="absolute left-32 bottom-3 flex items-center gap-2">
+            <div className="flex items-center gap-2 pt-2 pl-24">
               <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="profile-file" />
               <label htmlFor="profile-file" className="px-3 py-1.5 bg-white border-2 border-black text-xs font-black uppercase tracking-widest cursor-pointer hover:bg-neutral-100 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                 Change Photo
@@ -433,8 +438,6 @@ export default function Profile() {
               )}
             </div>
           </div>
-          {/* Spacer for avatar */}
-          <div className="h-12 bg-white" />
         </div>
 
         {/* ── Main Card ── */}
@@ -540,11 +543,12 @@ export default function Profile() {
                                 {me?.emailVerified ? (
                                   <span className="text-green-700 inline-flex items-center gap-1 text-xs font-black uppercase tracking-wide bg-green-100 border-2 border-black px-2 py-0.5"><ShieldCheck className="w-3 h-3" /> Verified</span>
                                 ) : (
-                                  <span className="text-red-700 inline-flex items-center gap-1 text-xs font-black uppercase tracking-wide bg-red-100 border-2 border-black px-2 py-0.5"><AlertCircle className="w-3 h-3" /> Not Verified</span>
+                                  <span className="text-amber-700 inline-flex items-center gap-1 text-xs font-black uppercase tracking-wide bg-amber-100 border-2 border-black px-2 py-0.5">⭐ Verify for +150 XP & Badge</span>
                                 )}
                               </div>
                               {!me?.emailVerified && (
                                 <div className="space-y-2">
+                                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Optional — earn the Verified Member badge and 150 XP</p>
                                   <button onClick={sendEmailOTP} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border-2 border-black text-xs font-black uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-50 transition-all">
                                     <Send className="w-3 h-3" /> Send OTP
                                   </button>
@@ -568,30 +572,6 @@ export default function Profile() {
                           <Field label="Phone">
                             <input value={form.phone ?? ""} readOnly disabled className={`${inputBase} ${inputDisabled}`} />
                           </Field>
-                          {isCredentials && (
-                            <div className="mt-2">
-                              <div className="flex items-center gap-2 mb-2">
-                                {me?.phoneVerified ? (
-                                  <span className="text-green-700 inline-flex items-center gap-1 text-xs font-black uppercase tracking-wide bg-green-100 border-2 border-black px-2 py-0.5"><ShieldCheck className="w-3 h-3" /> Verified</span>
-                                ) : (
-                                  <span className="text-red-700 inline-flex items-center gap-1 text-xs font-black uppercase tracking-wide bg-red-100 border-2 border-black px-2 py-0.5"><AlertCircle className="w-3 h-3" /> Not Verified</span>
-                                )}
-                              </div>
-                              {!me?.phoneVerified && (
-                                <div className="space-y-2">
-                                  <button onClick={sendPhoneOTP} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border-2 border-black text-xs font-black uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:bg-neutral-50 transition-all">
-                                    <Send className="w-3 h-3" /> Send OTP
-                                  </button>
-                                  <div className="flex gap-2">
-                                    <input value={phoneCode} onChange={e => setPhoneCode(e.target.value)} placeholder="6-digit OTP" className={`${inputBase} flex-1`} />
-                                    <button onClick={verifyPhoneOTP} className="px-3 py-2 bg-green-500 border-2 border-black font-black uppercase tracking-widest text-xs text-black hover:bg-green-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all">
-                                      <CheckCircle2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                         <div className="sm:col-span-2 text-[10px] text-slate-500 font-bold uppercase tracking-wide">
                           Email and phone are managed via verification. Contact support to change.

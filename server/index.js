@@ -129,8 +129,24 @@ async function connectWithRetry(retries = 5, delayMs = 3000) {
   }
 }
 
-// Connect immediately
-connectWithRetry();
+// Connect immediately and start feedback loop after connection
+const feedbackLoop = require('./services/feedbackLoop');
+connectWithRetry().then(async () => {
+  if (mongoConnected) {
+    feedbackLoop.start();
+    // Drop the old unique dedupeKey index if it exists — it breaks on null values
+    try {
+      const Analytics = require('./models/Analytics');
+      await Analytics.collection.dropIndex('dedupeKey_1');
+      console.log('✅ Dropped old dedupeKey unique index');
+    } catch (e) {
+      // Index may not exist or already dropped — that's fine
+      if (e.codeName !== 'IndexNotFound') {
+        console.warn('⚠️ Could not drop dedupeKey index:', e.message);
+      }
+    }
+  }
+});
 
 // MongoDB events
 mongoose.connection.on('error', err => console.error('❌ MongoDB connection error:', err));
@@ -239,6 +255,11 @@ if (require.main === module) {
     console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET' : 'NOT SET'}`);
     console.log(`💬 Socket.io initialized`);
   });
+
+  // Set infinite/long timeout for the server to handle heavy AI tasks
+  server.timeout = 600000; // 10 minutes
+  server.keepAliveTimeout = 610000;
+  server.headersTimeout = 620000;
 }
 
 // Force restart trigger 2

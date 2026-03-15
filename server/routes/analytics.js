@@ -49,17 +49,53 @@ router.post('/log', optionalAuth, async (req, res) => {
       return res.status(400).json({ error: 'Event has no owner' });
     }
 
+    // Dedup logic varies by type:
+    // - registration: one per userId+eventId ever (cancel+reregister = same count)
+    // - impression/click: one per userId+eventId within 30 seconds
+    const userId = req.user ? req.user.id : null;
+
+    let dedupQuery;
+    if (type === 'registration') {
+      // For registrations, only count once per user per event regardless of time
+      if (!userId) {
+        // Anonymous registrations — skip logging entirely, not meaningful
+        return res.status(201).json({ success: true, deduplicated: true });
+      }
+      dedupQuery = { eventId, type: 'registration', userId };
+    } else {
+      const dedupWindow = new Date(Date.now() - 30 * 1000);
+      dedupQuery = {
+        eventId,
+        type,
+        timestamp: { $gte: dedupWindow },
+        ...(userId ? { userId } : { userId: null, 'metadata.url': metadata?.url })
+      };
+    }
+
+    const existing = await Analytics.findOne(dedupQuery).select('_id').lean();
+    if (existing) {
+      console.log(`[Analytics] Dedup skip for event ${eventId} type ${type}`);
+      return res.status(201).json({ success: true, deduplicated: true });
+    }
+
     const log = new Analytics({
       eventId,
       hostId: event.hostId,
       type,
       source: source || 'direct',
-      userId: req.user ? req.user.id : null,
+      userId,
       metadata: metadata || {}
     });
 
-    await log.save();
-    console.log(`[Analytics] Log saved for event ${eventId}`);
+    try {
+      await log.save();
+      console.log(`[Analytics] Log saved for event ${eventId}`);
+    } catch (saveErr) {
+      if (saveErr.code === 11000) {
+        return res.status(201).json({ success: true, deduplicated: true });
+      }
+      throw saveErr;
+    }
 
     // Increment high-level metrics in Event model for quick reference
     const update = {};
@@ -72,7 +108,7 @@ router.post('/log', optionalAuth, async (req, res) => {
 
     res.status(201).json({ success: true });
   } catch (err) {
-    console.error('[Analytics] Log error:', err);
+    console.error('[Analytics] Log error:', err.message, err.stack);
     res.status(500).json({ error: 'Server error saving log', details: err.message });
   }
 });
@@ -199,6 +235,24 @@ router.get('/studio', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Analytics studio error:', err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * @route DELETE /api/analytics/dev/clear
+ * @desc Dev-only: wipe all analytics records
+ * @access Dev only (NODE_ENV !== production)
+ */
+router.delete('/dev/clear', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Not available in production' });
+  }
+  try {
+    const result = await Analytics.deleteMany({});
+    console.log(`[Analytics] Dev clear: deleted ${result.deletedCount} records`);
+    res.json({ success: true, deleted: result.deletedCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

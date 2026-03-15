@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import config from '../config';
 import api from '../utils/api';
+import { logEvent } from '../utils/analytics';
 import {
   X,
   Calendar,
@@ -80,10 +81,10 @@ const EventDetailModal = ({
     }
   }, [isOpen, event, user]);
 
-  // Viral Feedback Loop: track views whenever the modal opens
+  // Track impression whenever the modal opens
   useEffect(() => {
     if (isOpen && event?._id) {
-      api.post(`/api/genloop/track/${event._id}`, { action: 'view' }).catch(() => { });
+      logEvent({ eventId: event._id, type: 'impression', source: 'modal' });
     }
   }, [isOpen, event?._id]);
 

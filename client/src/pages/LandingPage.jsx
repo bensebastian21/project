@@ -15,6 +15,9 @@ import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 import { logEvent } from '../utils/analytics';
 
+// Module-level set to prevent duplicate impression logs across React strict mode remounts
+const _loggedImpressions = new Set();
+
 // --- Advanced Animation Components ---
 
 // Complex 3D Twist & Fade Reveal
@@ -111,9 +114,12 @@ const RedefinedBoxContent = () => (
 const EventCard = ({ event, index }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-10%' });
+  const hasLoggedRef = useRef(false);
 
   useEffect(() => {
-    if (isInView && event._id) {
+    if (isInView && event._id && !hasLoggedRef.current && !_loggedImpressions.has(event._id)) {
+      hasLoggedRef.current = true;
+      _loggedImpressions.add(event._id);
       logEvent({ 
         eventId: event._id, 
         type: 'impression', 

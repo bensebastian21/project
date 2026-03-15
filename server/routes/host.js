@@ -1792,6 +1792,12 @@ router.post('/public/events/:id/cancel', authenticateToken, async (req, res) => 
       event.waitingList.splice(waitlistedIndex, 1);
     }
 
+    // Keep high-level registration counter in sync
+    event.metrics = event.metrics || {};
+    event.metrics.registrations = (event.registrations || []).filter(
+      (r) => r.status === 'registered'
+    ).length;
+
     await event.save();
     res.json({ message: '✅ Successfully cancelled' });
   } catch (err) {
@@ -1806,11 +1812,6 @@ router.post('/public/events/:id/register', authenticateToken, async (req, res) =
     // Enforce verification
     const u = await User.findById(req.user.id).lean();
     if (!u) return res.status(401).json({ error: 'User not found' });
-    if (!u.emailVerified || !u.phoneVerified) {
-      return res
-        .status(403)
-        .json({ error: 'Please verify your email and phone to register for events' });
-    }
     const { id } = req.params;
     const { squadId } = req.body || {};
 
@@ -1931,10 +1932,28 @@ router.post('/public/events/:id/register', authenticateToken, async (req, res) =
     }
 
     event.updatedAt = new Date();
+    // Keep high-level registration counter in sync for quick analytics
+    event.metrics = event.metrics || {};
+    event.metrics.registrations = (event.registrations || []).filter(
+      (r) => r.status === 'registered'
+    ).length;
     await event.save();
 
     // Gamification: Award points to the caller (if solo, caller gets it. If squad, leader gets it for registering)
     await gamificationController.awardPoints(req.user.id, 'REGISTER_EVENT', event.category);
+
+    // Analytics: log registration event (fire-and-forget)
+    if (registeredCount > 0) {
+      const Analytics = require('../models/Analytics');
+      Analytics.create({
+        eventId: event._id,
+        hostId: event.hostId,
+        type: 'registration',
+        source: 'portal',
+        userId: req.user.id,
+        metadata: { device: 'server', browser: 'server' }
+      }).catch(err => console.error('[Analytics] Failed to log registration:', err));
+    }
 
     res.json({
       message: `✅ Registered ${registeredCount} members successfully.`,

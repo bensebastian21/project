@@ -24,8 +24,20 @@ router.get('/my-rank', authenticateToken, gamificationController.getUserRank);
 // Manual point award (e.g. from frontend interactions verified by token)
 router.post('/points', authenticateToken, async (req, res) => {
   try {
-    const { action } = req.body;
+    const { action, amount } = req.body;
     if (!action) return res.status(400).json({ error: 'Action required' });
+
+    // Handle badge XP award directly (not via gamificationController action map)
+    if (action === 'BADGE_EARNED' && amount > 0) {
+      const User = require('../models/User');
+      const user = await User.findById(req.user.id);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+      user.points = (user.points || 0) + amount;
+      user.seasonPoints = (user.seasonPoints || 0) + amount;
+      await user.save();
+      return res.json({ success: true, points: user.points });
+    }
+
     const result = await gamificationController.awardPoints(req.user.id, action);
     res.json({ success: true, ...result });
   } catch (e) {

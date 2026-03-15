@@ -7,18 +7,11 @@
 
 class BayesianClassifier {
   constructor() {
-    // Categories we want to classify events into
+    // Default categories — overridden when a saved model is loaded
     this.categories = [
-      'Technology',
-      'Business',
-      'Arts',
-      'Science',
-      'Sports',
-      'Education',
-      'Health',
-      'Entertainment',
-      'Social',
-      'Other',
+      'Hackathon', 'Workshop', 'Seminar', 'Competition', 'Networking',
+      'Cultural', 'Sports', 'Tech Talk', 'Career Fair',
+      'Education', 'Health', 'Entertainment', 'Social', 'Other',
     ];
 
     // Training data storage
@@ -55,7 +48,10 @@ class BayesianClassifier {
    */
   train(text, category) {
     if (!this.categories.includes(category)) {
-      throw new Error(`Unknown category: ${category}`);
+      // Auto-register new categories instead of throwing
+      this.categories.push(category);
+      this.categoryWordCounts[category] = {};
+      this.categoryDocumentCounts[category] = 0;
     }
 
     const words = this.tokenize(text);

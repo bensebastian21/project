@@ -507,42 +507,23 @@ export default function Settings() {
                     {activeTab === 'Security' && (
                       <div className="space-y-4">
                         {/* Verification status cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 gap-3">
                           <div
-                            className={`p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3 ${verify.emailVerified ? 'bg-green-50' : 'bg-red-50'}`}
+                            className={`p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3 ${verify.emailVerified ? 'bg-green-50' : 'bg-amber-50'}`}
                           >
                             {verify.emailVerified ? (
                               <CheckCircle className="w-5 h-5 text-green-700 flex-shrink-0" />
                             ) : (
-                              <XCircle className="w-5 h-5 text-red-700 flex-shrink-0" />
+                              <span className="text-xl flex-shrink-0">⭐</span>
                             )}
                             <div>
                               <div className="text-xs font-black uppercase tracking-widest text-black">
-                                Email
+                                Email Verification
                               </div>
                               <div
-                                className={`text-[10px] font-black uppercase tracking-widest ${verify.emailVerified ? 'text-green-700' : 'text-red-700'}`}
+                                className={`text-[10px] font-black uppercase tracking-widest ${verify.emailVerified ? 'text-green-700' : 'text-amber-700'}`}
                               >
-                                {verify.emailVerified ? 'Verified ✓' : 'Not Verified'}
-                              </div>
-                            </div>
-                          </div>
-                          <div
-                            className={`p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3 ${verify.phoneVerified ? 'bg-green-50' : 'bg-red-50'}`}
-                          >
-                            {verify.phoneVerified ? (
-                              <CheckCircle className="w-5 h-5 text-green-700 flex-shrink-0" />
-                            ) : (
-                              <XCircle className="w-5 h-5 text-red-700 flex-shrink-0" />
-                            )}
-                            <div>
-                              <div className="text-xs font-black uppercase tracking-widest text-black">
-                                Phone
-                              </div>
-                              <div
-                                className={`text-[10px] font-black uppercase tracking-widest ${verify.phoneVerified ? 'text-green-700' : 'text-red-700'}`}
-                              >
-                                {verify.phoneVerified ? 'Verified ✓' : 'Not Verified'}
+                                {verify.emailVerified ? 'Verified ✓ — Badge & XP Earned' : 'Optional — Earn +150 XP & Verified Member Badge'}
                               </div>
                             </div>
                           </div>

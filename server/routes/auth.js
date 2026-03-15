@@ -521,21 +521,17 @@ router.get("/me", authenticateToken, async (req, res) => {
 router.put("/me", authenticateToken, async (req, res) => {
   try {
     const allowed = [
-      "username", "fullname", "institute", "street", "city", "pincode", "age", "course", "countryCode", "interests", "bio", "bannerUrl"
+      "username", "fullname", "institute", "street", "city", "pincode", "age", "course", "countryCode", "interests", "bio", "bannerUrl", "profilePic"
       , "displayBadges"];
     const update = { updatedAt: new Date() };
     allowed.forEach(k => {
       if (typeof req.body[k] !== 'undefined') update[k] = req.body[k];
     });
 
-    // Validate required fields
+    // Only validate required fields if they are actually being updated
     const requiredFields = ["institute", "course", "street", "city", "pincode", "age"];
     for (const field of requiredFields) {
-      if (typeof update[field] === 'undefined' && field !== "pincode" && field !== "age") {
-        // For non-required fields, skip validation if not provided
-        continue;
-      }
-
+      if (typeof update[field] === 'undefined') continue; // skip if not being updated
       const value = String(update[field] || "").trim();
       if (!value) {
         return res.status(400).json({ error: `${field.charAt(0).toUpperCase() + field.slice(1)} is required` });
@@ -777,7 +773,26 @@ router.post("/verify-email-otp", authenticateToken, async (req, res) => {
     user.emailOTP = undefined;
     user.emailOTPExpires = undefined;
     await user.save();
-    res.json({ message: "✅ Email verified" });
+
+    // Award XP + badge for email verification directly on User model
+    try {
+      const alreadyHasBadge = (user.badges || []).some(b => (typeof b === 'string' ? b : b.id) === 'email_verified');
+      if (!alreadyHasBadge) {
+        user.badges = [...(user.badges || []), {
+          id: 'email_verified',
+          name: 'Verified Member',
+          icon: '✅',
+          tier: 'gold',
+          description: 'Verified your email address',
+          earnedAt: new Date(),
+        }];
+        user.points = (user.points || 0) + 150;
+        user.seasonPoints = (user.seasonPoints || 0) + 150;
+        await user.save();
+      }
+    } catch (_) { /* gamification is optional, don't fail the request */ }
+
+    res.json({ message: "✅ Email verified", xpAwarded: 150, badgeAwarded: 'email_verified' });
   } catch (err) {
     console.error("verify-email-otp error:", err);
     res.status(500).json({ error: "Server error" });
@@ -1117,7 +1132,7 @@ router.post("/register", uploadDocument.fields([
       countryCode: countryCode || "+91",
       password: hashedPassword,                    // null for Google accounts
       studentIdPath: (studentIdFile && studentIdFile.path) || studentId || null, // Cloudinary URL
-      secondDocPath: (secondDocFile && secondDocFile.path) || null, // Cloudinary URL
+      secondDocPath: (secondDocFile && secondDocFile.path) || req.body.secondDoc || null, // Cloudinary URL
       // Manual verification defaults
       isStudentIdVerified: false,
       studentIdVerifiedAt: null,
@@ -1198,12 +1213,16 @@ router.post("/register-host", async (req, res) => {
       age: age ? parseInt(age) : undefined,
       course,
       email,
-      phone,
+      phone: phoneStr,
       countryCode: countryCode || "+91",
       password: hashedPassword,
-      documentPath: req.file.path,
+      documentPath: document || null, // Cloudinary URL sent from frontend
       approvalStatus: "pending", // Default to pending approval
     };
+
+    if (!hostData.documentPath) {
+      return res.status(400).json({ error: "Verification document is required" });
+    }
 
     const host = new Host(hostData);
     await host.save();

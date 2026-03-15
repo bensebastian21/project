@@ -1,4 +1,4 @@
-import config from '../config';
+import api from './api';
 
 /**
  * Log an analytics event (impression, click, etc.)
@@ -9,31 +9,17 @@ import config from '../config';
  */
 export const logEvent = async ({ eventId, type, source = 'direct' }) => {
   try {
-    let baseUrl = config?.apiBaseUrl || 'http://localhost:5000/api';
-    if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
-    if (!baseUrl.endsWith('/api')) baseUrl += '/api';
-
-    const token = localStorage.getItem('token');
-    
-    await fetch(`${baseUrl}/analytics/log`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({
-        eventId,
-        type,
-        source,
-        metadata: {
-          browser: navigator.userAgent,
-          device: window.innerWidth < 768 ? 'mobile' : 'desktop',
-          url: window.location.href
-        }
-      })
+    await api.post('/api/analytics/log', {
+      eventId,
+      type,
+      source,
+      metadata: {
+        browser: navigator.userAgent,
+        device: window.innerWidth < 768 ? 'mobile' : 'desktop',
+        url: window.location.href
+      }
     });
   } catch (err) {
-    // Fail silently to not disrupt user experience
-    console.error('Analytics log failed:', err);
+    console.error('Analytics log failed:', err?.response?.data || err.message);
   }
 };

@@ -44,14 +44,6 @@ router.get('/', authenticateToken, async (req, res) => {
 // Bookmark an event (adds current user to event.bookmarks)
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    // Require verified contact info before allowing bookmarks
-    const u = await User.findById(req.user.id).lean();
-    if (!u) return res.status(401).json({ error: 'User not found' });
-    if (!u.emailVerified || !u.phoneVerified) {
-      return res
-        .status(403)
-        .json({ error: 'Please verify your email and phone to bookmark events' });
-    }
     const { eventId } = req.body;
 
     if (!eventId) {
@@ -81,14 +73,6 @@ router.post('/', authenticateToken, async (req, res) => {
 // Remove bookmark (removes current user from event.bookmarks)
 router.delete('/:eventId', authenticateToken, async (req, res) => {
   try {
-    // Policy: manage bookmarks only for verified users
-    const u = await User.findById(req.user.id).lean();
-    if (!u) return res.status(401).json({ error: 'User not found' });
-    if (!u.emailVerified || !u.phoneVerified) {
-      return res
-        .status(403)
-        .json({ error: 'Please verify your email and phone to manage bookmarks' });
-    }
     const { eventId } = req.params;
 
     const event = await Event.findOneAndUpdate(

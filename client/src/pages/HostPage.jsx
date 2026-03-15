@@ -261,19 +261,7 @@ export default function HostPage() {
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
-  const ensureVerified = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return false;
-      const { data } = await api.get("/api/auth/me", { headers: bearer() });
-      if (!data?.emailVerified || !data?.phoneVerified) {
-        toast.info("Please verify your email and phone to continue");
-        navigate("/profile?tab=otp");
-        return false;
-      }
-      return true;
-    } catch { return false; }
-  };
+  const ensureVerified = async () => { return true; };
 
   const toggleSubscribe = async () => {
     try {
