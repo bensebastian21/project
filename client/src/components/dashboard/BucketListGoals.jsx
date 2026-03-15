@@ -16,8 +16,9 @@ const BucketListGoals = () => {
     });
 
     const CATEGORIES = [
-        'Any', 'Coding', 'Volunteer', 'Technology', 'Business', 'Arts',
-        'Sports', 'Music', 'Charity', 'Education'
+        'Any', 'Hackathon', 'Workshop', 'Seminar', 'Competition', 'Networking',
+        'Cultural', 'Sports', 'Tech Talk', 'Career Fair', 'Education',
+        'Health', 'Entertainment', 'Social', 'General', 'Other'
     ];
 
     const fetchGoals = async () => {

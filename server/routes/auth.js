@@ -1703,16 +1703,20 @@ router.put("/update/:id", authenticateToken, requireAdmin, async (req, res) => {
       if (body.password && body.password.trim() !== "") {
         body.password = await bcrypt.hash(body.password, 10);
       } else {
-        // Do not overwrite existing password with empty string/null
         delete body.password;
       }
     }
 
     body.updatedAt = new Date();
 
-    const updatedUser = await User.findByIdAndUpdate(id, body, { new: true });
-    if (!updatedUser) return res.status(404).json({ error: "User not found" });
-    res.json(updatedUser);
+    // Try User collection first, then Host collection
+    let updated = await User.findByIdAndUpdate(id, body, { new: true });
+    if (!updated) {
+      const Host = require('../models/Host');
+      updated = await Host.findByIdAndUpdate(id, body, { new: true });
+    }
+    if (!updated) return res.status(404).json({ error: "User not found" });
+    res.json(updated);
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ error: "Server error" });
