@@ -15,7 +15,7 @@ export default function EventsNearMe({ onRegister, onBookmark, onViewMore, userS
       setLoading(true);
       setError(null);
       const { data } = await api.get(`/api/host/public/events-nearby`, {
-        params: { lat, lng, dist: 50000 }, // 50km radius
+        params: { lat, lng, dist: 50 }, // 50km radius (route expects km)
       });
       setEvents(data || []);
     } catch (err) {

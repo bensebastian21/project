@@ -1017,20 +1017,30 @@ router.get('/public/events-nearby', optionalAuth, async (req, res) => {
     const { lat, lng, dist } = req.query;
     if (!lat || !lng) return res.status(400).json({ error: 'Missing lat/lng' });
 
-    const distanceInMeters = (parseFloat(dist) || 10) * 1000;
+    const distanceInMeters = (parseFloat(dist) || 50) * 1000;
 
-    const events = await Event.find({
-      isPublished: true,
-      isDeleted: { $ne: true },
-      coordinates: {
-        $near: {
-          $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
-          $maxDistance: distanceInMeters,
+    let events = [];
+    try {
+      events = await Event.find({
+        isPublished: true,
+        isDeleted: { $ne: true },
+        coordinates: {
+          $near: {
+            $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+            $maxDistance: distanceInMeters,
+          },
         },
-      },
-    })
-      .limit(20)
-      .populate('hostId', 'fullname username profilePic institute');
+      })
+        .limit(20)
+        .populate('hostId', 'fullname username profilePic institute');
+    } catch (geoErr) {
+      // Fallback: 2dsphere index may not exist yet — return published events without geo filter
+      console.warn('Geo query failed, falling back to published events:', geoErr.message);
+      events = await Event.find({ isPublished: true, isDeleted: { $ne: true } })
+        .sort({ date: 1 })
+        .limit(20)
+        .populate('hostId', 'fullname username profilePic institute');
+    }
 
     res.json(events);
   } catch (err) {
